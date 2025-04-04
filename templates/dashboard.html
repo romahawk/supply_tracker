@@ -11,20 +11,20 @@
     <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
 </head>
 <body>
-    <header class="header">
-        <div class="header-left">
-            <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="logo">
-            <h1>Supply Tracker Dashboard</h1>
-        </div>
-        <div class="header-center">
-            <input type="text" id="order-filter" placeholder="Search orders (e.g., by product, buyer, status)">
-        </div>
-        <nav class="header-nav">
-            <span class="welcome-text">Welcome, RM!</span>
-            <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
-            <button class="nav-link toggle-form-btn">Add New Order</button>
-        </nav>
-    </header>
+  <header class="header">
+    <div class="header-left">
+        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="logo">
+        <h1>Supply Tracker Dashboard</h1>
+    </div>
+    <div class="header-center">
+        <input type="text" id="order-filter" placeholder="Search orders (e.g., by product, buyer, status)">
+    </div>
+    <nav class="header-nav">
+        <span class="welcome-text">Welcome, RM!</span>
+        <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+        <button class="nav-link toggle-form-btn">Add New Order</button>
+    </nav>
+  </header>
 
     <div class="container">
         <!-- Add New Order Form (Collapsible) -->
