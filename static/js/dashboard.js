@@ -613,3 +613,15 @@ document.addEventListener('DOMContentLoaded', function () {
       }
   });
 });
+
+// Toggle Add Order Form
+const toggleFormBtn = document.querySelector('.toggle-form-btn');
+const addOrderSection = document.getElementById('add-order-section');
+
+if (toggleFormBtn && addOrderSection) {
+    toggleFormBtn.addEventListener('click', () => {
+        const isHidden = addOrderSection.style.display === 'none' || addOrderSection.style.display === '';
+        addOrderSection.style.display = isHidden ? 'block' : 'none';
+        toggleFormBtn.textContent = isHidden ? 'Hide Add Order Form' : 'Add New Order';
+    });
+}
