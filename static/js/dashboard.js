@@ -60,20 +60,20 @@ document.addEventListener('DOMContentLoaded', function () {
             const row = document.createElement('tr');
             row.classList.add('bg-gray-100', 'dark:bg-gray-900', 'hover:bg-gray-200', 'dark:hover:bg-gray-700');
             row.innerHTML = `
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.order_date}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.order_number}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.product_name}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.buyer}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.responsible}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.quantity}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.required_delivery}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.terms_of_delivery}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.payment_date}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.etd}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.eta}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.ata || ''}</td>
-                <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${order.transit_status}</td>
-                <td class="px-4 py-2">
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.order_date}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.order_number}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.product_name}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.buyer}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.responsible}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.quantity}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.required_delivery}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.terms_of_delivery}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.payment_date}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.etd}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.eta}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.ata || ''}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.transit_status}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
                     <a href="#" class="edit-order text-blue-600 hover:underline dark:text-blue-400" data-id="${order.id}">Edit</a>
                     <a href="#" class="delete-order text-red-600 hover:underline dark:text-red-400 ml-2" data-id="${order.id}">Delete</a>
                 </td>

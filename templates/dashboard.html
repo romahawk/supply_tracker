@@ -17,24 +17,36 @@
     </script>
 </head>
 <body class="m-0 p-0 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-  <header class="sticky top-0 z-10 flex items-center justify-between p-4 bg-blue-600 text-white shadow-md dark:bg-blue-800">
-    <div class="flex items-center space-x-4">
-        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="h-12">
-        <h1 class="text-2xl font-semibold">Supply Tracker Dashboard</h1>
+  <header class="sticky top-0 z-10 flex items-center justify-between p-2 sm:p-4 bg-blue-600 text-white shadow-md dark:bg-blue-800">
+    <!-- Logo and Title -->
+    <div class="flex items-center space-x-2 sm:space-x-4">
+        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="h-8 sm:h-12">
+        <h1 class="text-base sm:text-2xl font-semibold">Supply Tracker Dashboard</h1>
     </div>
-    <div class="flex-1 mx-4 max-w-md">
+
+    <!-- Search Bar (Hidden on Mobile) -->
+    <div class="hidden sm:flex flex-1 mx-4 max-w-md">
         <input type="text" id="order-filter" placeholder="Search orders (e.g., by product, buyer, status)" class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
     </div>
-    <nav class="flex items-center space-x-4">
-        <span class="welcome-text">Welcome, RM!</span>
-        <button id="dark-mode-toggle" class="relative inline-flex items-center h-8 w-16 rounded-full transition-colors duration-300 focus:outline-none" aria-label="Toggle dark mode">
-            <span id="dark-mode-track" class="absolute inset-0 h-8 w-16 rounded-full bg-gray-200 dark:bg-gray-600 transition-colors duration-300"></span>
-            <span id="dark-mode-thumb" class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white flex items-center justify-center transform transition-transform duration-300 dark:translate-x-8">
-                <span id="dark-mode-icon" class="text-sm"></span>
+
+    <!-- Navigation -->
+    <nav class="flex items-center space-x-3 sm:space-x-4">
+        <!-- Welcome Text (Hidden on Mobile) -->
+        <span class="welcome-text hidden sm:inline">Welcome, RM!</span>
+
+        <!-- Dark Mode Toggle -->
+        <button id="dark-mode-toggle" class="relative inline-flex items-center h-5 w-10 sm:h-8 sm:w-16 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0" aria-label="Toggle dark mode">
+            <span id="dark-mode-track" class="absolute inset-0 h-5 w-10 sm:h-8 sm:w-16 rounded-full bg-gray-200 dark:bg-gray-600 transition-colors duration-300"></span>
+            <span id="dark-mode-thumb" class="absolute left-1 top-1 h-3 w-3 sm:h-6 sm:w-6 rounded-full bg-white flex items-center justify-center transform transition-transform duration-300 dark:translate-x-5 sm:dark:translate-x-8">
+                <span id="dark-mode-icon" class="text-xs sm:text-sm"></span>
             </span>
         </button>
-        <a href="{{ url_for('logout') }}" class="px-4 py-2 bg-blue-500 rounded-md hover:bg-blue-700">Logout</a>
-        <button class="px-4 py-2 bg-green-500 rounded-md hover:bg-green-700 toggle-form-btn">Add New Order</button>
+
+        <!-- Logout Link -->
+        <a href="{{ url_for('logout') }}" class="text-white hover:underline">Logout</a>
+
+        <!-- Add New Order Button -->
+        <button class="px-2 py-1 sm:px-4 sm:py-2 bg-green-500 rounded-md hover:bg-green-700 toggle-form-btn text-sm sm:text-base">Add New Order</button>
     </nav>
   </header>
 
@@ -105,51 +117,51 @@
     </div>
 
     <!-- Your Orders Table -->
-    <h2 class="text-xl font-semibold mb-4">Your Orders</h2>
+    <h2 class="text-xl font-semibold mb-6 sm:mb-4">Your Orders</h2>
     <div class="orders-table-container overflow-x-auto">
-        <table class="min-w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+        <table class="min-w-[800px] bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
             <thead class="bg-gray-200 dark:bg-gray-800">
                 <tr>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="order_date">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="order_date">
                         Order Date <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="order_number">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="order_number">
                         Order # <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="product_name">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="product_name">
                         Product Name <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="buyer">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="buyer">
                         Buyer <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="responsible">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="responsible">
                         Responsible <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="quantity">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="quantity">
                         Quantity <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="required_delivery">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="required_delivery">
                         Required Delivery <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="terms_of_delivery">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="terms_of_delivery">
                         Terms of Delivery <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="payment_date">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="payment_date">
                         Payment Date <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="etd">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="etd">
                         ETD <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="eta">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="eta">
                         ETA <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="ata">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="ata">
                         ATA <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="transit_status">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="transit_status">
                         Transit Status <span class="sort-indicator"></span>
                     </th>
-                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100">
+                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100">
                         Actions
                     </th>
                 </tr>
