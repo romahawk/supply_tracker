@@ -7,217 +7,245 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
 </head>
-<body>
-  <header class="header">
-    <div class="header-left">
-        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="logo">
-        <h1>Supply Tracker Dashboard</h1>
+<body class="m-0 p-0 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <header class="sticky top-0 z-10 flex items-center justify-between p-4 bg-blue-600 text-white shadow-md dark:bg-blue-800">
+    <div class="flex items-center space-x-4">
+        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="h-12">
+        <h1 class="text-2xl font-semibold">Supply Tracker Dashboard</h1>
     </div>
-    <div class="header-center">
-        <input type="text" id="order-filter" placeholder="Search orders (e.g., by product, buyer, status)">
+    <div class="flex-1 mx-4 max-w-md">
+        <input type="text" id="order-filter" placeholder="Search orders (e.g., by product, buyer, status)" class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
     </div>
-    <nav class="header-nav">
+    <nav class="flex items-center space-x-4">
         <span class="welcome-text">Welcome, RM!</span>
-        <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
-        <button class="nav-link toggle-form-btn">Add New Order</button>
+        <button id="dark-mode-toggle" class="relative inline-flex items-center h-8 w-16 rounded-full transition-colors duration-300 focus:outline-none" aria-label="Toggle dark mode">
+            <span id="dark-mode-track" class="absolute inset-0 h-8 w-16 rounded-full bg-gray-200 dark:bg-gray-600 transition-colors duration-300"></span>
+            <span id="dark-mode-thumb" class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white flex items-center justify-center transform transition-transform duration-300 dark:translate-x-8">
+                <span id="dark-mode-icon" class="text-sm"></span>
+            </span>
+        </button>
+        <a href="{{ url_for('logout') }}" class="px-4 py-2 bg-blue-500 rounded-md hover:bg-blue-700">Logout</a>
+        <button class="px-4 py-2 bg-green-500 rounded-md hover:bg-green-700 toggle-form-btn">Add New Order</button>
     </nav>
   </header>
 
-    <div class="container">
-        <!-- Add New Order Form (Collapsible) -->
-        <div id="add-order-section" class="form-section" style="display: none;">
-            <form id="add-order-form" class="add-order-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="order_date">Order Date (DD.MM.YY):</label>
-                        <input type="text" id="order_date" name="order_date" placeholder="DD.MM.YY" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="order_number">Order #:</label>
-                        <input type="text" id="order_number" name="order_number" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="product_name">Product Name:</label>
-                        <input type="text" id="product_name" name="product_name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="buyer">Buyer:</label>
-                        <input type="text" id="buyer" name="buyer" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="responsible">Responsible:</label>
-                        <input type="text" id="responsible" name="responsible" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="quantity">Quantity:</label>
-                        <input type="number" id="quantity" name="quantity" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="required_delivery">Required Delivery (DD.MM.YY):</label>
-                        <input type="text" id="required_delivery" name="required_delivery" placeholder="DD.MM.YY" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="terms_of_delivery">Terms of Delivery:</label>
-                        <input type="text" id="terms_of_delivery" name="terms_of_delivery" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="payment_date">Payment Date (DD.MM.YY):</label>
-                        <input type="text" id="payment_date" name="payment_date" placeholder="DD.MM.YY" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="etd">ETD (DD.MM.YY):</label>
-                        <input type="text" id="etd" name="etd" placeholder="DD.MM.YY" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="eta">ETA (DD.MM.YY):</label>
-                        <input type="text" id="eta" name="eta" placeholder="DD.MM.YY" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="ata">ATA (DD.MM.YY):</label>
-                        <input type="text" id="ata" name="ata" placeholder="DD.MM.YY">
-                    </div>
-                    <div class="form-group">
-                        <label for="transit_status">Transit Status:</label>
-                        <select id="transit_status" name="transit_status" required>
-                            <option value="in process">In Process</option>
-                            <option value="en route">En Route</option>
-                            <option value="arrived">Arrived</option>
-                        </select>
-                    </div>
-                    <div class="form-group form-submit">
-                        <button type="submit">Add Order</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <!-- Existing Dashboard Content -->
-        <h2>Your Orders</h2>
-        <div class="orders-table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th data-sort="order_date">Order Date</th>
-                        <th data-sort="order_number">Order #</th>
-                        <th data-sort="product_name">Product Name</th>
-                        <th data-sort="buyer">Buyer</th>
-                        <th data-sort="responsible">Responsible</th>
-                        <th data-sort="quantity">Quantity</th>
-                        <th data-sort="required_delivery">Required Delivery</th>
-                        <th data-sort="terms_of_delivery">Terms of Delivery</th>
-                        <th data-sort="payment_date">Payment Date</th>
-                        <th data-sort="etd">ETD</th>
-                        <th data-sort="eta">ETA</th>
-                        <th data-sort="ata">ATA</th>
-                        <th data-sort="transit_status">Transit Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Table rows will be populated dynamically -->
-                </tbody>
-            </table>
-        </div>
-
-        <h2>Timeline</h2>
-        <div class="legend">
-            <span class="legend-item">
-                <span class="legend-color" style="background-color: rgba(255, 165, 0, 0.8);"></span> In Process
-            </span>
-            <span class="legend-item">
-                <span class="legend-color" style="background-color: rgba(0, 123, 255, 0.8);"></span> En Route
-            </span>
-            <span class="legend-item">
-                <span class="legend-color" style="background-color: rgba(144, 238, 144, 0.8);"></span> Arrived
-            </span>
-        </div>
-        <div id="timeline-loading" style="display: none;">Loading timeline...</div>
-        <div class="timeline-container">
-            <canvas id="timelineChart"></canvas>
-        </div>
+  <div class="container mx-auto p-6">
+    <!-- Add New Order Form (Collapsible) -->
+    <div id="add-order-section" class="form-section p-6 bg-white dark:bg-gray-900 rounded-lg shadow-md" style="display: none;">
+        <form id="add-order-form" class="add-order-form grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="form-group">
+                <label for="order_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order Date:</label>
+                <input type="date" id="order_date" name="order_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="order_number" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order #:</label>
+                <input type="text" id="order_number" name="order_number" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="product_name" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Product Name:</label>
+                <input type="text" id="product_name" name="product_name" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="buyer" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Buyer:</label>
+                <input type="text" id="buyer" name="buyer" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="responsible" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Responsible:</label>
+                <input type="text" id="responsible" name="responsible" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="quantity" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="required_delivery" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Required Delivery:</label>
+                <input type="date" id="required_delivery" name="required_delivery" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="terms_of_delivery" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Terms of Delivery:</label>
+                <input type="text" id="terms_of_delivery" name="terms_of_delivery" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="payment_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Payment Date:</label>
+                <input type="date" id="payment_date" name="payment_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="etd" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETD:</label>
+                <input type="date" id="etd" name="etd" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="eta" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETA:</label>
+                <input type="date" id="eta" name="eta" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="ata" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ATA:</label>
+                <input type="date" id="ata" name="ata" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="transit_status" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Transit Status:</label>
+                <select id="transit_status" name="transit_status" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                    <option value="in process">In Process</option>
+                    <option value="en route">En Route</option>
+                    <option value="arrived">Arrived</option>
+                </select>
+            </div>
+            <div class="form-group col-span-1 md:col-span-2 lg:col-span-3">
+                <button type="submit" class="w-full p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Add Order</button>
+            </div>
+        </form>
     </div>
 
-    <!-- Edit Order Modal -->
-    <div id="edit-order-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">×</span>
-            <h2>Edit Order</h2>
-            <form id="edit-order-form">
-                <input type="hidden" id="edit-order-id" name="order_id">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit-order_date">Order Date (DD.MM.YY):</label>
-                        <input type="text" id="edit-order_date" name="order_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-order_number">Order #:</label>
-                        <input type="text" id="edit-order_number" name="order_number" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-product_name">Product Name:</label>
-                        <input type="text" id="edit-product_name" name="product_name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-buyer">Buyer:</label>
-                        <input type="text" id="edit-buyer" name="buyer" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-responsible">Responsible:</label>
-                        <input type="text" id="edit-responsible" name="responsible" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit-quantity">Quantity:</label>
-                        <input type="number" id="edit-quantity" name="quantity" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-required_delivery">Required Delivery (DD.MM.YY):</label>
-                        <input type="text" id="edit-required_delivery" name="required_delivery" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-terms_of_delivery">Terms of Delivery:</label>
-                        <input type="text" id="edit-terms_of_delivery" name="terms_of_delivery" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-payment_date">Payment Date (DD.MM.YY):</label>
-                        <input type="text" id="edit-payment_date" name="payment_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-etd">ETD (DD.MM.YY):</label>
-                        <input type="text" id="edit-etd" name="etd" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit-eta">ETA (DD.MM.YY):</label>
-                        <input type="text" id="edit-eta" name="eta" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-ata">ATA (DD.MM.YY):</label>
-                        <input type="text" id="edit-ata" name="ata">
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-transit_status">Transit Status:</label>
-                        <select id="edit-transit_status" name="transit_status" required>
-                            <option value="in process">In Process</option>
-                            <option value="en route">En Route</option>
-                            <option value="arrived">Arrived</option>
-                        </select>
-                    </div>
-                    <div class="form-group form-submit">
-                        <button type="submit">Update Order</button>
-                    </div>
-                </div>
-            </form>
-        </div>
+    <!-- Your Orders Table -->
+    <h2 class="text-xl font-semibold mb-4">Your Orders</h2>
+    <div class="orders-table-container overflow-x-auto">
+        <table class="min-w-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+            <thead class="bg-gray-200 dark:bg-gray-800">
+                <tr>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="order_date">
+                        Order Date <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="order_number">
+                        Order # <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="product_name">
+                        Product Name <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="buyer">
+                        Buyer <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="responsible">
+                        Responsible <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="quantity">
+                        Quantity <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="required_delivery">
+                        Required Delivery <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="terms_of_delivery">
+                        Terms of Delivery <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="payment_date">
+                        Payment Date <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="etd">
+                        ETD <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="eta">
+                        ETA <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="ata">
+                        ATA <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="transit_status">
+                        Transit Status <span class="sort-indicator"></span>
+                    </th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-white dark:text-gray-100">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-300 dark:divide-gray-600 bg-gray-100 dark:bg-gray-900">
+                <!-- Table rows will be populated dynamically -->
+            </tbody>
+        </table>
     </div>
+
+    <h2 class="text-xl font-semibold mt-8 mb-4">Timeline</h2>
+    <div class="legend flex space-x-4 mb-4">
+        <span class="legend-item cursor-pointer" data-status="in process">
+            <span class="legend-color inline-block w-4 h-4 mr-2" style="background-color: rgba(255, 165, 0, 0.8);"></span> In Process
+        </span>
+        <span class="legend-item cursor-pointer" data-status="en route">
+            <span class="legend-color inline-block w-4 h-4 mr-2" style="background-color: rgba(0, 123, 255, 0.8);"></span> En Route
+        </span>
+        <span class="legend-item cursor-pointer" data-status="arrived">
+            <span class="legend-color inline-block w-4 h-4 mr-2" style="background-color: rgba(144, 238, 144, 0.8);"></span> Arrived
+        </span>
+    </div>
+    <div id="timeline-loading" style="display: none;" class="text-gray-600 dark:text-gray-400">Loading timeline...</div>
+    <div class="timeline-container bg-gray-100 dark:bg-gray-900 p-4 rounded-lg shadow-md">
+        <canvas id="timelineChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Edit Order Modal -->
+  <div id="edit-order-modal" class="modal fixed inset-0 bg-black bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center" style="display: none;">
+    <div class="modal-content bg-gray-100 dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-3xl">
+        <span class="close cursor-pointer text-gray-800 dark:text-gray-100 text-2xl float-right">×</span>
+        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Edit Order</h2>
+        <form id="edit-order-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <input type="hidden" id="edit-order-id" name="order_id">
+            <div class="form-group">
+                <label for="edit-order_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order Date:</label>
+                <input type="date" id="edit-order_date" name="order_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-order_number" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order #:</label>
+                <input type="text" id="edit-order_number" name="order_number" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-product_name" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Product Name:</label>
+                <input type="text" id="edit-product_name" name="product_name" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-buyer" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Buyer:</label>
+                <input type="text" id="edit-buyer" name="buyer" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-responsible" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Responsible:</label>
+                <input type="text" id="edit-responsible" name="responsible" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-quantity" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Quantity:</label>
+                <input type="number" id="edit-quantity" name="quantity" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-required_delivery" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Required Delivery:</label>
+                <input type="date" id="edit-required_delivery" name="required_delivery" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-terms_of_delivery" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Terms of Delivery:</label>
+                <input type="text" id="edit-terms_of_delivery" name="terms_of_delivery" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-payment_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Payment Date:</label>
+                <input type="date" id="edit-payment_date" name="payment_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-etd" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETD:</label>
+                <input type="date" id="edit-etd" name="etd" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-eta" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETA:</label>
+                <input type="date" id="edit-eta" name="eta" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-ata" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ATA:</label>
+                <input type="date" id="edit-ata" name="ata" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="edit-transit_status" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Transit Status:</label>
+                <select id="edit-transit_status" name="transit_status" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                    <option value="in process">In Process</option>
+                    <option value="en route">En Route</option>
+                    <option value="arrived">Arrived</option>
+                </select>
+            </div>
+            <div class="form-group col-span-1 md:col-span-2 lg:col-span-3">
+                <button type="submit" class="w-full p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Update Order</button>
+            </div>
+        </form>
+    </div>
+  </div>
 </body>
 </html>
