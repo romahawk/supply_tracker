@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let allOrders = [];
     let sortDirection = {};
     let visibleStatuses = ['in process', 'en route', 'arrived'];
+    let selectedYear = null; // Will be set dynamically
 
     Chart.register(window['chartjs-plugin-annotation']);
 
@@ -47,6 +48,60 @@ document.addEventListener('DOMContentLoaded', function () {
         const startOfWeek = new Date(firstMonday);
         startOfWeek.setDate(startOfWeek.getDate() + (weekNum - 1) * 7);
         return startOfWeek;
+    }
+
+    function getYearFromDate(dateStr) {
+        const date = parseDate(dateStr);
+        return date ? date.getFullYear() : null;
+    }
+
+    function populateYearDropdown(orders) {
+        const yearFilter = document.getElementById('year-filter');
+        if (!yearFilter) {
+            console.error('populateYearDropdown: Year filter dropdown not found');
+            return;
+        }
+
+        // Extract unique years from orders
+        const years = [...new Set(orders.map(order => getYearFromDate(order.etd)).filter(year => year !== null))].sort((a, b) => b - a);
+        console.log('populateYearDropdown: Unique years found:', years);
+
+        if (years.length === 0) {
+            yearFilter.innerHTML = '<option value="" disabled selected>No orders available</option>';
+            selectedYear = null;
+            return;
+        }
+
+        // Populate dropdown with years
+        yearFilter.innerHTML = years.map(year => `<option value="${year}">${year}</option>`).join('');
+
+        // Set the selected year to the most recent year with orders
+        if (!selectedYear || !years.includes(parseInt(selectedYear))) {
+            selectedYear = years[0].toString();
+            yearFilter.value = selectedYear;
+        } else {
+            yearFilter.value = selectedYear;
+        }
+        console.log('populateYearDropdown: Selected year set to:', selectedYear);
+    }
+
+    function filterData(data, query) {
+        if (!selectedYear) return [];
+        query = query.toLowerCase();
+        return data.filter(order => {
+            const orderYear = getYearFromDate(order.etd);
+            return (
+                visibleStatuses.includes(order.transit_status) &&
+                orderYear === parseInt(selectedYear) &&
+                (
+                    order.order_number.toLowerCase().includes(query) ||
+                    order.product_name.toLowerCase().includes(query) ||
+                    order.buyer.toLowerCase().includes(query) ||
+                    order.responsible.toLowerCase().includes(query) ||
+                    order.transit_status.toLowerCase().includes(query)
+                )
+            );
+        });
     }
 
     function updateTable(data) {
@@ -113,34 +168,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function filterData(data, query) {
-        query = query.toLowerCase();
-        return data.filter(order => {
-            return (
-                visibleStatuses.includes(order.transit_status) &&
-                (
-                    order.order_number.toLowerCase().includes(query) ||
-                    order.product_name.toLowerCase().includes(query) ||
-                    order.buyer.toLowerCase().includes(query) ||
-                    order.responsible.toLowerCase().includes(query) ||
-                    order.transit_status.toLowerCase().includes(query)
-                )
-            );
-        });
-    }
-
     function renderTimeline(data) {
         console.log('renderTimeline: Function called with data:', data);
         const loadingIndicator = document.getElementById('timeline-loading');
         const canvas = document.getElementById('timelineChart');
         console.log('renderTimeline: Loading indicator:', loadingIndicator);
         console.log('renderTimeline: Canvas element:', canvas);
-
+    
         if (!canvas) {
             console.error('renderTimeline: Canvas element not found');
             return;
         }
-
+    
         if (loadingIndicator) {
             loadingIndicator.style.display = 'block';
         } else {
@@ -148,80 +187,92 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         canvas.style.display = 'none';
         console.log('renderTimeline: Set canvas to hidden');
-
+    
         const filteredData = data.filter(order => visibleStatuses.includes(order.transit_status));
-
+    
+        const year = parseInt(selectedYear);
+        const yearStart = new Date(year, 0, 1); // January 1st
+        const yearEnd = new Date(year, 11, 31); // December 31st
+    
         const chartData = [];
-        const labels = filteredData.map(order => `${order.product_name} (${order.order_number})`);
+        const labels = [];
         filteredData.forEach((order, index) => {
             console.log(`renderTimeline: Processing order ${order.order_number} at index ${index}`);
             const startDate = parseDate(order.etd);
             const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
-
+    
             if (!startDate || !endDate) {
                 console.warn(`renderTimeline: Invalid dates for order ${order.order_number}: ETD=${order.etd}, ETA=${order.eta}, ATA=${order.ata}`);
                 return;
             }
-
+    
+            // Check if the order's date range overlaps with the selected year
+            const orderStartYear = startDate.getFullYear();
+            const orderEndYear = endDate.getFullYear();
+            if (orderEndYear < year || orderStartYear > year) {
+                console.log(`renderTimeline: Skipping order ${order.order_number} as it does not overlap with ${year}`);
+                return;
+            }
+    
+            // Clip the dates to the selected year's boundaries
+            const clippedStartDate = startDate < yearStart ? yearStart : startDate;
+            const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
+    
             const color = {
                 'in process': 'rgba(255, 165, 0, 0.8)',
                 'en route': 'rgba(0, 123, 255, 0.8)',
                 'arrived': 'rgba(144, 238, 144, 0.8)'
             }[order.transit_status] || 'rgba(128, 128, 128, 0.8)';
-
+    
             chartData.push({
-                x: [startDate, endDate],
-                y: index,
+                x: [clippedStartDate, clippedEndDate],
+                y: chartData.length, // Use chartData.length as the y-index since we're filtering
                 backgroundColor: color,
                 borderColor: color.replace('0.8', '1'),
                 borderWidth: 1
             });
+    
+            labels.push(`${order.product_name} (${order.order_number})`);
         });
-
+    
         console.log('renderTimeline: Prepared chart data:', chartData);
-
+    
         if (chartData.length === 0) {
             console.warn('renderTimeline: No valid data to display in the timeline.');
             canvas.style.display = 'none';
             if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
+                loadingIndicator.style.display = 'block';
+                loadingIndicator.textContent = `No orders found for ${selectedYear}`;
             }
             return;
         }
-
+    
         const heightPerOrder = 50;
         const minHeight = 100;
-        const calculatedHeight = Math.max(minHeight, filteredData.length * heightPerOrder);
+        const calculatedHeight = Math.max(minHeight, chartData.length * heightPerOrder);
         canvas.style.height = `${calculatedHeight}px`;
-        console.log(`renderTimeline: Set canvas height to ${calculatedHeight}px for ${filteredData.length} orders`);
-
+        console.log(`renderTimeline: Set canvas height to ${calculatedHeight}px for ${chartData.length} orders`);
+    
         canvas.style.display = 'block';
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
         console.log('renderTimeline: Set canvas to visible, loading indicator to hidden');
-
-        const allDates = chartData.flatMap(item => item.x);
-        if (allDates.length === 0) {
-            console.warn('renderTimeline: No valid dates found in chart data.');
-            canvas.style.display = 'none';
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-            return;
-        }
-        const minDate = new Date(Math.min(...allDates));
-        const maxDate = new Date(Math.max(...allDates));
-        minDate.setDate(minDate.getDate() - 7);
-        maxDate.setDate(maxDate.getDate() + 7);
+    
+        // Set the date range to the entire selected year
+        const minDate = yearStart;
+        const maxDate = yearEnd;
         console.log('renderTimeline: Date range:', { minDate, maxDate });
-
+    
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentWeek = getWeekNumber(today);
         const startOfCurrentWeek = getStartOfWeek(currentWeek, currentYear);
-        console.log(`renderTimeline: Current week: W${currentWeek}, Start date: ${startOfCurrentWeek}`);
-
+        // Calculate the end of the current week (start + 6 days)
+        const endOfCurrentWeek = new Date(startOfCurrentWeek);
+        endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+        console.log(`renderTimeline: Current week: W${currentWeek}, Start date: ${startOfCurrentWeek}, End date: ${endOfCurrentWeek}`);
+    
         const ctx = canvas.getContext('2d');
         if (!ctx) {
             console.error('renderTimeline: Failed to get canvas context');
@@ -234,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function () {
             chartInstance.destroy();
             console.log('renderTimeline: Destroyed existing chart instance');
         }
-
+    
         console.log('renderTimeline: Creating new Chart instance');
         chartInstance = new Chart(ctx, {
             type: 'bar',
@@ -305,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         },
                         beginAtZero: true,
                         min: 0,
-                        max: filteredData.length - 1,
+                        max: chartData.length - 1,
                         ticks: {
                             stepSize: 1,
                             padding: 10,
@@ -321,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             display: false
                         },
                         afterFit: function (scale) {
-                            scale.height = filteredData.length * 50;
+                            scale.height = chartData.length * 50;
                         }
                     }
                 },
@@ -345,7 +396,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         cornerRadius: 6,
                         callbacks: {
                             label: function (context) {
-                                const order = filteredData[context.dataIndex];
+                                const orderIndex = context.dataIndex;
+                                const order = filteredData.find((_, idx) => labels[idx] === labels[orderIndex]);
                                 return [
                                     `Product: ${order.product_name}`,
                                     `Order #: ${order.order_number}`,
@@ -365,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             const ctx = chart.ctx;
                             const xAxis = chart.scales.x;
                             const yAxis = chart.scales.y;
-
+    
                             const monthPositions = {};
                             let currentDate = new Date(minDate);
                             while (currentDate <= maxDate) {
@@ -379,37 +431,40 @@ document.addEventListener('DOMContentLoaded', function () {
                                 currentDate = new Date(currentDate);
                                 currentDate.setDate(currentDate.getDate() + 7);
                             }
-
+    
                             ctx.save();
                             ctx.font = 'bold 12px Inter, sans-serif';
                             ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000';
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'bottom';
-
+    
                             for (const month in monthPositions) {
                                 const { start, end } = monthPositions[month];
                                 const x = (start + end) / 2;
                                 const y = yAxis.top - 10;
                                 ctx.fillText(month, x, y);
                             }
-
+    
                             ctx.restore();
                         }
                     },
                     annotation: {
                         annotations: {
-                            currentWeekLine: {
-                                type: 'line',
+                            currentWeekHighlight: {
+                                type: 'box',
                                 xMin: startOfCurrentWeek,
-                                xMax: startOfCurrentWeek,
-                                borderColor: 'rgba(255, 0, 0, 0.5)',
-                                borderWidth: 2,
+                                xMax: endOfCurrentWeek,
+                                yMin: 0,
+                                yMax: chartData.length - 1,
+                                backgroundColor: 'rgba(255, 255, 0, 0.3)', // Yellow with 30% opacity
+                                borderColor: 'rgba(255, 255, 0, 0.5)', // Slightly less transparent border
+                                borderWidth: 1,
                                 label: {
-                                    enabled: true,
+                                    enabled: currentYear === parseInt(selectedYear),
                                     content: `W${currentWeek}`,
                                     position: 'top',
-                                    backgroundColor: document.documentElement.classList.contains('dark') ? 'rgba(255, 0, 0, 0.6)' : 'rgba(255, 0, 0, 0.8)',
-                                    color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#ffffff',
+                                    backgroundColor: 'rgba(255, 255, 0, 0.5)', // Match the yellow theme
+                                    color: document.documentElement.classList.contains('dark') ? '#000000' : '#000000', // Black text for contrast
                                     font: {
                                         size: 12,
                                         weight: 'bold'
@@ -470,7 +525,14 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 console.log('fetchAndRender: Fetched orders:', data);
                 allOrders = data;
-                const filteredData = filterData(data, document.getElementById('order-filter').value);
+                populateYearDropdown(allOrders); // Populate the year dropdown
+                if (!selectedYear) {
+                    console.warn('fetchAndRender: No orders available to set a selected year');
+                    updateTable([]);
+                    renderTimeline([]);
+                    return;
+                }
+                const filteredData = filterData(allOrders, document.getElementById('order-filter').value);
                 updateTable(filteredData);
                 renderTimeline(filteredData);
             })
@@ -503,6 +565,14 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('order-filter').addEventListener('input', (e) => {
         const query = e.target.value;
         const filteredData = filterData(allOrders, query);
+        updateTable(filteredData);
+        renderTimeline(filteredData);
+    });
+
+    document.getElementById('year-filter').addEventListener('change', (e) => {
+        selectedYear = e.target.value;
+        console.log(`Year filter changed to: ${selectedYear}`);
+        const filteredData = filterData(allOrders, document.getElementById('order-filter').value);
         updateTable(filteredData);
         renderTimeline(filteredData);
     });
