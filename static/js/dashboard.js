@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     order.product_name.toLowerCase().includes(query) ||
                     order.buyer.toLowerCase().includes(query) ||
                     order.responsible.toLowerCase().includes(query) ||
-                    order.transit_status.toLowerCase().includes(query)
+                    order.transit_status.toLowerCase().includes(query) ||
+                    order.transport.toLowerCase().includes(query) // Add transport to search
                 )
             );
         });
@@ -112,6 +113,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         tbody.innerHTML = '';
         data.forEach(order => {
+            const transportIcon = {
+                'sea': '🚢',
+                'air': '✈️',
+                'truck': '🚚'
+            }[order.transport] || order.transport; // Fallback to text if no icon
             const row = document.createElement('tr');
             row.classList.add('bg-gray-100', 'dark:bg-gray-900', 'hover:bg-gray-200', 'dark:hover:bg-gray-700');
             row.innerHTML = `
@@ -128,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.eta}</td>
                 <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.ata || ''}</td>
                 <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.transit_status}</td>
+                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
                 <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
                     <a href="#" class="edit-order text-blue-600 hover:underline dark:text-blue-400" data-id="${order.id}">Edit</a>
                     <a href="#" class="delete-order text-red-600 hover:underline dark:text-red-400 ml-2" data-id="${order.id}">Delete</a>
@@ -155,8 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (['order_date', 'required_delivery', 'payment_date', 'etd', 'eta', 'ata'].includes(key)) {
                 valA = parseDate(valA) || new Date(0);
                 valB = parseDate(valB) || new Date(0);
-            }
-            if (key === 'quantity') {
+            } else if (key === 'quantity') {
                 valA = parseInt(valA) || 0;
                 valB = parseInt(valB) || 0;
             }
@@ -174,12 +180,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const canvas = document.getElementById('timelineChart');
         console.log('renderTimeline: Loading indicator:', loadingIndicator);
         console.log('renderTimeline: Canvas element:', canvas);
-    
+
         if (!canvas) {
             console.error('renderTimeline: Canvas element not found');
             return;
         }
-    
+
         if (loadingIndicator) {
             loadingIndicator.style.display = 'block';
         } else {
@@ -187,25 +193,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         canvas.style.display = 'none';
         console.log('renderTimeline: Set canvas to hidden');
-    
+
         const filteredData = data.filter(order => visibleStatuses.includes(order.transit_status));
-    
+
         const year = parseInt(selectedYear);
         const yearStart = new Date(year, 0, 1); // January 1st
         const yearEnd = new Date(year, 11, 31); // December 31st
-    
+
         const chartData = [];
         const labels = [];
         filteredData.forEach((order, index) => {
             console.log(`renderTimeline: Processing order ${order.order_number} at index ${index}`);
             const startDate = parseDate(order.etd);
             const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
-    
+
             if (!startDate || !endDate) {
                 console.warn(`renderTimeline: Invalid dates for order ${order.order_number}: ETD=${order.etd}, ETA=${order.eta}, ATA=${order.ata}`);
                 return;
             }
-    
+
             // Check if the order's date range overlaps with the selected year
             const orderStartYear = startDate.getFullYear();
             const orderEndYear = endDate.getFullYear();
@@ -213,17 +219,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log(`renderTimeline: Skipping order ${order.order_number} as it does not overlap with ${year}`);
                 return;
             }
-    
+
             // Clip the dates to the selected year's boundaries
             const clippedStartDate = startDate < yearStart ? yearStart : startDate;
             const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
-    
+
             const color = {
                 'in process': 'rgba(255, 165, 0, 0.8)',
                 'en route': 'rgba(0, 123, 255, 0.8)',
                 'arrived': 'rgba(144, 238, 144, 0.8)'
             }[order.transit_status] || 'rgba(128, 128, 128, 0.8)';
-    
+
             chartData.push({
                 x: [clippedStartDate, clippedEndDate],
                 y: chartData.length, // Use chartData.length as the y-index since we're filtering
@@ -231,12 +237,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 borderColor: color.replace('0.8', '1'),
                 borderWidth: 1
             });
-    
-            labels.push(`${order.product_name} (${order.order_number})`);
+
+            // Add transport icon to the label
+            const transportIcon = {
+                'sea': '🚢',
+                'air': '✈️',
+                'truck': '🚚'
+            }[order.transport] || order.transport;
+            labels.push(`${transportIcon} ${order.product_name} (${order.order_number})`);
         });
-    
+
         console.log('renderTimeline: Prepared chart data:', chartData);
-    
+
         if (chartData.length === 0) {
             console.warn('renderTimeline: No valid data to display in the timeline.');
             canvas.style.display = 'none';
@@ -246,24 +258,24 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             return;
         }
-    
+
         const heightPerOrder = 50;
         const minHeight = 100;
         const calculatedHeight = Math.max(minHeight, chartData.length * heightPerOrder);
         canvas.style.height = `${calculatedHeight}px`;
         console.log(`renderTimeline: Set canvas height to ${calculatedHeight}px for ${chartData.length} orders`);
-    
+
         canvas.style.display = 'block';
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
         console.log('renderTimeline: Set canvas to visible, loading indicator to hidden');
-    
+
         // Set the date range to the entire selected year
         const minDate = yearStart;
         const maxDate = yearEnd;
         console.log('renderTimeline: Date range:', { minDate, maxDate });
-    
+
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentWeek = getWeekNumber(today);
@@ -272,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const endOfCurrentWeek = new Date(startOfCurrentWeek);
         endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
         console.log(`renderTimeline: Current week: W${currentWeek}, Start date: ${startOfCurrentWeek}, End date: ${endOfCurrentWeek}`);
-    
+
         const ctx = canvas.getContext('2d');
         if (!ctx) {
             console.error('renderTimeline: Failed to get canvas context');
@@ -285,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function () {
             chartInstance.destroy();
             console.log('renderTimeline: Destroyed existing chart instance');
         }
-    
+
         console.log('renderTimeline: Creating new Chart instance');
         chartInstance = new Chart(ctx, {
             type: 'bar',
@@ -398,12 +410,18 @@ document.addEventListener('DOMContentLoaded', function () {
                             label: function (context) {
                                 const orderIndex = context.dataIndex;
                                 const order = filteredData.find((_, idx) => labels[idx] === labels[orderIndex]);
+                                const transportIcon = {
+                                    'sea': '🚢',
+                                    'air': '✈️',
+                                    'truck': '🚚'
+                                }[order.transport] || order.transport;
                                 return [
                                     `Product: ${order.product_name}`,
                                     `Order #: ${order.order_number}`,
                                     `Buyer: ${order.buyer}`,
                                     `Responsible: ${order.responsible}`,
                                     `Status: ${order.transit_status}`,
+                                    `Transport: ${transportIcon}`,
                                     `ETD: ${order.etd}`,
                                     `ETA: ${order.eta}`,
                                     `ATA: ${order.ata || 'N/A'}`
@@ -417,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             const ctx = chart.ctx;
                             const xAxis = chart.scales.x;
                             const yAxis = chart.scales.y;
-    
+
                             const monthPositions = {};
                             let currentDate = new Date(minDate);
                             while (currentDate <= maxDate) {
@@ -431,20 +449,20 @@ document.addEventListener('DOMContentLoaded', function () {
                                 currentDate = new Date(currentDate);
                                 currentDate.setDate(currentDate.getDate() + 7);
                             }
-    
+
                             ctx.save();
                             ctx.font = 'bold 12px Inter, sans-serif';
                             ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000';
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'bottom';
-    
+
                             for (const month in monthPositions) {
                                 const { start, end } = monthPositions[month];
                                 const x = (start + end) / 2;
                                 const y = yAxis.top - 10;
                                 ctx.fillText(month, x, y);
                             }
-    
+
                             ctx.restore();
                         }
                     },
@@ -664,6 +682,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         document.getElementById('edit-quantity').value = order.quantity;
                         document.getElementById('edit-terms_of_delivery').value = order.terms_of_delivery;
                         document.getElementById('edit-transit_status').value = order.transit_status;
+                        document.getElementById('edit-transport').value = order.transport; // Populate the transport field
                         document.getElementById('edit-order-modal').style.display = 'flex';
                     }
                 });

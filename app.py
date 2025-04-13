@@ -1,6 +1,6 @@
-# app.py
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_migrate import Migrate
 from database import db, init_db
 from models import User, Order
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12,6 +12,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database
 init_db(app)
+
+# Initialize Flask-Migrate
+migrate = Migrate(app, db)
 
 # Set up Flask-Login
 login_manager = LoginManager()
@@ -96,7 +99,8 @@ def add_order():
             etd=data['etd'],
             eta=data['eta'],
             ata=data['ata'],
-            transit_status=data['transit_status']
+            transit_status=data['transit_status'],
+            transport=data['transport']  # Add transport field
         )
         db.session.add(new_order)
         db.session.commit()
@@ -128,6 +132,7 @@ def edit_order(order_id):
             order.eta = data['eta']
             order.ata = data['ata']
             order.transit_status = data['transit_status']
+            order.transport = data['transport']  # Add transport field
             db.session.commit()
             return jsonify({'success': True, 'message': 'Order updated successfully!'})
         except Exception as e:
@@ -169,7 +174,8 @@ def get_orders():
         'etd': order.etd,
         'eta': order.eta,
         'ata': order.ata,
-        'transit_status': order.transit_status
+        'transit_status': order.transit_status,
+        'transport': order.transport  # Add transport field
     } for order in orders]
     return jsonify(orders_data)
 

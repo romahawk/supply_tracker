@@ -53,7 +53,8 @@
   <div class="container mx-auto p-6">
     <!-- Add New Order Form (Collapsible) -->
     <div id="add-order-section" class="form-section p-6 bg-white dark:bg-gray-900 rounded-lg shadow-md" style="display: none;">
-        <form id="add-order-form" class="add-order-form grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h2 class="text-xl font-semibold mb-4">Add New Order</h2>
+        <form id="add-order-form" class="add-order-form grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div class="form-group">
                 <label for="order_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order Date:</label>
                 <input type="date" id="order_date" name="order_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
@@ -88,7 +89,7 @@
             </div>
             <div class="form-group">
                 <label for="payment_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Payment Date:</label>
-                <input type="date" id="payment_date" name="payment_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                <input type="date" id="payment_date" name="payment_date" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
             </div>
             <div class="form-group">
                 <label for="etd" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETD:</label>
@@ -110,7 +111,16 @@
                     <option value="arrived">Arrived</option>
                 </select>
             </div>
-            <div class="form-group col-span-1 md:col-span-2 lg:col-span-3">
+            <!-- Transport Field -->
+            <div class="form-group">
+                <label for="transport" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Transport:</label>
+                <select id="transport" name="transport" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                    <option value="sea">Sea</option>
+                    <option value="air">Air</option>
+                    <option value = "truck">Truck</option>
+                </select>
+            </div>
+            <div class="form-group col-span-1 sm:col-span-2 lg:col-span-3">
                 <button type="submit" class="w-full p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Add Order</button>
             </div>
         </form>
@@ -121,49 +131,22 @@
     <div class="orders-table-container overflow-x-auto">
         <table class="min-w-[800px] bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
             <thead class="bg-gray-200 dark:bg-gray-800">
-                <tr>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="order_date">
-                        Order Date <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="order_number">
-                        Order # <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="product_name">
-                        Product Name <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="buyer">
-                        Buyer <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="responsible">
-                        Responsible <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="quantity">
-                        Quantity <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="required_delivery">
-                        Required Delivery <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="terms_of_delivery">
-                        Terms of Delivery <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="payment_date">
-                        Payment Date <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="etd">
-                        ETD <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="eta">
-                        ETA <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="ata">
-                        ATA <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100 cursor-pointer" data-sort="transit_status">
-                        Transit Status <span class="sort-indicator"></span>
-                    </th>
-                    <th class="px-2 py-1 sm:px-4 sm:py-2 text-left text-xs sm:text-sm font-medium text-white dark:text-gray-100">
-                        Actions
-                    </th>
+                <tr class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs sm:text-sm">
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="order_date">Order Date <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="order_number">Order # <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="product_name">Product Name <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="buyer">Buyer <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="responsible">Responsible <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="quantity">Quantity <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="required_delivery">Required Delivery <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="terms_of_delivery">Terms of Delivery <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="payment_date">Payment Date <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="etd">ETD <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="eta">ETA <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="ata">ATA <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="transit_status">Transit Status <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="transport">Transport <span class="sort-indicator"></span></th>
+                    <th class="px-2 py-1 sm:px-4 sm:py-3 text-left">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-300 dark:divide-gray-600 bg-gray-100 dark:bg-gray-900">
@@ -197,74 +180,83 @@
     </div>
   </div>
 
-  <!-- Edit Order Modal -->
-  <div id="edit-order-modal" class="modal fixed inset-0 bg-black bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center" style="display: none;">
-    <div class="modal-content bg-gray-100 dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-3xl">
-        <span class="close cursor-pointer text-gray-800 dark:text-gray-100 text-2xl float-right">×</span>
-        <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Edit Order</h2>
-        <form id="edit-order-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <input type="hidden" id="edit-order-id" name="order_id">
-            <div class="form-group">
-                <label for="edit-order_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order Date:</label>
-                <input type="date" id="edit-order_date" name="order_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-order_number" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order #:</label>
-                <input type="text" id="edit-order_number" name="order_number" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-product_name" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Product Name:</label>
-                <input type="text" id="edit-product_name" name="product_name" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-buyer" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Buyer:</label>
-                <input type="text" id="edit-buyer" name="buyer" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-responsible" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Responsible:</label>
-                <input type="text" id="edit-responsible" name="responsible" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-quantity" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Quantity:</label>
-                <input type="number" id="edit-quantity" name="quantity" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-required_delivery" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Required Delivery:</label>
-                <input type="date" id="edit-required_delivery" name="required_delivery" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-terms_of_delivery" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Terms of Delivery:</label>
-                <input type="text" id="edit-terms_of_delivery" name="terms_of_delivery" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-payment_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Payment Date:</label>
-                <input type="date" id="edit-payment_date" name="payment_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-etd" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETD:</label>
-                <input type="date" id="edit-etd" name="etd" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-eta" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETA:</label>
-                <input type="date" id="edit-eta" name="eta" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-ata" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ATA:</label>
-                <input type="date" id="edit-ata" name="ata" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-            </div>
-            <div class="form-group">
-                <label for="edit-transit_status" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Transit Status:</label>
-                <select id="edit-transit_status" name="transit_status" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                    <option value="in process">In Process</option>
-                    <option value="en route">En Route</option>
-                    <option value="arrived">Arrived</option>
-                </select>
-            </div>
-            <div class="form-group col-span-1 md:col-span-2 lg:col-span-3">
-                <button type="submit" class="w-full p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Update Order</button>
-            </div>
-        </form>
+    <!-- Edit Order Modal -->
+    <div id="edit-order-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-2xl">
+            <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Edit Order</h2>
+            <form id="edit-order-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <input type="hidden" id="edit-order-id" name="order_id">
+                <div>
+                    <label for="edit-order_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order Date</label>
+                    <input type="date" id="edit-order_date" name="order_date" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-order_number" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Order Number</label>
+                    <input type="text" id="edit-order_number" name="order_number" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-product_name" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Product Name</label>
+                    <input type="text" id="edit-product_name" name="product_name" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-buyer" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Buyer</label>
+                    <input type="text" id="edit-buyer" name="buyer" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-responsible" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Responsible</label>
+                    <input type="text" id="edit-responsible" name="responsible" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-quantity" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Quantity</label>
+                    <input type="number" id="edit-quantity" name="quantity" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-required_delivery" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Required Delivery</label>
+                    <input type="date" id="edit-required_delivery" name="required_delivery" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-terms_of_delivery" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Terms of Delivery</label>
+                    <input type="text" id="edit-terms_of_delivery" name="terms_of_delivery" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-payment_date" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Payment Date</label>
+                    <input type="date" id="edit-payment_date" name="payment_date" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                </div>
+                <div>
+                    <label for="edit-etd" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETD</label>
+                    <input type="date" id="edit-etd" name="etd" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-eta" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ETA</label>
+                    <input type="date" id="edit-eta" name="eta" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </div>
+                <div>
+                    <label for="edit-ata" class="block text-sm font-medium text-gray-900 dark:text-gray-100">ATA</label>
+                    <input type="date" id="edit-ata" name="ata" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                </div>
+                <div>
+                    <label for="edit-transit_status" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Transit Status</label>
+                    <select id="edit-transit_status" name="transit_status" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <option value="in process">In Process</option>
+                        <option value="en route">En Route</option>
+                        <option value="arrived">Arrived</option>
+                    </select>
+                </div>
+                <!-- New Transport Field -->
+                <div>
+                    <label for="edit-transport" class="block text-sm font-medium text-gray-900 dark:text-gray-100">Transport</label>
+                    <select id="edit-transport" name="transport" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <option value="sea">Sea</option>
+                        <option value="air">Air</option>
+                        <option value="truck">Truck</option>
+                    </select>
+                </div>
+                <div class="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-end space-x-4">
+                    <button type="button" class="close px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Save Changes</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </body>
 </html>
