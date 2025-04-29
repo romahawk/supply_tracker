@@ -1,4 +1,7 @@
 // static/js/dashboard.js
+let showOrderDate = true;
+let showPaymentDate = true;
+
 document.addEventListener('DOMContentLoaded', function () {
     let chartInstance = null;
     let allOrders = [];
@@ -163,8 +166,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 valA = parseDate(valA) || new Date(0);
                 valB = parseDate(valB) || new Date(0);
             } else if (key === 'quantity') {
-                valA = parseInt(valA) || 0;
-                valB = parseInt(valB) || 0;
+                valA = parseFloat(valA) || 0; // Use parseFloat instead of parseInt
+                valB = parseFloat(valB) || 0;
             }
             if (sortDirection[key] === 'asc') {
                 return valA > valB ? 1 : -1;
@@ -180,12 +183,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const canvas = document.getElementById('timelineChart');
         console.log('renderTimeline: Loading indicator:', loadingIndicator);
         console.log('renderTimeline: Canvas element:', canvas);
-
+    
         if (!canvas) {
             console.error('renderTimeline: Canvas element not found');
             return;
         }
-
+    
         if (loadingIndicator) {
             loadingIndicator.style.display = 'block';
         } else {
@@ -193,52 +196,48 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         canvas.style.display = 'none';
         console.log('renderTimeline: Set canvas to hidden');
-
+    
         const filteredData = data.filter(order => visibleStatuses.includes(order.transit_status));
-
+    
         const year = parseInt(selectedYear);
         const yearStart = new Date(year, 0, 1); // January 1st
         const yearEnd = new Date(year, 11, 31); // December 31st
-
+    
         const chartData = [];
         const labels = [];
         filteredData.forEach((order, index) => {
             console.log(`renderTimeline: Processing order ${order.order_number} at index ${index}`);
             const startDate = parseDate(order.etd);
             const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
-
+    
             if (!startDate || !endDate) {
                 console.warn(`renderTimeline: Invalid dates for order ${order.order_number}: ETD=${order.etd}, ETA=${order.eta}, ATA=${order.ata}`);
                 return;
             }
-
-            // Check if the order's date range overlaps with the selected year
-            const orderStartYear = startDate.getFullYear();
-            const orderEndYear = endDate.getFullYear();
-            if (orderEndYear < year || orderStartYear > year) {
-                console.log(`renderTimeline: Skipping order ${order.order_number} as it does not overlap with ${year}`);
+    
+            const orderYear = getYearFromDate(order.etd);
+            if (orderYear !== year) {
+                console.log(`renderTimeline: Skipping order ${order.order_number} as it does not match selected year ${year}`);
                 return;
             }
-
-            // Clip the dates to the selected year's boundaries
+    
             const clippedStartDate = startDate < yearStart ? yearStart : startDate;
             const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
-
+    
             const color = {
                 'in process': 'rgba(255, 165, 0, 0.8)',
                 'en route': 'rgba(0, 123, 255, 0.8)',
                 'arrived': 'rgba(144, 238, 144, 0.8)'
             }[order.transit_status] || 'rgba(128, 128, 128, 0.8)';
-
+    
             chartData.push({
                 x: [clippedStartDate, clippedEndDate],
-                y: chartData.length, // Use chartData.length as the y-index since we're filtering
+                y: chartData.length,
                 backgroundColor: color,
                 borderColor: color.replace('0.8', '1'),
                 borderWidth: 1
             });
-
-            // Add transport icon to the label
+    
             const transportIcon = {
                 'sea': '🚢',
                 'air': '✈️',
@@ -246,9 +245,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }[order.transport] || order.transport;
             labels.push(`${transportIcon} ${order.product_name} (${order.order_number})`);
         });
-
+    
         console.log('renderTimeline: Prepared chart data:', chartData);
-
+    
         if (chartData.length === 0) {
             console.warn('renderTimeline: No valid data to display in the timeline.');
             canvas.style.display = 'none';
@@ -258,33 +257,31 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             return;
         }
-
+    
         const heightPerOrder = 50;
         const minHeight = 100;
         const calculatedHeight = Math.max(minHeight, chartData.length * heightPerOrder);
         canvas.style.height = `${calculatedHeight}px`;
         console.log(`renderTimeline: Set canvas height to ${calculatedHeight}px for ${chartData.length} orders`);
-
+    
         canvas.style.display = 'block';
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
         console.log('renderTimeline: Set canvas to visible, loading indicator to hidden');
-
-        // Set the date range to the entire selected year
+    
         const minDate = yearStart;
         const maxDate = yearEnd;
         console.log('renderTimeline: Date range:', { minDate, maxDate });
-
+    
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentWeek = getWeekNumber(today);
         const startOfCurrentWeek = getStartOfWeek(currentWeek, currentYear);
-        // Calculate the end of the current week (start + 6 days)
         const endOfCurrentWeek = new Date(startOfCurrentWeek);
         endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
         console.log(`renderTimeline: Current week: W${currentWeek}, Start date: ${startOfCurrentWeek}, End date: ${endOfCurrentWeek}`);
-
+    
         const ctx = canvas.getContext('2d');
         if (!ctx) {
             console.error('renderTimeline: Failed to get canvas context');
@@ -297,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
             chartInstance.destroy();
             console.log('renderTimeline: Destroyed existing chart instance');
         }
-
+    
         console.log('renderTimeline: Creating new Chart instance');
         chartInstance = new Chart(ctx, {
             type: 'bar',
@@ -435,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             const ctx = chart.ctx;
                             const xAxis = chart.scales.x;
                             const yAxis = chart.scales.y;
-
+    
                             const monthPositions = {};
                             let currentDate = new Date(minDate);
                             while (currentDate <= maxDate) {
@@ -449,20 +446,20 @@ document.addEventListener('DOMContentLoaded', function () {
                                 currentDate = new Date(currentDate);
                                 currentDate.setDate(currentDate.getDate() + 7);
                             }
-
+    
                             ctx.save();
                             ctx.font = 'bold 12px Inter, sans-serif';
                             ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000';
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'bottom';
-
+    
                             for (const month in monthPositions) {
                                 const { start, end } = monthPositions[month];
                                 const x = (start + end) / 2;
                                 const y = yAxis.top - 10;
                                 ctx.fillText(month, x, y);
                             }
-
+    
                             ctx.restore();
                         }
                     },
@@ -474,15 +471,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                 xMax: endOfCurrentWeek,
                                 yMin: 0,
                                 yMax: chartData.length - 1,
-                                backgroundColor: 'rgba(255, 255, 0, 0.3)', // Yellow with 30% opacity
-                                borderColor: 'rgba(255, 255, 0, 0.5)', // Slightly less transparent border
+                                backgroundColor: 'rgba(255, 255, 0, 0.3)',
+                                borderColor: 'rgba(255, 255, 0, 0.5)',
                                 borderWidth: 1,
                                 label: {
                                     enabled: currentYear === parseInt(selectedYear),
                                     content: `W${currentWeek}`,
                                     position: 'top',
-                                    backgroundColor: 'rgba(255, 255, 0, 0.5)', // Match the yellow theme
-                                    color: document.documentElement.classList.contains('dark') ? '#000000' : '#000000', // Black text for contrast
+                                    backgroundColor: 'rgba(255, 255, 0, 0.5)',
+                                    color: document.documentElement.classList.contains('dark') ? '#000000' : '#000000',
                                     font: {
                                         size: 12,
                                         weight: 'bold'
@@ -615,7 +612,26 @@ document.addEventListener('DOMContentLoaded', function () {
     if (addForm) {
         addForm.addEventListener('submit', function (event) {
             event.preventDefault();
-
+        
+            // Validate form inputs
+            const quantity = parseFloat(document.getElementById('quantity').value); // Use parseFloat to allow decimals
+            const orderDate = document.getElementById('order_date').value;
+            const etd = document.getElementById('etd').value;
+            const eta = document.getElementById('eta').value;
+        
+            if (isNaN(quantity) || quantity <= 0) {
+                alert('Quantity must be a positive number (decimals allowed).');
+                return;
+            }
+            if (new Date(orderDate) > new Date(etd)) {
+                alert('Order Date cannot be later than ETD.');
+                return;
+            }
+            if (new Date(etd) > new Date(eta)) {
+                alert('ETD cannot be later than ETA.');
+                return;
+            }
+        
             const formData = new FormData(addForm);
             const dateFields = ['order_date', 'required_delivery', 'payment_date', 'etd', 'eta', 'ata'];
             const convertedFormData = new FormData();
@@ -629,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 convertedFormData.append(key, value);
             }
-
+        
             fetch('/add_order', {
                 method: 'POST',
                 body: convertedFormData
@@ -715,7 +731,26 @@ document.addEventListener('DOMContentLoaded', function () {
     if (editForm) {
         editForm.addEventListener('submit', function (event) {
             event.preventDefault();
-
+        
+            // Validate form inputs
+            const quantity = parseFloat(document.getElementById('edit-quantity').value); // Use parseFloat
+            const orderDate = document.getElementById('edit-order_date').value;
+            const etd = document.getElementById('edit-etd').value;
+            const eta = document.getElementById('edit-eta').value;
+        
+            if (isNaN(quantity) || quantity <= 0) {
+                alert('Quantity must be a positive number (decimals allowed).');
+                return;
+            }
+            if (new Date(orderDate) > new Date(etd)) {
+                alert('Order Date cannot be later than ETD.');
+                return;
+            }
+            if (new Date(etd) > new Date(eta)) {
+                alert('ETD cannot be later than ETA.');
+                return;
+            }
+        
             const formData = new FormData(editForm);
             const dateFields = ['order_date', 'required_delivery', 'payment_date', 'etd', 'eta', 'ata'];
             const convertedFormData = new FormData();
@@ -729,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 convertedFormData.append(key, value);
             }
-
+        
             const orderId = convertedFormData.get('order_id');
             fetch(`/edit_order/${orderId}`, {
                 method: 'POST',
