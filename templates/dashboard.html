@@ -177,11 +177,11 @@
             <span class="legend-color inline-block w-4 h-4 mr-2" style="background-color: rgba(144, 238, 144, 0.8);"></span> Arrived
         </span>
     </div>
-    <div id="timeline-loading" style="display: none;" class="text-gray-600 dark:text-gray-400">Loading timeline...</div>
-    <div class="timeline-container bg-gray-100 dark:bg-gray-900 p-4 rounded-lg shadow-md">
+    <div id="timeline-loading" style="overflow-y: auto; max-height: 800px;" class="text-gray-600 dark:text-gray-400">Loading timeline...</div>
+        <div class="timeline-container bg-gray-100 dark:bg-gray-900 p-4 rounded-lg shadow-md">
         <canvas id="timelineChart"></canvas>
+        </div>
     </div>
-  </div>
 
     <!-- Edit Order Modal -->
     <div id="edit-order-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">

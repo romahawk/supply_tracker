@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
             chartData.push({
                 x: [clippedStartDate, clippedEndDate],
-                y: chartData.length,
+                y: index, // Use index for y-position (linear scale)
                 backgroundColor: color,
                 borderColor: color.replace('0.8', '1'),
                 borderWidth: 1
@@ -258,11 +258,28 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
     
-        const heightPerOrder = 50;
-        const minHeight = 100;
-        const calculatedHeight = Math.max(minHeight, chartData.length * heightPerOrder);
+        // Dynamic heightPerOrder calculation
+        const maxHeight = 50;
+        const minHeight = 20;
+        const thresholdMin = 50;
+        const thresholdMax = 200;
+        let heightPerOrder;
+    
+        if (chartData.length <= thresholdMin) {
+            heightPerOrder = maxHeight;
+        } else if (chartData.length >= thresholdMax) {
+            heightPerOrder = minHeight;
+        } else {
+            const slope = (maxHeight - minHeight) / (thresholdMin - thresholdMax);
+            heightPerOrder = maxHeight + slope * (chartData.length - thresholdMin);
+        }
+    
+        // Adjust barThickness to ensure spacing
+        const barThickness = heightPerOrder * 0.3; // Reduced to 30% to increase spacing
+        const minHeightCanvas = 100;
+        const calculatedHeight = Math.max(minHeightCanvas, chartData.length * heightPerOrder);
         canvas.style.height = `${calculatedHeight}px`;
-        console.log(`renderTimeline: Set canvas height to ${calculatedHeight}px for ${chartData.length} orders`);
+        console.log(`renderTimeline: Set canvas height to ${calculatedHeight}px for ${chartData.length} orders, heightPerOrder=${heightPerOrder}, barThickness=${barThickness}`);
     
         canvas.style.display = 'block';
         if (loadingIndicator) {
@@ -354,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     },
                     y: {
+                        type: 'linear', // Revert to linear scale for precise control
                         title: {
                             display: true,
                             text: 'Orders',
@@ -363,25 +381,27 @@ document.addEventListener('DOMContentLoaded', function () {
                             },
                             color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000'
                         },
-                        beginAtZero: true,
                         min: 0,
                         max: chartData.length - 1,
                         ticks: {
                             stepSize: 1,
                             padding: 10,
                             callback: function (value, index, values) {
-                                return labels[value] || '';
+                                const intValue = Math.round(value);
+                                return labels[intValue] || '';
                             },
                             font: {
                                 size: 12
                             },
-                            color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000'
+                            color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
+                            autoSkip: false, // Explicitly disable skipping
+                            maxTicksLimit: chartData.length // Ensure all ticks are shown
                         },
                         grid: {
                             display: false
                         },
                         afterFit: function (scale) {
-                            scale.height = chartData.length * 50;
+                            scale.height = chartData.length * heightPerOrder;
                         }
                     }
                 },
@@ -406,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         callbacks: {
                             label: function (context) {
                                 const orderIndex = context.dataIndex;
-                                const order = filteredData.find((_, idx) => labels[idx] === labels[orderIndex]);
+                                const order = filteredData[orderIndex];
                                 const transportIcon = {
                                     'sea': '🚢',
                                     'air': '✈️',
@@ -491,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
                 },
-                barThickness: 20,
+                barThickness: barThickness,
                 maintainAspectRatio: false,
                 responsive: true,
                 onHover: (event, chartElement) => {
@@ -525,6 +545,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }]
         });
         console.log('renderTimeline: Chart rendered successfully.');
+    
+        // Log bar positions for debugging
+        chartInstance.data.datasets[0].data.forEach((item, index) => {
+            const pixelY = chartInstance.scales.y.getPixelForValue(index);
+            console.log(`Bar ${index} (Order ${labels[index]}): y-position = ${pixelY}px`);
+        });
     }
 
     function fetchAndRender() {
