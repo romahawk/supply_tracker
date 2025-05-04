@@ -1,62 +1,381 @@
-// static/js/dashboard.js
 let showOrderDate = true;
 let showPaymentDate = true;
+const pageSize = 20; // Maximum 20 orders per page
+let currentPage = 1; // Track current page
+let allOrders = []; // Global to store all orders
+let selectedYear = null; // Global to store selected year
+let visibleStatuses = ['in process', 'en route', 'arrived']; // Global to store visible statuses
+let chartInstance = null; // Global to store Chart.js instance
+let sortDirection = { order_date: 'desc' }; // Global sort direction
+
+// Helper functions needed by filterData and renderTimeline
+function parseDate(dateStr) {
+    try {
+        if (!dateStr || typeof dateStr !== 'string') {
+            console.error(`parseDate: Invalid date string: ${dateStr}`);
+            throw new Error('Invalid date string');
+        }
+        // Handle both dd.mm.yy and yyyy-mm-dd formats
+        let day, month, year;
+        if (dateStr.includes('.')) {
+            [day, month, year] = dateStr.split('.').map(Number);
+            year = 2000 + year;
+        } else if (dateStr.includes('-')) {
+            [year, month, day] = dateStr.split('-').map(Number);
+        } else {
+            throw new Error('Unsupported date format');
+        }
+        if (!day || !month || !year || day < 1 || day > 31 || month < 1 || month > 12) {
+            console.error(`parseDate: Invalid date components: ${dateStr}`);
+            throw new Error('Invalid date components');
+        }
+        const date = new Date(year, month - 1, day);
+        if (isNaN(date.getTime())) {
+            console.error(`parseDate: Invalid date: ${dateStr}`);
+            throw new Error('Invalid date');
+        }
+        console.log(`parseDate: Successfully parsed ${dateStr} to ${date}`);
+        return date;
+    } catch (error) {
+        console.error(`parseDate: Error parsing date: ${dateStr}`, error);
+        return null;
+    }
+}
+
+function getYearFromDate(dateStr) {
+    const date = parseDate(dateStr);
+    return date ? date.getFullYear() : null;
+}
+
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function getStartOfWeek(weekNum, year) {
+    const firstDayOfYear = new Date(year, 0, 1);
+    const dayOfWeek = firstDayOfYear.getDay();
+    const firstMonday = dayOfWeek === 1 ? firstDayOfYear : new Date(firstDayOfYear.setDate(firstDayOfYear.getDate() + (8 - dayOfWeek) % 7));
+    const startOfWeek = new Date(firstMonday);
+    startOfWeek.setDate(startOfWeek.getDate() + (weekNum - 1) * 7);
+    return startOfWeek;
+}
+
+// Filter data function
+function filterData(data, query) {
+    console.log(`filterData: Called with query: "${query}", selectedYear: ${selectedYear}, visibleStatuses: ${visibleStatuses}`);
+    if (!data || !Array.isArray(data)) {
+        console.warn('filterData: Invalid or empty data array');
+        return [];
+    }
+    query = query.toLowerCase().trim();
+    const filtered = data.filter(order => {
+        // Log order details for debugging
+        console.log(`filterData: Processing order: ${order.order_number || 'unknown'}, ETD: ${order.etd}, Transit Status: ${order.transit_status}`);
+        
+        // Check year filter
+        const orderYear = getYearFromDate(order.etd);
+        if (!orderYear || (selectedYear && orderYear !== parseInt(selectedYear))) {
+            console.log(`filterData: Order ${order.order_number} excluded - Year mismatch: ${orderYear} !== ${selectedYear}`);
+            return false;
+        }
+
+        // Check transit status
+        if (!visibleStatuses.includes(order.transit_status)) {
+            console.log(`filterData: Order ${order.order_number} excluded - Status not visible: ${order.transit_status}`);
+            return false;
+        }
+
+        // Filter by query (order_date and order_number)
+        let orderDate = order.order_date || '';
+        // Normalize order_date to dd.mm.yy if in yyyy-mm-dd
+        if (orderDate.includes('-')) {
+            const [year, month, day] = orderDate.split('-');
+            orderDate = `${day}.${month}.${year.slice(-2)}`;
+        }
+        const orderNumber = (order.order_number || '').toLowerCase();
+        orderDate = orderDate.toLowerCase();
+        const matches = query ? (
+            orderNumber.includes(query) ||
+            orderDate.includes(query)
+        ) : true; // Empty query returns all matching year/status
+        
+        console.log(`filterData: Order ${order.order_number} - Date: ${orderDate}, Number: ${orderNumber}, Query: ${query}, Matches: ${matches}`);
+        return matches;
+    });
+    console.log(`filterData: Returned ${filtered.length} orders`);
+    return filtered;
+}
+
+// Render timeline function
+function renderTimeline(data, page = 1) {
+    console.log('renderTimeline: Function called with data:', data, 'Page:', page);
+    const loadingIndicator = document.getElementById('timeline-loading');
+    const canvas = document.getElementById('timelineChart');
+
+    if (!canvas) {
+        console.error('renderTimeline: Canvas element not found');
+        return;
+    }
+
+    if (loadingIndicator) loadingIndicator.style.display = 'block';
+    canvas.style.display = 'none';
+
+    if (!Array.isArray(data) || data.length === 0) {
+        console.warn('renderTimeline: No data provided');
+        if (loadingIndicator) {
+            loadingIndicator.textContent = data.length === 0 ? `No orders found for ${selectedYear || 'selected year'}` : `Loading...`;
+            loadingIndicator.style.display = 'block';
+        }
+        canvas.style.display = 'none';
+        return;
+    }
+
+    // Paginate data
+    const start = (page - 1) * pageSize;
+    const paginatedData = data.slice(start, start + pageSize);
+    console.log('renderTimeline: Paginated data:', paginatedData);
+
+    const year = parseInt(selectedYear) || new Date().getFullYear();
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year, 11, 31);
+
+    const chartData = [];
+    const labels = [];
+    let displayIndex = 0;
+
+    paginatedData.forEach((order) => {
+        const startDate = parseDate(order.etd);
+        const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
+
+        if (!startDate || !endDate) return;
+
+        const orderYear = getYearFromDate(order.etd);
+        if (orderYear !== year) return;
+
+        const clippedStartDate = startDate < yearStart ? yearStart : startDate;
+        const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
+
+        const color = {
+            'in process': 'rgba(255, 165, 0, 0.8)',
+            'en route': 'rgba(0, 123, 255, 0.8)',
+            'arrived': 'rgba(144, 238, 144, 0.8)'
+        }[order.transit_status] || 'rgba(128, 128, 128, 0.8)';
+
+        chartData.push({
+            x: [clippedStartDate, clippedEndDate],
+            y: displayIndex,
+            backgroundColor: color,
+            borderColor: color.replace('0.8', '1'),
+            borderWidth: 1
+        });
+
+        const transportIcon = {
+            'sea': '🚢',
+            'air': '✈️',
+            'truck': '🚚'
+        }[order.transport] || order.transport;
+
+        labels.push(`${transportIcon} ${order.product_name} (${order.order_number})`);
+        displayIndex += 1;
+    });
+
+    if (chartData.length === 0) {
+        console.warn('renderTimeline: No valid orders to display');
+        if (loadingIndicator) {
+            loadingIndicator.textContent = `No valid orders for ${selectedYear || 'selected year'}`;
+            loadingIndicator.style.display = 'block';
+        }
+        canvas.style.display = 'none';
+        return;
+    }
+
+    // Dynamic canvas height
+    const heightPerOrder = 50;
+    const headerHeight = 50;
+    const canvasHeight = Math.max(100, chartData.length * heightPerOrder + headerHeight);
+    canvas.style.height = `${canvasHeight}px`;
+
+    // Show/hide Load More and Back buttons
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const backBtn = document.getElementById('back-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.style.display = data.length > page * pageSize ? 'block' : 'none';
+    } else {
+        console.warn('renderTimeline: Load More button not found');
+    }
+    if (backBtn) {
+        backBtn.style.display = page > 1 ? 'block' : 'none';
+    } else {
+        console.warn('renderTimeline: Back button not found');
+    }
+
+    if (loadingIndicator) loadingIndicator.style.display = 'none';
+    canvas.style.display = 'block';
+
+    const today = new Date();
+    const currentWeek = getWeekNumber(today);
+    const startOfWeek = getStartOfWeek(currentWeek, today.getFullYear());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const ctx = canvas.getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Orders Timeline',
+                data: chartData,
+                backgroundColor: chartData.map(item => item.backgroundColor),
+                borderColor: chartData.map(item => item.borderColor),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'week',
+                        tooltipFormat: 'dd.MM.yyyy'
+                    },
+                    min: yearStart,
+                    max: yearEnd,
+                    title: {
+                        display: true,
+                        text: 'Timeline',
+                        font: { size: 16, weight: '600' },
+                        color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                    },
+                    ticks: {
+                        callback: (value) => `W${getWeekNumber(new Date(value))}`,
+                        color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                    },
+                    grid: {
+                        color: document.documentElement.classList.contains('dark') ? '#6b7280' : '#d1d5db'
+                    }
+                },
+                y: {
+                    min: 0,
+                    max: chartData.length - 1,
+                    ticks: {
+                        callback: (_, i) => labels[i],
+                        color: document.documentElement.classList.contains('dark') ? '#fff' : '#000',
+                        font: { size: 12 },
+                        stepSize: 1
+                    },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                annotation: {
+                    annotations: {
+                        currentWeek: {
+                            type: 'box',
+                            xMin: startOfWeek,
+                            xMax: endOfWeek,
+                            yMin: 0,
+                            yMax: chartData.length - 1,
+                            backgroundColor: 'rgba(255,255,0,0.3)',
+                            borderColor: 'rgba(255,255,0,0.6)',
+                            label: {
+                                enabled: true,
+                                content: `W${currentWeek}`,
+                                position: 'top'
+                            }
+                        }
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    console.log('renderTimeline: Chart rendered successfully');
+}
+
+// Load more orders function
+function loadMoreOrders() {
+    currentPage++;
+    const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
+    const sortedData = sortData(filteredData, 'order_date', true); // Force descending
+    renderTimeline(sortedData, currentPage);
+}
+
+// Load previous orders function
+function loadPreviousOrders() {
+    if (currentPage > 1) {
+        currentPage--;
+        const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
+        const sortedData = sortData(filteredData, 'order_date', true); // Force descending
+        renderTimeline(sortedData, currentPage);
+    }
+}
+
+// Modified sortData to support forced direction
+function sortData(data, key, forceDescending = false) {
+    // Initialize sortDirection for the key if not set
+    if (!sortDirection[key]) {
+        sortDirection[key] = 'desc'; // Default to descending
+    }
+    // Toggle direction for user-initiated sorting (e.g., header clicks)
+    if (!forceDescending) {
+        sortDirection[key] = sortDirection[key] === 'asc' ? 'desc' : 'asc';
+    }
+    const direction = forceDescending ? 'desc' : sortDirection[key];
+
+    // Update sort indicators
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+        const thKey = th.getAttribute('data-sort');
+        const indicator = th.querySelector('.sort-indicator');
+        if (indicator) {
+            if (thKey === key) {
+                indicator.textContent = direction === 'asc' ? '↑' : '↓';
+            } else {
+                indicator.textContent = '';
+            }
+        }
+    });
+
+    return [...data].sort((a, b) => {
+        let valA = a[key] || '';
+        let valB = b[key] || '';
+        if (['order_date', 'required_delivery', 'payment_date', 'etd', 'eta', 'ata'].includes(key)) {
+            valA = parseDate(valA) || new Date(0);
+            valB = parseDate(valB) || new Date(0);
+        } else if (key === 'quantity') {
+            valA = parseFloat(valA) || 0;
+            valB = parseFloat(valB) || 0;
+        } else {
+            valA = valA.toString().toLowerCase();
+            valB = valB.toString().toLowerCase();
+        }
+        if (direction === 'asc') {
+            return valA > valB ? 1 : -1;
+        } else {
+            return valA < valB ? 1 : -1;
+        }
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function () {
-    let chartInstance = null;
-    let allOrders = [];
-    let sortDirection = {};
-    let visibleStatuses = ['in process', 'en route', 'arrived'];
-    let selectedYear = null; // Will be set dynamically
+    // Set initial sort indicator for order_date
+    const orderDateHeader = document.querySelector('th[data-sort="order_date"]');
+    if (orderDateHeader) {
+        const indicator = orderDateHeader.querySelector('.sort-indicator');
+        if (indicator) indicator.textContent = '↓';
+    }
 
     Chart.register(window['chartjs-plugin-annotation']);
-
-    function parseDate(dateStr) {
-        try {
-            if (!dateStr || typeof dateStr !== 'string') {
-                console.error(`parseDate: Invalid date string: ${dateStr}`);
-                throw new Error('Invalid date string');
-            }
-            const [day, month, year] = dateStr.split('.').map(Number);
-            if (!day || !month || !year || day < 1 || day > 31 || month < 1 || month > 12) {
-                console.error(`parseDate: Invalid date components: ${dateStr}`);
-                throw new Error('Invalid date components');
-            }
-            const fullYear = 2000 + year;
-            const date = new Date(fullYear, month - 1, day);
-            if (isNaN(date.getTime())) {
-                console.error(`parseDate: Invalid date: ${dateStr}`);
-                throw new Error('Invalid date');
-            }
-            console.log(`parseDate: Successfully parsed ${dateStr} to ${date}`);
-            return date;
-        } catch (error) {
-            console.error(`parseDate: Error parsing date: ${dateStr}`, error);
-            return null;
-        }
-    }
-
-    function getWeekNumber(date) {
-        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-        const dayNum = d.getUTCDay() || 7;
-        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    }
-
-    function getStartOfWeek(weekNum, year) {
-        const firstDayOfYear = new Date(year, 0, 1);
-        const dayOfWeek = firstDayOfYear.getDay();
-        const firstMonday = dayOfWeek === 1 ? firstDayOfYear : new Date(firstDayOfYear.setDate(firstDayOfYear.getDate() + (8 - dayOfWeek) % 7));
-        const startOfWeek = new Date(firstMonday);
-        startOfWeek.setDate(startOfWeek.getDate() + (weekNum - 1) * 7);
-        return startOfWeek;
-    }
-
-    function getYearFromDate(dateStr) {
-        const date = parseDate(dateStr);
-        return date ? date.getFullYear() : null;
-    }
 
     function populateYearDropdown(orders) {
         const yearFilter = document.getElementById('year-filter');
@@ -65,7 +384,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Extract unique years from orders
         const years = [...new Set(orders.map(order => getYearFromDate(order.etd)).filter(year => year !== null))].sort((a, b) => b - a);
         console.log('populateYearDropdown: Unique years found:', years);
 
@@ -75,10 +393,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Populate dropdown with years
         yearFilter.innerHTML = years.map(year => `<option value="${year}">${year}</option>`).join('');
 
-        // Set the selected year to the most recent year with orders
         if (!selectedYear || !years.includes(parseInt(selectedYear))) {
             selectedYear = years[0].toString();
             yearFilter.value = selectedYear;
@@ -88,26 +404,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('populateYearDropdown: Selected year set to:', selectedYear);
     }
 
-    function filterData(data, query) {
-        if (!selectedYear) return [];
-        query = query.toLowerCase();
-        return data.filter(order => {
-            const orderYear = getYearFromDate(order.etd);
-            return (
-                visibleStatuses.includes(order.transit_status) &&
-                orderYear === parseInt(selectedYear) &&
-                (
-                    order.order_number.toLowerCase().includes(query) ||
-                    order.product_name.toLowerCase().includes(query) ||
-                    order.buyer.toLowerCase().includes(query) ||
-                    order.responsible.toLowerCase().includes(query) ||
-                    order.transit_status.toLowerCase().includes(query) ||
-                    order.transport.toLowerCase().includes(query) // Add transport to search
-                )
-            );
-        });
-    }
-
     function updateTable(data) {
         const tbody = document.querySelector('table tbody');
         if (!tbody) {
@@ -115,232 +411,45 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         tbody.innerHTML = '';
-        data.forEach(order => {
-            const transportIcon = {
-                'sea': '🚢',
-                'air': '✈️',
-                'truck': '🚚'
-            }[order.transport] || order.transport; // Fallback to text if no icon
+        if (data.length === 0) {
             const row = document.createElement('tr');
-            row.classList.add('bg-gray-100', 'dark:bg-gray-900', 'hover:bg-gray-200', 'dark:hover:bg-gray-700');
-            row.innerHTML = `
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.order_date}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.order_number}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.product_name}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.buyer}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.responsible}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.quantity}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.required_delivery}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.terms_of_delivery}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.payment_date}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.etd}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.eta}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.ata || ''}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.transit_status}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
-                <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
-                    <a href="#" class="edit-order text-blue-600 hover:underline dark:text-blue-400" data-id="${order.id}">Edit</a>
-                    <a href="#" class="delete-order text-red-600 hover:underline dark:text-red-400 ml-2" data-id="${order.id}">Delete</a>
-                </td>
-            `;
+            row.innerHTML = `<td colspan="15" class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200 text-center">No orders found</td>`;
             tbody.appendChild(row);
-        });
+        } else {
+            data.forEach(order => {
+                const transportIcon = {
+                    'sea': '🚢',
+                    'air': '✈️',
+                    'truck': '🚚'
+                }[order.transport] || order.transport;
+                const row = document.createElement('tr');
+                row.classList.add('bg-gray-100', 'dark:bg-gray-900', 'hover:bg-gray-200', 'dark:hover:bg-gray-700');
+                row.innerHTML = `
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.order_date}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.order_number}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.product_name}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.buyer}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.responsible}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.quantity}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.required_delivery}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.terms_of_delivery}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.payment_date}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.etd}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.eta}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.ata || ''}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.transit_status}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
+                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
+                        <a href="#" class="edit-order text-blue-600 hover:underline dark:text-blue-400" data-id="${order.id}">Edit</a>
+                        <a href="#" class="delete-order text-red-600 hover:underline dark:text-red-400 ml-2" data-id="${order.id}">Delete</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
         console.log('updateTable: Table updated with data:', data);
     }
 
-    function sortData(data, key) {
-        sortDirection[key] = sortDirection[key] === 'asc' ? 'desc' : 'asc';
-        document.querySelectorAll('th[data-sort]').forEach(th => {
-            const thKey = th.getAttribute('data-sort');
-            const indicator = th.querySelector('.sort-indicator');
-            if (thKey === key) {
-                indicator.textContent = sortDirection[key] === 'asc' ? '↑' : '↓';
-            } else {
-                indicator.textContent = '';
-            }
-        });
-        return [...data].sort((a, b) => {
-            let valA = a[key] || '';
-            let valB = b[key] || '';
-            if (['order_date', 'required_delivery', 'payment_date', 'etd', 'eta', 'ata'].includes(key)) {
-                valA = parseDate(valA) || new Date(0);
-                valB = parseDate(valB) || new Date(0);
-            } else if (key === 'quantity') {
-                valA = parseFloat(valA) || 0; // Use parseFloat instead of parseInt
-                valB = parseFloat(valB) || 0;
-            }
-            if (sortDirection[key] === 'asc') {
-                return valA > valB ? 1 : -1;
-            } else {
-                return valA < valB ? 1 : -1;
-            }
-        });
-    }
-
-    function renderTimeline(data) {
-        console.log('renderTimeline: Function called with data:', data);
-        const loadingIndicator = document.getElementById('timeline-loading');
-        const canvas = document.getElementById('timelineChart');
-    
-        if (!canvas) {
-            console.error('renderTimeline: Canvas element not found');
-            return;
-        }
-    
-        if (loadingIndicator) loadingIndicator.style.display = 'block';
-        canvas.style.display = 'none';
-    
-        if (!Array.isArray(data) || data.length === 0) {
-            console.warn('renderTimeline: No data provided');
-            if (loadingIndicator) loadingIndicator.textContent = `No orders found for ${selectedYear}`;
-            return;
-        }
-    
-        const year = parseInt(selectedYear);
-        const yearStart = new Date(year, 0, 1);
-        const yearEnd = new Date(year, 11, 31);
-    
-        const chartData = [];
-        const labels = [];
-    
-        let displayIndex = 0;
-    
-        data.forEach((order) => {
-            const startDate = parseDate(order.etd);
-            const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
-    
-            if (!startDate || !endDate) return;
-    
-            const orderYear = getYearFromDate(order.etd);
-            if (orderYear !== year) return;
-    
-            const clippedStartDate = startDate < yearStart ? yearStart : startDate;
-            const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
-    
-            const color = {
-                'in process': 'rgba(255, 165, 0, 0.8)',
-                'en route': 'rgba(0, 123, 255, 0.8)',
-                'arrived': 'rgba(144, 238, 144, 0.8)'
-            }[order.transit_status] || 'rgba(128, 128, 128, 0.8)';
-    
-            chartData.push({
-                x: [clippedStartDate, clippedEndDate],
-                y: displayIndex,
-                backgroundColor: color,
-                borderColor: color.replace('0.8', '1'),
-                borderWidth: 1
-            });
-    
-            const transportIcon = {
-                'sea': '🚢',
-                'air': '✈️',
-                'truck': '🚚'
-            }[order.transport] || order.transport;
-    
-            labels.push(`${transportIcon} ${order.product_name} (${order.order_number})`);
-            displayIndex += 1;
-        });
-    
-        if (chartData.length === 0) {
-            console.warn('renderTimeline: No valid orders to display');
-            if (loadingIndicator) loadingIndicator.textContent = `No valid orders for ${selectedYear}`;
-            return;
-        }
-    
-        const heightPerOrder = 50;
-        const canvasHeight = Math.max(100, chartData.length * heightPerOrder);
-        canvas.style.height = `${canvasHeight}px`;
-    
-        if (loadingIndicator) loadingIndicator.style.display = 'none';
-        canvas.style.display = 'block';
-    
-        const today = new Date();
-        const currentWeek = getWeekNumber(today);
-        const startOfWeek = getStartOfWeek(currentWeek, today.getFullYear());
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-    
-        const ctx = canvas.getContext('2d');
-        if (chartInstance) chartInstance.destroy();
-    
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Orders Timeline',
-                    data: chartData,
-                    backgroundColor: chartData.map(item => item.backgroundColor),
-                    borderColor: chartData.map(item => item.borderColor),
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'week',
-                            tooltipFormat: 'dd.MM.yyyy'
-                        },
-                        min: yearStart,
-                        max: yearEnd,
-                        title: {
-                            display: true,
-                            text: 'Timeline',
-                            font: { size: 16, weight: '600' },
-                            color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
-                        },
-                        ticks: {
-                            callback: (value) => `W${getWeekNumber(new Date(value))}`,
-                            color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
-                        },
-                        grid: {
-                            color: document.documentElement.classList.contains('dark') ? '#6b7280' : '#d1d5db'
-                        }
-                    },
-                    y: {
-                        min: 0,
-                        max: chartData.length - 1,
-                        ticks: {
-                            callback: (_, i) => labels[i],
-                            color: document.documentElement.classList.contains('dark') ? '#fff' : '#000',
-                            font: { size: 12 },
-                            stepSize: 1
-                        },
-                        grid: { display: false }
-                    }
-                },
-                plugins: {
-                    legend: { display: false },
-                    annotation: {
-                        annotations: {
-                            currentWeek: {
-                                type: 'box',
-                                xMin: startOfWeek,
-                                xMax: endOfWeek,
-                                yMin: 0,
-                                yMax: chartData.length - 1,
-                                backgroundColor: 'rgba(255,255,0,0.3)',
-                                borderColor: 'rgba(255,255,0,0.6)',
-                                label: {
-                                    enabled: true,
-                                    content: `W${currentWeek}`,
-                                    position: 'top'
-                                }
-                            }
-                        }
-                    }
-                },
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-    
-        console.log('renderTimeline: Chart rendered successfully');
-    }        
-    
     function fetchAndRender() {
         console.log('fetchAndRender: Fetching orders from /api/orders...');
         fetch('/api/orders')
@@ -352,18 +461,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                console.log('fetchAndRender: Fetched orders:', data);
-                allOrders = data;
-                populateYearDropdown(allOrders); // Populate the year dropdown
+                console.log('fetchAndRender: Fetched orders:', data.slice(0, 5)); // Log first 5 for brevity
+                // Normalize date formats
+                allOrders = data.map(order => ({
+                    ...order,
+                    order_date: order.order_date.includes('-') ? order.order_date.split('-').reverse().join('.') : order.order_date,
+                    etd: order.etd.includes('-') ? order.etd.split('-').reverse().join('.') : order.etd,
+                    eta: order.eta.includes('-') ? order.eta.split('-').reverse().join('.') : order.eta,
+                    ata: order.ata && order.ata.includes('-') ? order.ata.split('-').reverse().join('.') : order.ata,
+                    required_delivery: order.required_delivery && order.required_delivery.includes('-') ? order.required_delivery.split('-').reverse().join('.') : order.required_delivery,
+                    payment_date: order.payment_date && order.payment_date.includes('-') ? order.payment_date.split('-').reverse().join('.') : order.payment_date
+                }));
+                populateYearDropdown(allOrders);
                 if (!selectedYear) {
                     console.warn('fetchAndRender: No orders available to set a selected year');
                     updateTable([]);
                     renderTimeline([]);
                     return;
                 }
-                const filteredData = filterData(allOrders, document.getElementById('order-filter').value);
-                updateTable(filteredData);
-                renderTimeline(filteredData);
+                currentPage = 1; // Reset page on new fetch
+                const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
+                const sortedData = sortData(filteredData, 'order_date', true); // Force descending
+                updateTable(sortedData);
+                renderTimeline(sortedData, currentPage);
             })
             .catch(error => {
                 console.error('fetchAndRender: Error fetching or rendering:', error);
@@ -384,30 +504,56 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('table th[data-sort]').forEach(header => {
         header.addEventListener('click', () => {
             const key = header.getAttribute('data-sort');
-            const filteredData = filterData(allOrders, document.getElementById('order-filter').value);
-            const sortedData = sortData(filteredData, key);
+            console.log(`Sorting by ${key}`);
+            const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
+            const sortedData = sortData(filteredData, key); // User-initiated sort toggles direction
             updateTable(sortedData);
-            renderTimeline(sortedData);
+            renderTimeline(sortedData, currentPage);
         });
     });
 
-    document.getElementById('order-filter').addEventListener('input', (e) => {
-        const query = e.target.value;
-        const filteredData = filterData(allOrders, query);
-        updateTable(filteredData);
-        renderTimeline(filteredData);
-    });
+    const orderFilterInput = document.getElementById('order-filter');
+    if (orderFilterInput) {
+        orderFilterInput.addEventListener('input', (e) => {
+            console.log('order-filter: Input event triggered, query:', e.target.value);
+            currentPage = 1; // Reset page on filter change
+            const query = e.target.value;
+            const filteredData = filterData(allOrders, query);
+            console.log('order-filter: Filtered data length:', filteredData.length);
+            const sortedData = sortData(filteredData, 'order_date', true); // Force descending
+            updateTable(sortedData);
+            renderTimeline(sortedData, currentPage);
+        });
+    } else {
+        console.error('order-filter: Input element not found in DOM');
+    }
 
     document.getElementById('year-filter').addEventListener('change', (e) => {
+        currentPage = 1; // Reset page on year change
         selectedYear = e.target.value;
+        sortDirection = { order_date: 'desc' }; // Reset sortDirection
+        // Reset sort indicator
+        const orderDateHeader = document.querySelector('th[data-sort="order_date"]');
+        if (orderDateHeader) {
+            const indicator = orderDateHeader.querySelector('.sort-indicator');
+            if (indicator) indicator.textContent = '↓';
+        }
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            if (th.getAttribute('data-sort') !== 'order_date') {
+                const indicator = th.querySelector('.sort-indicator');
+                if (indicator) indicator.textContent = '';
+            }
+        });
         console.log(`Year filter changed to: ${selectedYear}`);
-        const filteredData = filterData(allOrders, document.getElementById('order-filter').value);
-        updateTable(filteredData);
-        renderTimeline(filteredData);
+        const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
+        const sortedData = sortData(filteredData, 'order_date', true); // Force descending
+        updateTable(sortedData);
+        renderTimeline(sortedData, currentPage);
     });
 
     document.querySelectorAll('.legend-item').forEach(item => {
         item.addEventListener('click', () => {
+            currentPage = 1; // Reset page on status change
             const status = item.getAttribute('data-status');
             if (visibleStatuses.includes(status)) {
                 visibleStatuses = visibleStatuses.filter(s => s !== status);
@@ -416,9 +562,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 visibleStatuses.push(status);
                 item.classList.remove('opacity-50');
             }
-            const filteredData = filterData(allOrders, document.getElementById('order-filter').value);
-            updateTable(filteredData);
-            renderTimeline(filteredData);
+            console.log(`Legend toggled, visibleStatuses: ${visibleStatuses}`);
+            const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
+            const sortedData = sortData(filteredData, 'order_date', true); // Force descending
+            updateTable(sortedData);
+            renderTimeline(sortedData, currentPage);
         });
     });
 
@@ -426,13 +574,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (addForm) {
         addForm.addEventListener('submit', function (event) {
             event.preventDefault();
-        
-            // Validate form inputs
-            const quantity = parseFloat(document.getElementById('quantity').value); // Use parseFloat to allow decimals
+
+            const quantity = parseFloat(document.getElementById('quantity').value);
             const orderDate = document.getElementById('order_date').value;
             const etd = document.getElementById('etd').value;
             const eta = document.getElementById('eta').value;
-        
+
             if (isNaN(quantity) || quantity <= 0) {
                 alert('Quantity must be a positive number (decimals allowed).');
                 return;
@@ -445,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('ETD cannot be later than ETA.');
                 return;
             }
-        
+
             const formData = new FormData(addForm);
             const dateFields = ['order_date', 'required_delivery', 'payment_date', 'etd', 'eta', 'ata'];
             const convertedFormData = new FormData();
@@ -459,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 convertedFormData.append(key, value);
             }
-        
+
             fetch('/add_order', {
                 method: 'POST',
                 body: convertedFormData
@@ -512,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         document.getElementById('edit-quantity').value = order.quantity;
                         document.getElementById('edit-terms_of_delivery').value = order.terms_of_delivery;
                         document.getElementById('edit-transit_status').value = order.transit_status;
-                        document.getElementById('edit-transport').value = order.transport; // Populate the transport field
+                        document.getElementById('edit-transport').value = order.transport;
                         document.getElementById('edit-order-modal').style.display = 'flex';
                     }
                 });
@@ -545,13 +692,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (editForm) {
         editForm.addEventListener('submit', function (event) {
             event.preventDefault();
-        
-            // Validate form inputs
-            const quantity = parseFloat(document.getElementById('edit-quantity').value); // Use parseFloat
+
+            const quantity = parseFloat(document.getElementById('edit-quantity').value);
             const orderDate = document.getElementById('edit-order_date').value;
             const etd = document.getElementById('edit-etd').value;
             const eta = document.getElementById('edit-eta').value;
-        
+
             if (isNaN(quantity) || quantity <= 0) {
                 alert('Quantity must be a positive number (decimals allowed).');
                 return;
@@ -564,7 +710,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('ETD cannot be later than ETA.');
                 return;
             }
-        
+
             const formData = new FormData(editForm);
             const dateFields = ['order_date', 'required_delivery', 'payment_date', 'etd', 'eta', 'ata'];
             const convertedFormData = new FormData();
@@ -578,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 convertedFormData.append(key, value);
             }
-        
+
             const orderId = convertedFormData.get('order_id');
             fetch(`/edit_order/${orderId}`, {
                 method: 'POST',
@@ -618,21 +764,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Dark mode toggle
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const darkModeIcon = document.getElementById('dark-mode-icon');
 
     if (darkModeToggle && darkModeIcon) {
-        // Function to update the toggle button's appearance
         function updateDarkModeToggle(isDarkMode) {
             if (isDarkMode) {
-                darkModeIcon.textContent = '☀️'; // Sun icon to switch to light mode
+                darkModeIcon.textContent = '☀️';
             } else {
-                darkModeIcon.textContent = '🌙'; // Moon icon to switch to dark mode
+                darkModeIcon.textContent = '🌙';
             }
         }
 
-        // Check for saved preference
         if (localStorage.getItem('dark-mode') === 'enabled') {
             document.documentElement.classList.add('dark');
             updateDarkModeToggle(true);
@@ -645,9 +788,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const isDarkMode = document.documentElement.classList.contains('dark');
             localStorage.setItem('dark-mode', isDarkMode ? 'enabled' : 'disabled');
             updateDarkModeToggle(isDarkMode);
-            // Re-render the timeline to update colors
-            const filteredData = filterData(allOrders, document.getElementById('order-filter').value);
-            renderTimeline(filteredData);
+            const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
+            const sortedData = sortData(filteredData, 'order_date', true); // Force descending
+            renderTimeline(sortedData, currentPage);
         });
     }
 });

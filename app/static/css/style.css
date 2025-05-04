@@ -305,6 +305,10 @@ button:hover {
   background-color: #2b6cb0;
 }
 
+#load-more-btn {
+  display: none; /* Initially hidden, controlled by JS */
+}
+
 /* Modal Styles */
 .modal {
   display: none;
