@@ -181,45 +181,38 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('renderTimeline: Function called with data:', data);
         const loadingIndicator = document.getElementById('timeline-loading');
         const canvas = document.getElementById('timelineChart');
-        console.log('renderTimeline: Loading indicator:', loadingIndicator);
-        console.log('renderTimeline: Canvas element:', canvas);
     
         if (!canvas) {
             console.error('renderTimeline: Canvas element not found');
             return;
         }
     
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'block';
-        } else {
-            console.warn('renderTimeline: Loading indicator not found, proceeding without it');
-        }
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
         canvas.style.display = 'none';
-        console.log('renderTimeline: Set canvas to hidden');
     
-        const filteredData = data.filter(order => visibleStatuses.includes(order.transit_status));
+        if (!Array.isArray(data) || data.length === 0) {
+            console.warn('renderTimeline: No data provided');
+            if (loadingIndicator) loadingIndicator.textContent = `No orders found for ${selectedYear}`;
+            return;
+        }
     
         const year = parseInt(selectedYear);
-        const yearStart = new Date(year, 0, 1); // January 1st
-        const yearEnd = new Date(year, 11, 31); // December 31st
+        const yearStart = new Date(year, 0, 1);
+        const yearEnd = new Date(year, 11, 31);
     
         const chartData = [];
         const labels = [];
-        filteredData.forEach((order, index) => {
-            console.log(`renderTimeline: Processing order ${order.order_number} at index ${index}`);
+    
+        let displayIndex = 0;
+    
+        data.forEach((order) => {
             const startDate = parseDate(order.etd);
             const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
     
-            if (!startDate || !endDate) {
-                console.warn(`renderTimeline: Invalid dates for order ${order.order_number}: ETD=${order.etd}, ETA=${order.eta}, ATA=${order.ata}`);
-                return;
-            }
+            if (!startDate || !endDate) return;
     
             const orderYear = getYearFromDate(order.etd);
-            if (orderYear !== year) {
-                console.log(`renderTimeline: Skipping order ${order.order_number} as it does not match selected year ${year}`);
-                return;
-            }
+            if (orderYear !== year) return;
     
             const clippedStartDate = startDate < yearStart ? yearStart : startDate;
             const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
@@ -232,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
             chartData.push({
                 x: [clippedStartDate, clippedEndDate],
-                y: index, // Use index for y-position (linear scale)
+                y: displayIndex,
                 backgroundColor: color,
                 borderColor: color.replace('0.8', '1'),
                 borderWidth: 1
@@ -243,76 +236,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 'air': '✈️',
                 'truck': '🚚'
             }[order.transport] || order.transport;
+    
             labels.push(`${transportIcon} ${order.product_name} (${order.order_number})`);
+            displayIndex += 1;
         });
     
-        console.log('renderTimeline: Prepared chart data:', chartData);
-    
         if (chartData.length === 0) {
-            console.warn('renderTimeline: No valid data to display in the timeline.');
-            canvas.style.display = 'none';
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'block';
-                loadingIndicator.textContent = `No orders found for ${selectedYear}`;
-            }
+            console.warn('renderTimeline: No valid orders to display');
+            if (loadingIndicator) loadingIndicator.textContent = `No valid orders for ${selectedYear}`;
             return;
         }
     
-        // Dynamic heightPerOrder calculation
-        const maxHeight = 50;
-        const minHeight = 20;
-        const thresholdMin = 50;
-        const thresholdMax = 200;
-        let heightPerOrder;
+        const heightPerOrder = 50;
+        const canvasHeight = Math.max(100, chartData.length * heightPerOrder);
+        canvas.style.height = `${canvasHeight}px`;
     
-        if (chartData.length <= thresholdMin) {
-            heightPerOrder = maxHeight;
-        } else if (chartData.length >= thresholdMax) {
-            heightPerOrder = minHeight;
-        } else {
-            const slope = (maxHeight - minHeight) / (thresholdMin - thresholdMax);
-            heightPerOrder = maxHeight + slope * (chartData.length - thresholdMin);
-        }
-    
-        // Adjust barThickness to ensure spacing
-        const barThickness = heightPerOrder * 0.3; // Reduced to 30% to increase spacing
-        const minHeightCanvas = 100;
-        const calculatedHeight = Math.max(minHeightCanvas, chartData.length * heightPerOrder);
-        canvas.style.height = `${calculatedHeight}px`;
-        console.log(`renderTimeline: Set canvas height to ${calculatedHeight}px for ${chartData.length} orders, heightPerOrder=${heightPerOrder}, barThickness=${barThickness}`);
-    
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
         canvas.style.display = 'block';
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'none';
-        }
-        console.log('renderTimeline: Set canvas to visible, loading indicator to hidden');
-    
-        const minDate = yearStart;
-        const maxDate = yearEnd;
-        console.log('renderTimeline: Date range:', { minDate, maxDate });
     
         const today = new Date();
-        const currentYear = today.getFullYear();
         const currentWeek = getWeekNumber(today);
-        const startOfCurrentWeek = getStartOfWeek(currentWeek, currentYear);
-        const endOfCurrentWeek = new Date(startOfCurrentWeek);
-        endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
-        console.log(`renderTimeline: Current week: W${currentWeek}, Start date: ${startOfCurrentWeek}, End date: ${endOfCurrentWeek}`);
+        const startOfWeek = getStartOfWeek(currentWeek, today.getFullYear());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
     
         const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            console.error('renderTimeline: Failed to get canvas context');
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-            return;
-        }
-        if (chartInstance) {
-            chartInstance.destroy();
-            console.log('renderTimeline: Destroyed existing chart instance');
-        }
+        if (chartInstance) chartInstance.destroy();
     
-        console.log('renderTimeline: Creating new Chart instance');
         chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -332,227 +282,65 @@ document.addEventListener('DOMContentLoaded', function () {
                         type: 'time',
                         time: {
                             unit: 'week',
-                            displayFormats: {
-                                week: 'W'
-                            },
                             tooltipFormat: 'dd.MM.yyyy'
                         },
-                        min: minDate,
-                        max: maxDate,
+                        min: yearStart,
+                        max: yearEnd,
                         title: {
                             display: true,
                             text: 'Timeline',
-                            font: {
-                                size: 16,
-                                weight: '600'
-                            },
-                            color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000'
+                            font: { size: 16, weight: '600' },
+                            color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
                         },
                         ticks: {
-                            source: 'auto',
-                            autoSkip: true,
-                            maxRotation: 45,
-                            minRotation: 45,
-                            callback: function (value, index, values) {
-                                const date = new Date(value);
-                                const weekNum = getWeekNumber(date);
-                                return `W${weekNum}`;
-                            },
-                            font: {
-                                size: 12
-                            },
-                            color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000'
+                            callback: (value) => `W${getWeekNumber(new Date(value))}`,
+                            color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
                         },
                         grid: {
-                            display: true,
-                            drawBorder: true,
-                            drawOnChartArea: true,
                             color: document.documentElement.classList.contains('dark') ? '#6b7280' : '#d1d5db'
                         }
                     },
                     y: {
-                        type: 'linear', // Revert to linear scale for precise control
-                        title: {
-                            display: true,
-                            text: 'Orders',
-                            font: {
-                                size: 16,
-                                weight: '600'
-                            },
-                            color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000'
-                        },
                         min: 0,
                         max: chartData.length - 1,
                         ticks: {
-                            stepSize: 1,
-                            padding: 10,
-                            callback: function (value, index, values) {
-                                const intValue = Math.round(value);
-                                return labels[intValue] || '';
-                            },
-                            font: {
-                                size: 12
-                            },
-                            color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
-                            autoSkip: false, // Explicitly disable skipping
-                            maxTicksLimit: chartData.length // Ensure all ticks are shown
+                            callback: (_, i) => labels[i],
+                            color: document.documentElement.classList.contains('dark') ? '#fff' : '#000',
+                            font: { size: 12 },
+                            stepSize: 1
                         },
-                        grid: {
-                            display: false
-                        },
-                        afterFit: function (scale) {
-                            scale.height = chartData.length * heightPerOrder;
-                        }
+                        grid: { display: false }
                     }
                 },
                 plugins: {
-                    chartArea: {
-                        backgroundColor: 'transparent'
-                    },
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#2d3748',
-                        titleFont: {
-                            size: 14,
-                            weight: '600'
-                        },
-                        bodyFont: {
-                            size: 12
-                        },
-                        padding: 10,
-                        cornerRadius: 6,
-                        callbacks: {
-                            label: function (context) {
-                                const orderIndex = context.dataIndex;
-                                const order = filteredData[orderIndex];
-                                const transportIcon = {
-                                    'sea': '🚢',
-                                    'air': '✈️',
-                                    'truck': '🚚'
-                                }[order.transport] || order.transport;
-                                return [
-                                    `Product: ${order.product_name}`,
-                                    `Order #: ${order.order_number}`,
-                                    `Buyer: ${order.buyer}`,
-                                    `Responsible: ${order.responsible}`,
-                                    `Status: ${order.transit_status}`,
-                                    `Transport: ${transportIcon}`,
-                                    `ETD: ${order.etd}`,
-                                    `ETA: ${order.eta}`,
-                                    `ATA: ${order.ata || 'N/A'}`
-                                ];
-                            }
-                        }
-                    },
-                    customMonthLabels: {
-                        id: 'customMonthLabels',
-                        afterDraw: (chart) => {
-                            const ctx = chart.ctx;
-                            const xAxis = chart.scales.x;
-                            const yAxis = chart.scales.y;
-    
-                            const monthPositions = {};
-                            let currentDate = new Date(minDate);
-                            while (currentDate <= maxDate) {
-                                const month = currentDate.toLocaleString('default', { month: 'long' });
-                                const xPos = xAxis.getPixelForValue(currentDate.getTime());
-                                if (!monthPositions[month]) {
-                                    monthPositions[month] = { start: xPos, end: xPos };
-                                } else {
-                                    monthPositions[month].end = xPos;
-                                }
-                                currentDate = new Date(currentDate);
-                                currentDate.setDate(currentDate.getDate() + 7);
-                            }
-    
-                            ctx.save();
-                            ctx.font = 'bold 12px Inter, sans-serif';
-                            ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'bottom';
-    
-                            for (const month in monthPositions) {
-                                const { start, end } = monthPositions[month];
-                                const x = (start + end) / 2;
-                                const y = yAxis.top - 10;
-                                ctx.fillText(month, x, y);
-                            }
-    
-                            ctx.restore();
-                        }
-                    },
+                    legend: { display: false },
                     annotation: {
                         annotations: {
-                            currentWeekHighlight: {
+                            currentWeek: {
                                 type: 'box',
-                                xMin: startOfCurrentWeek,
-                                xMax: endOfCurrentWeek,
+                                xMin: startOfWeek,
+                                xMax: endOfWeek,
                                 yMin: 0,
                                 yMax: chartData.length - 1,
-                                backgroundColor: 'rgba(255, 255, 0, 0.3)',
-                                borderColor: 'rgba(255, 255, 0, 0.5)',
-                                borderWidth: 1,
+                                backgroundColor: 'rgba(255,255,0,0.3)',
+                                borderColor: 'rgba(255,255,0,0.6)',
                                 label: {
-                                    enabled: currentYear === parseInt(selectedYear),
+                                    enabled: true,
                                     content: `W${currentWeek}`,
-                                    position: 'top',
-                                    backgroundColor: 'rgba(255, 255, 0, 0.5)',
-                                    color: document.documentElement.classList.contains('dark') ? '#000000' : '#000000',
-                                    font: {
-                                        size: 12,
-                                        weight: 'bold'
-                                    },
-                                    padding: 6,
-                                    cornerRadius: 4
+                                    position: 'top'
                                 }
                             }
                         }
                     }
                 },
-                barThickness: barThickness,
-                maintainAspectRatio: false,
                 responsive: true,
-                onHover: (event, chartElement) => {
-                    event.native.target.style.cursor = chartElement.length ? 'pointer' : 'default';
-                },
-                onClick: (event, elements) => {
-                    if (elements.length > 0) {
-                        const index = elements[0].index;
-                        const orderRow = document.querySelector(`table tbody tr:nth-child(${index + 1})`);
-                        if (orderRow) {
-                            document.querySelectorAll('table tbody tr').forEach(row => {
-                                row.classList.remove('highlighted');
-                            });
-                            row.classList.add('highlighted', 'bg-blue-100', 'dark:bg-blue-900');
-                            orderRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }
-                }
-            },
-            plugins: [{
-                id: 'customMonthLabels'
-            }, {
-                id: 'chartAreaBackground',
-                beforeDraw(chart) {
-                    const ctx = chart.ctx;
-                    ctx.save();
-                    ctx.fillStyle = 'transparent';
-                    ctx.fillRect(0, 0, chart.width, chart.height);
-                    ctx.restore();
-                }
-            }]
+                maintainAspectRatio: false
+            }
         });
-        console.log('renderTimeline: Chart rendered successfully.');
     
-        // Log bar positions for debugging
-        chartInstance.data.datasets[0].data.forEach((item, index) => {
-            const pixelY = chartInstance.scales.y.getPixelForValue(index);
-            console.log(`Bar ${index} (Order ${labels[index]}): y-position = ${pixelY}px`);
-        });
-    }
-
+        console.log('renderTimeline: Chart rendered successfully');
+    }        
+    
     function fetchAndRender() {
         console.log('fetchAndRender: Fetching orders from /api/orders...');
         fetch('/api/orders')

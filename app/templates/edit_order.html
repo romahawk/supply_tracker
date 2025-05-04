@@ -10,7 +10,7 @@
 <body>
     <div class="container">
         <h1>Edit Order</h1>
-        <p><a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
+        <p><a href="{{ url_for('main.dashboard') }}">Back to Dashboard</a></p>
         
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -25,34 +25,54 @@
         <form method="POST">
             <label for="order_date">Order Date (DD.MM.YY):</label>
             <input type="text" id="order_date" name="order_date" value="{{ order.order_date }}" required>
+
             <label for="order_number">Order #:</label>
             <input type="text" id="order_number" name="order_number" value="{{ order.order_number }}" required>
+
             <label for="product_name">Product Name:</label>
             <input type="text" id="product_name" name="product_name" value="{{ order.product_name }}" required>
+
             <label for="buyer">Buyer:</label>
             <input type="text" id="buyer" name="buyer" value="{{ order.buyer }}" required>
+
             <label for="responsible">Responsible:</label>
             <input type="text" id="responsible" name="responsible" value="{{ order.responsible }}" required>
+
             <label for="quantity">Quantity:</label>
             <input type="number" step="0.01" id="quantity" name="quantity" value="{{ order.quantity }}" required>
+
             <label for="required_delivery">Required Delivery (DD.MM.YY):</label>
             <input type="text" id="required_delivery" name="required_delivery" value="{{ order.required_delivery }}" required>
+
             <label for="terms_of_delivery">Terms of Delivery:</label>
             <input type="text" id="terms_of_delivery" name="terms_of_delivery" value="{{ order.terms_of_delivery }}" required>
+
             <label for="payment_date">Payment Date (DD.MM.YY):</label>
             <input type="text" id="payment_date" name="payment_date" value="{{ order.payment_date }}" required>
+
             <label for="etd">ETD (DD.MM.YY):</label>
             <input type="text" id="etd" name="etd" value="{{ order.etd }}" required>
+
             <label for="eta">ETA (DD.MM.YY):</label>
             <input type="text" id="eta" name="eta" value="{{ order.eta }}" required>
+
             <label for="ata">ATA (DD.MM.YY):</label>
             <input type="text" id="ata" name="ata" value="{{ order.ata }}">
+
             <label for="transit_status">Transit Status:</label>
             <select id="transit_status" name="transit_status" required>
                 <option value="in process" {% if order.transit_status == 'in process' %}selected{% endif %}>In Process</option>
                 <option value="en route" {% if order.transit_status == 'en route' %}selected{% endif %}>En Route</option>
                 <option value="arrived" {% if order.transit_status == 'arrived' %}selected{% endif %}>Arrived</option>
             </select>
+
+            <label for="transport">Transport:</label>
+            <select id="transport" name="transport" required>
+                <option value="sea" {% if order.transport == 'sea' %}selected{% endif %}>Sea</option>
+                <option value="air" {% if order.transport == 'air' %}selected{% endif %}>Air</option>
+                <option value="truck" {% if order.transport == 'truck' %}selected{% endif %}>Truck</option>
+            </select>
+
             <button type="submit">Update Order</button>
         </form>
     </div>
