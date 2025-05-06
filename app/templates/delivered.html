@@ -17,25 +17,34 @@
         </div>
     </nav>
     <div class="p-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
         <h2 class="text-2xl font-bold mb-4">🚚 Delivered Goods</h2>
-        <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-xs sm:text-sm">
+        <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
             <thead>
-                <tr class="bg-gray-200 dark:bg-gray-700">
+                <tr class="bg-gray-200 dark:bg-gray-700 text-center">
                     <th class="px-4 py-2">Order #</th>
                     <th class="px-4 py-2">Product Name</th>
                     <th class="px-4 py-2">Quantity</th>
                     <th class="px-4 py-2">Delivery Source</th>
                     <th class="px-4 py-2">Delivery Date</th>
+                    <th class="px-4 py-2">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in delivered_items %}
-                <tr class="bg-gray-100 dark:bg-gray-900">
+                <tr class="text-center even:bg-gray-100 dark:even:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700">
                     <td class="px-4 py-2">{{ item.order_number }}</td>
                     <td class="px-4 py-2">{{ item.product_name }}</td>
                     <td class="px-4 py-2">{{ item.quantity }}</td>
                     <td class="px-4 py-2">{{ item.delivery_source }}</td>
                     <td class="px-4 py-2">{{ item.delivery_date }}</td>
+                    <td class="px-4 py-2">
+                        <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}" class="text-blue-500 hover:underline text-xs">Edit</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

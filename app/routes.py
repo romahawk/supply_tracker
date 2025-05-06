@@ -207,80 +207,89 @@ def get_orders():
 @main.route('/warehouse')
 @login_required
 def warehouse():
+    from .models import WarehouseStock
     warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).all()
     return render_template('warehouse.html', warehouse_items=warehouse_items)
 
 @main.route('/delivered')
 @login_required
 def delivered():
+    from .models import DeliveredGoods
     delivered_items = DeliveredGoods.query.filter_by(user_id=current_user.id).all()
     return render_template('delivered.html', delivered_items=delivered_items)
 
 
-
-@main.route('/stock_order/<int:order_id>', methods=['POST'])
+@main.route('/deliver_partial/<int:item_id>', methods=['POST'])
 @login_required
-def stock_order(order_id):
-    order = Order.query.get_or_404(order_id)
-    if order.user_id != current_user.id:
-        flash('Unauthorized', 'danger')
-        return redirect(url_for('main.dashboard'))
-
-    # Add to WarehouseStock
-    stock = WarehouseStock(
-        user_id=current_user.id,
-        order_number=order.order_number,
-        product_name=order.product_name,
-        quantity=order.quantity,
-        ata=order.ata,
-        transit_status='In Stock'
-    )
-    db.session.add(stock)
-    db.session.delete(order)  # Remove from dashboard (Arrived view)
-    db.session.commit()
-    flash('Order moved to warehouse stock.', 'success')
-    return redirect(url_for('main.warehouse'))
-
-@main.route('/deliver_direct/<int:order_id>', methods=['POST'])
-@login_required
-def deliver_direct(order_id):
-    order = Order.query.get_or_404(order_id)
-    if order.user_id != current_user.id:
-        flash('Unauthorized', 'danger')
-        return redirect(url_for('main.dashboard'))
-
-    delivery = DeliveredGoods(
-        user_id=current_user.id,
-        order_number=order.order_number,
-        product_name=order.product_name,
-        quantity=order.quantity,
-        delivery_source="Direct from Transit",
-        delivery_date=datetime.now().strftime('%Y-%m-%d')
-    )
-    db.session.add(delivery)
-    db.session.delete(order)
-    db.session.commit()
-    flash('Order marked as delivered to customer.', 'success')
-    return redirect(url_for('main.delivered'))
-
-@main.route('/deliver_from_warehouse/<int:item_id>', methods=['POST'])
-@login_required
-def mark_delivered_from_warehouse(item_id):
-    stock_item = WarehouseStock.query.get_or_404(item_id)
-    if stock_item.user_id != current_user.id:
-        flash('Unauthorized', 'danger')
+def deliver_partial(item_id):
+    item = WarehouseStock.query.get_or_404(item_id)
+    if item.user_id != current_user.id:
+        flash('Unauthorized access.', 'danger')
         return redirect(url_for('main.warehouse'))
 
+    try:
+        qty_to_deliver = float(request.form['quantity'])
+    except ValueError:
+        flash('Invalid quantity entered.', 'danger')
+        return redirect(url_for('main.warehouse'))
+
+    if qty_to_deliver <= 0 or qty_to_deliver > item.quantity:
+        flash(f"Invalid quantity. Must be between 1 and {item.quantity}.", 'danger')
+        return redirect(url_for('main.warehouse'))
+
+    # Create a DeliveredGoods entry
     delivery = DeliveredGoods(
         user_id=current_user.id,
-        order_number=stock_item.order_number,
-        product_name=stock_item.product_name,
-        quantity=stock_item.quantity,
+        order_number=item.order_number,
+        product_name=item.product_name,
+        quantity=qty_to_deliver,
         delivery_source="From Warehouse",
         delivery_date=datetime.now().strftime('%Y-%m-%d')
     )
     db.session.add(delivery)
-    db.session.delete(stock_item)
+
+    # Adjust warehouse quantity or delete if zero
+    item.quantity -= qty_to_deliver
+    if item.quantity <= 0:
+        db.session.delete(item)
+
     db.session.commit()
-    flash('Warehouse item marked as delivered.', 'success')
-    return redirect(url_for('main.delivered'))
+    flash(f'Delivered {qty_to_deliver} from warehouse.', 'success')
+    return redirect(url_for('main.warehouse'))
+
+
+@main.route('/edit_warehouse/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def edit_warehouse(item_id):
+    item = WarehouseStock.query.get_or_404(item_id)
+    if item.user_id != current_user.id:
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('main.warehouse'))
+
+    if request.method == 'POST':
+        item.quantity = float(request.form['quantity'])
+        item.ata = request.form['ata']
+        db.session.commit()
+        flash('Warehouse item updated successfully!', 'success')
+        return redirect(url_for('main.warehouse'))
+
+    return render_template('edit_warehouse.html', item=item)
+
+
+@main.route('/edit_delivered/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def edit_delivered(item_id):
+    item = DeliveredGoods.query.get_or_404(item_id)
+    if item.user_id != current_user.id:
+        flash('Unauthorized access', 'danger')
+        return redirect(url_for('main.delivered'))
+
+    if request.method == 'POST':
+        item.quantity = float(request.form['quantity'])
+        item.delivery_source = request.form['delivery_source']
+        item.delivery_date = request.form['delivery_date']
+        db.session.commit()
+        flash('Delivered item updated successfully!', 'success')
+        return redirect(url_for('main.delivered'))
+
+    return render_template('edit_delivered.html', item=item)
