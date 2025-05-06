@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Warehouse Stock</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <nav class="bg-blue-700 text-white px-4 py-2 flex justify-between items-center">
+        <div class="font-semibold text-lg">Supply Tracker</div>
+        <div class="space-x-4">
+            <a href="{{ url_for('main.dashboard') }}" class="hover:underline">Dashboard</a>
+            <a href="{{ url_for('main.warehouse') }}" class="font-bold underline">Warehouse</a>
+            <a href="{{ url_for('main.delivered') }}" class="hover:underline">Delivered</a>
+            <a href="{{ url_for('main.logout') }}" class="hover:underline">Logout</a>
+        </div>
+    </nav>
+    <div class="p-4">
+        <h2 class="text-2xl font-bold mb-4">📦 Warehouse Stock</h2>
+        <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-xs sm:text-sm">
+            <thead>
+                <tr class="bg-gray-200 dark:bg-gray-700">
+                    <th class="px-4 py-2">Order #</th>
+                    <th class="px-4 py-2">Product Name</th>
+                    <th class="px-4 py-2">Quantity</th>
+                    <th class="px-4 py-2">ATA</th>
+                    <th class="px-4 py-2">Status</th>
+                    <th class="px-4 py-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in warehouse_items %}
+                <tr class="bg-gray-100 dark:bg-gray-900">
+                    <td class="px-4 py-2">{{ item.order_number }}</td>
+                    <td class="px-4 py-2">{{ item.product_name }}</td>
+                    <td class="px-4 py-2">{{ item.quantity }}</td>
+                    <td class="px-4 py-2">{{ item.ata }}</td>
+                    <td class="px-4 py-2 text-green-500">In Stock</td>
+                    <td class="px-4 py-2">
+                        <form method="POST" action="{{ url_for('main.mark_delivered_from_warehouse', item_id=item.id) }}">
+                            <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">Mark as Delivered</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

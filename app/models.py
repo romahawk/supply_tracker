@@ -34,3 +34,22 @@ class Order(db.Model):
     ata = db.Column(db.String(10))
     transit_status = db.Column(db.String(20), nullable=False)
     transport = db.Column(db.String(20), nullable=False)
+
+class WarehouseStock(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    order_number = db.Column(db.String(50), nullable=False)
+    product_name = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    ata = db.Column(db.String(10), nullable=True)
+    transit_status = db.Column(db.String(20), default='In Stock', nullable=False)
+
+
+class DeliveredGoods(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    order_number = db.Column(db.String(50), nullable=False)
+    product_name = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    delivery_source = db.Column(db.String(50), nullable=False)  # e.g., "From Warehouse" or "Direct from Transit"
+    delivery_date = db.Column(db.String(10), nullable=False)

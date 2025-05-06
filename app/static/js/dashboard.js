@@ -442,7 +442,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm">
                         <a href="#" class="edit-order text-blue-600 hover:underline dark:text-blue-400" data-id="${order.id}">Edit</a>
                         <a href="#" class="delete-order text-red-600 hover:underline dark:text-red-400 ml-2" data-id="${order.id}">Delete</a>
+                        ${order.transit_status === 'arrived' ? `
+                            <form method="POST" action="/stock_order/${order.id}" style="display:inline;">
+                                <button type="submit" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs ml-1">Stock</button>
+                            </form>
+                            <form method="POST" action="/deliver_direct/${order.id}" style="display:inline;">
+                                <button type="submit" class="bg-blue-500 text-white px-2 py-1 rounded text-xs ml-1">Deliver</button>
+                            </form>
+                        ` : ''}
                     </td>
+
                 `;
                 tbody.appendChild(row);
             });

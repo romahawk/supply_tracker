@@ -42,11 +42,15 @@
             </span>
         </button>
 
-        <!-- Logout Link -->
-        <a href="{{ url_for('main.logout') }}" class="text-white hover:underline">Logout</a>
+
+        <a href="{{ url_for('main.warehouse') }}" class="text-white hover:underline">Warehouse</a>
+        <a href="{{ url_for('main.delivered') }}" class="text-white hover:underline ml-4">Delivered</a>
 
         <!-- Add New Order Button -->
         <button class="px-2 py-1 sm:px-4 sm:py-2 bg-green-500 rounded-md hover:bg-green-700 toggle-form-btn text-sm sm:text-base">Add New Order</button>
+
+        <!-- Logout Link -->
+        <a href="{{ url_for('main.logout') }}" class="text-white hover:underline">Logout</a>
     </nav>
   </header>
 

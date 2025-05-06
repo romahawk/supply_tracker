@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from .models import db, User, Order
+from .models import db, User, Order, WarehouseStock, DeliveredGoods
 from datetime import datetime
 
 main = Blueprint('main', __name__)
@@ -202,3 +202,85 @@ def get_orders():
         'transport': order.transport
     } for order in orders]
     return jsonify(orders_data)
+
+
+@main.route('/warehouse')
+@login_required
+def warehouse():
+    warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).all()
+    return render_template('warehouse.html', warehouse_items=warehouse_items)
+
+@main.route('/delivered')
+@login_required
+def delivered():
+    delivered_items = DeliveredGoods.query.filter_by(user_id=current_user.id).all()
+    return render_template('delivered.html', delivered_items=delivered_items)
+
+
+
+@main.route('/stock_order/<int:order_id>', methods=['POST'])
+@login_required
+def stock_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    # Add to WarehouseStock
+    stock = WarehouseStock(
+        user_id=current_user.id,
+        order_number=order.order_number,
+        product_name=order.product_name,
+        quantity=order.quantity,
+        ata=order.ata,
+        transit_status='In Stock'
+    )
+    db.session.add(stock)
+    db.session.delete(order)  # Remove from dashboard (Arrived view)
+    db.session.commit()
+    flash('Order moved to warehouse stock.', 'success')
+    return redirect(url_for('main.warehouse'))
+
+@main.route('/deliver_direct/<int:order_id>', methods=['POST'])
+@login_required
+def deliver_direct(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    delivery = DeliveredGoods(
+        user_id=current_user.id,
+        order_number=order.order_number,
+        product_name=order.product_name,
+        quantity=order.quantity,
+        delivery_source="Direct from Transit",
+        delivery_date=datetime.now().strftime('%Y-%m-%d')
+    )
+    db.session.add(delivery)
+    db.session.delete(order)
+    db.session.commit()
+    flash('Order marked as delivered to customer.', 'success')
+    return redirect(url_for('main.delivered'))
+
+@main.route('/deliver_from_warehouse/<int:item_id>', methods=['POST'])
+@login_required
+def mark_delivered_from_warehouse(item_id):
+    stock_item = WarehouseStock.query.get_or_404(item_id)
+    if stock_item.user_id != current_user.id:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('main.warehouse'))
+
+    delivery = DeliveredGoods(
+        user_id=current_user.id,
+        order_number=stock_item.order_number,
+        product_name=stock_item.product_name,
+        quantity=stock_item.quantity,
+        delivery_source="From Warehouse",
+        delivery_date=datetime.now().strftime('%Y-%m-%d')
+    )
+    db.session.add(delivery)
+    db.session.delete(stock_item)
+    db.session.commit()
+    flash('Warehouse item marked as delivered.', 'success')
+    return redirect(url_for('main.delivered'))
