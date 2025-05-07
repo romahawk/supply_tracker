@@ -10,10 +10,29 @@
     <nav class="bg-blue-700 text-white px-4 py-2 flex justify-between items-center">
         <div class="font-semibold text-lg">Supply Tracker</div>
         <div class="space-x-4">
-            <a href="{{ url_for('main.dashboard') }}" class="hover:underline">Dashboard</a>
-            <a href="{{ url_for('main.warehouse') }}" class="font-bold underline">Warehouse</a>
-            <a href="{{ url_for('main.delivered') }}" class="hover:underline">Delivered</a>
-            <a href="{{ url_for('main.logout') }}" class="hover:underline">Logout</a>
+            <a href="{{ url_for('main.dashboard') }}"
+            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-200">
+            🧭 Dashboard
+            </a>
+
+            <a href="{{ url_for('main.warehouse') }}"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ml-2">
+            🏢 Warehouse
+            </a>
+
+            <a href="{{ url_for('main.delivered') }}"
+            class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ml-2">
+            📦 Delivered
+            </a>
+
+            <a href="{{ url_for('main.logout') }}" title="Logout" class="text-white hover:text-red-400 ml-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            </a>
         </div>
     </nav>
     <div class="p-4">
