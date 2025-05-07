@@ -440,19 +440,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.transit_status}</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
                     <td class="px-2 py-2 text-center text-xs sm:text-sm">
-  <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
-    <a href="#" class="edit-order bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs" data-id="${order.id}">Edit</a>
-    <a href="#" class="delete-order bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs" data-id="${order.id}">Delete</a>
-    ${order.transit_status === 'arrived' ? `
-      <form method="POST" action="/stock_order/${order.id}" class="w-full">
-        <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs w-full">Stock</button>
-      </form>
-      <form method="POST" action="/deliver_direct/${order.id}" class="w-full">
-        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs w-full">Deliver</button>
-      </form>
-    ` : ''}
-  </div>
-</td>
+                       <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
+                            <form class="w-full sm:w-auto">
+                                <button type="button" class="edit-order bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${order.id}">Edit</button>
+                            </form>
+                            <form class="w-full sm:w-auto">
+                                <button type="button" class="delete-order bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${order.id}">Delete</button>
+                            </form>
+                            ${order.transit_status === 'arrived' ? `
+                            <form method="POST" action="/stock_order/${order.id}" class="w-full sm:w-auto">
+                                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Stock</button>
+                            </form>
+                            <form method="POST" action="/deliver_direct/${order.id}" class="w-full sm:w-auto">
+                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Deliver</button>
+                            </form>
+                            ` : ''}
+                        </div>
+
+                    </td>
 
                 `;
                 tbody.appendChild(row);
