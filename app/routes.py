@@ -293,3 +293,49 @@ def edit_delivered(item_id):
         return redirect(url_for('main.delivered'))
 
     return render_template('edit_delivered.html', item=item)
+
+@main.route('/stock_order/<int:order_id>', methods=['POST'])
+@login_required
+def stock_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        flash('Unauthorized action.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    # Move order to warehouse stock
+    stock_item = WarehouseStock(
+        user_id=current_user.id,
+        order_number=order.order_number,
+        product_name=order.product_name,
+        quantity=order.quantity,
+        ata=order.ata
+    )
+    db.session.add(stock_item)
+    db.session.delete(order)
+    db.session.commit()
+
+    flash('Order successfully moved to Warehouse Stock.', 'success')
+    return redirect(url_for('main.dashboard'))
+
+@main.route('/deliver_direct/<int:order_id>', methods=['POST'])
+@login_required
+def deliver_direct(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        flash("Unauthorized access", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    delivered = DeliveredGoods(
+        user_id=current_user.id,
+        order_number=order.order_number,
+        product_name=order.product_name,
+        quantity=order.quantity,
+        delivery_source="Direct from Transit",
+        delivery_date=order.ata
+    )
+    db.session.add(delivered)
+    db.session.delete(order)
+    db.session.commit()
+
+    flash("Order delivered successfully", "success")
+    return redirect(url_for("main.dashboard"))
