@@ -2,9 +2,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Delivered Goods</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        <meta charset="UTF-8">
+        <title>Warehouse Stock</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                darkMode: 'class',
+            };
+        </script>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     <nav class="bg-blue-700 text-white px-4 py-2 flex justify-between items-center">
@@ -68,5 +75,23 @@
             </tbody>
         </table>
     </div>
+    <script>
+        const toggle = document.getElementById('dark-mode-toggle');
+        const icon = document.getElementById('dark-mode-icon');
+      
+        // Check saved mode in localStorage
+        if (localStorage.getItem('dark-mode') === 'enabled') {
+            document.documentElement.classList.add('dark');
+            icon.textContent = '🌞';
+        }
+
+        toggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            icon.textContent = isDark ? '🌞' : '🌙';
+            localStorage.setItem('dark-mode', isDark ? 'enabled' : 'disabled');
+        });
+
+      </script>
 </body>
 </html>

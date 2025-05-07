@@ -4,11 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Warehouse Stock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        };
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+<body class="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100">
     <nav class="bg-blue-700 text-white px-4 py-2 flex justify-between items-center">
-        <div class="font-semibold text-lg">Supply Tracker</div>
+        <!-- Logo and Title -->
+        <div class="flex items-center space-x-2 sm:space-x-4">
+            <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="h-8 sm:h-12">
+            <h1 class="text-base sm:text-2xl font-semibold">Supply Tracker Dashboard</h1>
+        </div>
+
+        <!-- Search Bar (Hidden on Mobile) -->
+        <div class="hidden sm:flex flex-1 mx-4 max-w-md">
+            <input type="text" id="order-filter" placeholder="Search orders (e.g., by product, buyer, status)" class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+        </div>
+
         <div class="space-x-4">
             <a href="{{ url_for('main.dashboard') }}"
             class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-200">
@@ -25,6 +42,7 @@
             📦 Delivered
             </a>
 
+            <!-- Logout Link -->
             <a href="{{ url_for('main.logout') }}" title="Logout" class="text-white hover:text-red-400 ml-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -76,5 +94,23 @@
             </tbody>
         </table>
     </div>
+    <script>
+        const toggle = document.getElementById('dark-mode-toggle');
+        const icon = document.getElementById('dark-mode-icon');
+      
+        // Check saved mode in localStorage
+        if (localStorage.getItem('dark-mode') === 'enabled') {
+            document.documentElement.classList.add('dark');
+            icon.textContent = '🌞';
+        }
+
+        toggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            icon.textContent = isDark ? '🌞' : '🌙';
+            localStorage.setItem('dark-mode', isDark ? 'enabled' : 'disabled');
+        });
+
+      </script>
 </body>
 </html>
