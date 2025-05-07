@@ -15,7 +15,11 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     <nav class="bg-blue-700 text-white px-4 py-2 flex justify-between items-center">
-        <div class="font-semibold text-lg">Supply Tracker</div>
+        <!-- Logo and Title -->
+        <div class="flex items-center space-x-2 sm:space-x-4">
+            <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="h-8 sm:h-12">
+            <h1 class="text-base sm:text-2xl font-semibold">Supply Tracker Dashboard</h1>
+        </div>
         <div class="space-x-4">
             <a href="{{ url_for('main.dashboard') }}"
             class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-200">
@@ -48,7 +52,14 @@
           {% endfor %}
         {% endwith %}
         <h2 class="text-2xl font-bold mb-4">🚚 Delivered Goods</h2>
-        <table class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
+        <!-- Search bar -->
+        <div class="mb-4">
+            <input type="text" id="search-warehouse" placeholder="Search stock (product, order #, status)"
+                   class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400
+                          bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+        </div>
+        <!-- Orders Table -->
+        <table id="warehouse-table" class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
             <thead>
                 <tr class="bg-gray-200 dark:bg-gray-700 text-center">
                     <th class="px-4 py-2">Order #</th>
@@ -91,7 +102,18 @@
             icon.textContent = isDark ? '🌞' : '🌙';
             localStorage.setItem('dark-mode', isDark ? 'enabled' : 'disabled');
         });
-
-      </script>
+    </script>
+    <script>
+        const searchWarehouse = document.getElementById('search-warehouse');
+        const warehouseRows = document.querySelectorAll('#warehouse-table tbody tr');
+              
+        searchWarehouse.addEventListener('input', () => {
+            const term = searchWarehouse.value.toLowerCase();
+            warehouseRows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                row.style.display = rowText.includes(term) ? '' : 'none';
+            });
+        });
+    </script>
 </body>
 </html>
