@@ -276,6 +276,16 @@ function renderTimeline(data, page = 1) {
             },
             plugins: {
                 legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const [start, end] = context.raw.x;
+                        const startDate = new Date(start).toLocaleDateString();
+                        const endDate = new Date(end).toLocaleDateString();
+                        return `Delivery: ${startDate} → ${endDate}`;
+                      }
+                    }
+                  },                  
                 annotation: {
                     annotations: {
                         currentWeek: {
