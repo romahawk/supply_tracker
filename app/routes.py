@@ -244,7 +244,7 @@ def deliver_partial(item_id):
         product_name=item.product_name,
         quantity=qty_to_deliver,
         delivery_source="From Warehouse",
-        delivery_date=datetime.now().strftime('%Y-%m-%d')
+        delivery_date=datetime.now().strftime('%d.%m.%y')
     )
     db.session.add(delivery)
 

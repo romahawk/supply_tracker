@@ -78,17 +78,22 @@
                     <td class="px-4 py-2">{{ item.quantity }}</td>
                     <td class="px-4 py-2">{{ item.delivery_source }}</td>
                     <td class="px-4 py-2">{{ item.delivery_date }}</td>
-                    <td class="px-4 py-2">
-                        <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}" class="text-blue-500 hover:underline text-xs">Edit</a>
-                        <form 
-                            method="POST" 
-                            action="{{ url_for('main.restore_from_delivered', item_id=item.id) }}"  class="inline">
-                            <button 
-                                type="submit" 
-                                class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs mt-1">Restore
+                    <td class="px-4 py-2 space-y-1">
+                        <!-- Edit -->
+                        <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}"
+                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px] text-center">
+                            Edit
+                        </a>
+
+                        <!-- Restore -->
+                        <form method="POST" action="{{ url_for('main.restore_from_delivered', item_id=item.id) }}" class="inline">
+                            <button type="submit"
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">
+                                Restore
                             </button>
                         </form>
                     </td>
+
                 </tr>
                 {% endfor %}
             </tbody>
