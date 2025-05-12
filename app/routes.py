@@ -339,3 +339,84 @@ def deliver_direct(order_id):
 
     flash("Order delivered successfully", "success")
     return redirect(url_for("main.dashboard"))
+
+@main.route('/restore_to_dashboard/<int:item_id>', methods=['POST'])
+@login_required
+def restore_to_dashboard(item_id):
+    item = WarehouseStock.query.get_or_404(item_id)
+    if item.user_id != current_user.id:
+        flash('Unauthorized.', 'danger')
+        return redirect(url_for('main.warehouse'))
+
+    today = datetime.now().strftime('%d.%m.%y')  # 🟢 FIXED FORMAT
+
+    restored_order = Order(
+        user_id=current_user.id,
+        order_date=today,
+        order_number=item.order_number,
+        product_name=item.product_name,
+        buyer="Restored",
+        responsible="Restored",
+        quantity=item.quantity,
+        required_delivery=today,
+        terms_of_delivery="Restored",
+        payment_date="",
+        etd=today,
+        eta=today,
+        ata=item.ata or today,
+        transit_status="arrived",
+        transport="truck"
+    )
+
+    db.session.add(restored_order)
+    db.session.delete(item)
+    db.session.commit()
+
+    flash('Item restored to dashboard.', 'success')
+    return redirect(url_for('main.warehouse'))
+
+
+@main.route('/restore_from_delivered/<int:item_id>', methods=['POST'])
+@login_required
+def restore_from_delivered(item_id):
+    item = DeliveredGoods.query.get_or_404(item_id)
+    if item.user_id != current_user.id:
+        flash('Unauthorized.', 'danger')
+        return redirect(url_for('main.delivered'))
+
+    today = datetime.now().strftime('%d.%m.%y')  # 🟢 FIXED FORMAT
+
+    if item.delivery_source == "Direct from Transit":
+        restored_order = Order(
+            user_id=current_user.id,
+            order_date=today,
+            order_number=item.order_number,
+            product_name=item.product_name,
+            buyer="Restored",
+            responsible="Restored",
+            quantity=item.quantity,
+            required_delivery=today,
+            terms_of_delivery="Restored",
+            payment_date="",
+            etd=today,
+            eta=today,
+            ata=item.delivery_date or today,
+            transit_status="arrived",
+            transport="truck"
+        )
+        db.session.add(restored_order)
+    else:  # From Warehouse
+        restored_stock = WarehouseStock(
+            user_id=current_user.id,
+            order_number=item.order_number,
+            product_name=item.product_name,
+            quantity=item.quantity,
+            ata=item.delivery_date or today
+        )
+        db.session.add(restored_stock)
+
+    db.session.delete(item)
+    db.session.commit()
+
+    flash('Delivered item restored.', 'success')
+    return redirect(url_for('main.delivered'))

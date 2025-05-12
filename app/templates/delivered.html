@@ -80,6 +80,14 @@
                     <td class="px-4 py-2">{{ item.delivery_date }}</td>
                     <td class="px-4 py-2">
                         <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}" class="text-blue-500 hover:underline text-xs">Edit</a>
+                        <form 
+                            method="POST" 
+                            action="{{ url_for('main.restore_from_delivered', item_id=item.id) }}"  class="inline">
+                            <button 
+                                type="submit" 
+                                class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs mt-1">Restore
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}
