@@ -217,7 +217,16 @@ def warehouse():
 def delivered():
     from .models import DeliveredGoods
     delivered_items = DeliveredGoods.query.filter_by(user_id=current_user.id).all()
+
+    for item in delivered_items:
+        if isinstance(item.delivery_date, str):
+            try:
+                item.delivery_date = datetime.strptime(item.delivery_date, '%Y-%m-%d')
+            except ValueError:
+                pass
+
     return render_template('delivered.html', delivered_items=delivered_items)
+
 
 
 @main.route('/deliver_partial/<int:item_id>', methods=['POST'])

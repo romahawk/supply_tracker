@@ -50,7 +50,14 @@
                     <td class="px-4 py-2">{{ item.product_name }}</td>
                     <td class="px-4 py-2">{{ item.quantity }}</td>
                     <td class="px-4 py-2">{{ item.delivery_source }}</td>
-                    <td class="px-4 py-2">{{ item.delivery_date }}</td>
+                    <td class="px-4 py-2">
+                    {% if item.delivery_date.__class__.__name__ == 'datetime' %}
+                        {{ item.delivery_date.strftime('%d.%m.%y') }}
+                    {% else %}
+                        {{ item.delivery_date }}
+                    {% endif %}
+                    </td>
+
                     <td class="px-4 py-2 space-y-1">
                         <!-- Edit -->
                         <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}"
