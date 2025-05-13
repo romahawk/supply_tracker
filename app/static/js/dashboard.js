@@ -377,6 +377,7 @@ function sortData(data, key, forceDescending = false) {
     });
 }
 
+
 document.addEventListener('DOMContentLoaded', function () {
     // Set initial sort indicator for order_date
     const orderDateHeader = document.querySelector('th[data-sort="order_date"]');
@@ -475,6 +476,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         console.log('updateTable: Table updated with data:', data);
     }
+
+// Add a setupDashboardSearch() function
+function setupDashboardSearch() {
+    const searchInput = document.getElementById("search-dashboard");
+    if (!searchInput) return;
+
+    searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll("table tbody tr");
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? "" : "none";
+        });
+    });
+}
+
+    setupDashboardSearch(); // 🔁 Rebinds search to updated DOM
 
     function fetchAndRender() {
         console.log('fetchAndRender: Fetching orders from /api/orders...');

@@ -3,12 +3,13 @@ from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import db, User, Order, WarehouseStock, DeliveredGoods
 from datetime import datetime
+from flask import request
 
 main = Blueprint('main', __name__)
 
 @main.app_context_processor
-def inject_user():
-    return dict(current_user=current_user)
+def inject_globals():
+    return dict(current_user=current_user, current_path=request.path)
 
 @main.route('/')
 def index():
