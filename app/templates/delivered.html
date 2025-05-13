@@ -30,9 +30,11 @@
                           bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
         </div>
         <!-- Orders Table -->
-        <table id="warehouse-table" class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
+        <table 
+            id="warehouse-table" 
+            class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
             <thead>
-                <tr class="bg-gray-200 dark:bg-gray-700 text-center">
+                <tr class="text-center bg-gray-200 dark:bg-gray-700">
                     <th class="px-4 py-2">Order #</th>
                     <th class="px-4 py-2">Product Name</th>
                     <th class="px-4 py-2">Quantity</th>
@@ -52,7 +54,7 @@
                     <td class="px-4 py-2 space-y-1">
                         <!-- Edit -->
                         <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}"
-                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px] text-center">
+                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">
                             Edit
                         </a>
 
