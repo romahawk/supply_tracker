@@ -227,6 +227,39 @@ def delivered():
 
     return render_template('delivered.html', delivered_items=delivered_items)
 
+@main.route('/add_warehouse_manual', methods=['POST'])
+@login_required
+def add_warehouse_manual():
+    try:
+        order_number = request.form['order_number']
+        product_name = request.form['product_name']
+        quantity = float(request.form['quantity'])
+        ata = request.form['ata']
+        transport = request.form['transport']
+        notes = request.form.get('notes', 'Manual Entry')
+
+        if quantity <= 0:
+            flash("Quantity must be greater than 0", "danger")
+            return redirect(url_for('main.warehouse'))
+
+        new_item = WarehouseStock(
+            user_id=current_user.id,
+            order_number=order_number,
+            product_name=product_name,
+            quantity=quantity,
+            ata=ata,
+            transport=transport,
+            notes=notes
+        )
+        db.session.add(new_item)
+        db.session.commit()
+
+        flash("Manual order successfully added to warehouse.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error adding manual order: {e}", "danger")
+
+    return redirect(url_for('main.warehouse'))
 
 
 @main.route('/deliver_partial/<int:item_id>', methods=['POST'])
@@ -430,3 +463,4 @@ def restore_from_delivered(item_id):
 
     flash('Delivered item restored.', 'success')
     return redirect(url_for('main.delivered'))
+

@@ -43,6 +43,9 @@ class WarehouseStock(db.Model):
     quantity = db.Column(db.Float, nullable=False)
     ata = db.Column(db.String(10), nullable=True)
     transit_status = db.Column(db.String(20), default='In Stock', nullable=False)
+    notes = db.Column(db.String(120))        # optional manual tag or comments
+    transport = db.Column(db.String(20))     # 'sea', 'air', or 'truck'
+
 
 
 class DeliveredGoods(db.Model):

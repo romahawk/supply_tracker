@@ -22,6 +22,41 @@
             <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">{{ message }}</div>
           {% endfor %}
         {% endwith %}
+
+        <!-- Manual Order Button -->
+        <button onclick="document.getElementById('manual-order-form').classList.toggle('hidden')"
+            class="mb-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+            ➕ Add Manual Order
+        </button>
+
+        <!-- Manual Order Form -->
+        <form method="POST" action="{{ url_for('main.add_warehouse_manual') }}"
+            id="manual-order-form"
+            class="hidden bg-white dark:bg-gray-800 rounded p-4 mb-6 shadow space-y-4">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="order_number" placeholder="Order #" required class="p-2 rounded border dark:bg-gray-700">
+                <input type="text" name="product_name" placeholder="Product Name" required class="p-2 rounded border dark:bg-gray-700">
+                <input type="number" name="quantity" step="0.01" placeholder="Quantity" required class="p-2 rounded border dark:bg-gray-700">
+                <input type="date" name="ata" required class="p-2 rounded border dark:bg-gray-700">
+
+                <select name="transport" required class="p-2 rounded border dark:bg-gray-700">
+                    <option value="">Select Transport</option>
+                    <option value="sea">Ship</option>
+                    <option value="air">Plane</option>
+                    <option value="truck">Truck</option>
+                </select>
+
+                <input type="text" name="notes" placeholder="Notes (optional)" class="p-2 rounded border dark:bg-gray-700">
+            </div>
+
+            <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                📥 Save Manual Order
+            </button>
+        </form>
+
+
         <h2 class="text-2xl font-bold mb-4">📦 Warehouse Stock</h2>
         <!-- Search bar -->
         <div class="mb-4">
@@ -38,6 +73,7 @@
                     <th class="px-4 py-2">ATA</th>
                     <th class="px-4 py-2">Status</th>
                     <th class="px-4 py-2">Actions</th>
+                    <th class="px-4 py-2">Notes</th>
                 </tr>
             </thead>
             <tbody>
@@ -47,9 +83,11 @@
                     <td class="px-4 py-2">{{ item.product_name }}</td>
                     <td class="px-4 py-2">{{ item.quantity }}</td>
                     <td class="px-4 py-2">{{ item.ata }}</td>
-                    <td class="px-4 py-2">
+                    <td class="px-4 py-2 space-y-1">
                         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">In Stock</span>
+
                     </td>
+                    <!-- Actions -->
                     <td class="px-4 py-2 space-y-1">
                         <!-- Deliver -->
                         <form method="POST" action="{{ url_for('main.deliver_partial', item_id=item.id) }}" class="inline">
@@ -79,7 +117,14 @@
                             </button>
                         </form>
                     </td>
-
+                    <!-- Notes -->
+                    <td class="px-4 py-2 text-xs">
+                        {% if item.notes %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">{{ item.notes }}</span>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
