@@ -94,6 +94,14 @@
             </form>
     </div>
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">
+                {{ message }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
     <div class="p-4 sm:p-6 space-y-6">
         <!-- Your Orders Table -->
         <h2 class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
