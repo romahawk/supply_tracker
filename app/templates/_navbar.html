@@ -50,10 +50,19 @@
     </a>
 
     {% if current_path == url_for('main.dashboard') %}
-    <button class="px-2 py-1 sm:px-3 sm:py-1 bg-green-500 rounded-md hover:bg-green-700 toggle-form-btn text-sm">
-      ➕ Add Order
+    <button class="w-[180px] px-3 py-1 bg-green-500 text-white text-sm rounded-md hover:bg-green-700 toggle-form-btn">
+      ➕ Add New Order
     </button>
+    {% elif current_path == url_for('main.warehouse') %}
+    <button onclick="document.getElementById('manual-order-form').classList.toggle('hidden')"
+            class="w-[180px] px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+            title="Create a new manually stocked order">
+      ➕ Add Manual Order
+    </button>
+    {% elif current_path == url_for('main.delivered') %}
+    <div class="w-[180px]"></div>  {# placeholder to keep layout aligned #}
     {% endif %}
+
 
     <!-- Logout Icon -->
     <a href="{{ url_for('main.logout') }}" title="Logout" class="text-white hover:text-red-400 ml-1">
