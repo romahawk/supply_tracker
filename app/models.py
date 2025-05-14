@@ -56,3 +56,5 @@ class DeliveredGoods(db.Model):
     quantity = db.Column(db.Float, nullable=False)
     delivery_source = db.Column(db.String(50), nullable=False)  # e.g., "From Warehouse" or "Direct from Transit"
     delivery_date = db.Column(db.String(10), nullable=False)
+    transport = db.Column(db.String(20))  # new field
+

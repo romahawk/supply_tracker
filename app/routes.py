@@ -351,7 +351,8 @@ def stock_order(order_id):
         order_number=order.order_number,
         product_name=order.product_name,
         quantity=order.quantity,
-        ata=order.ata
+        ata=order.ata,
+        transport=order.transport
     )
     db.session.add(stock_item)
     db.session.delete(order)
@@ -374,7 +375,8 @@ def deliver_direct(order_id):
         product_name=order.product_name,
         quantity=order.quantity,
         delivery_source="Direct from Transit",
-        delivery_date=order.ata
+        delivery_date=order.ata,
+        transport=order.transport
     )
     db.session.add(delivered)
     db.session.delete(order)
