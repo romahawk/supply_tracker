@@ -71,6 +71,7 @@
                     <th class="px-4 py-2">Product Name</th>
                     <th class="px-4 py-2">Quantity</th>
                     <th class="px-4 py-2">ATA</th>
+                    <th class="px-4 py-2">Transport</th>
                     <th class="px-4 py-2">Status</th>
                     <th class="px-4 py-2">Actions</th>
                     <th class="px-4 py-2">Notes</th>
@@ -83,9 +84,19 @@
                     <td class="px-4 py-2">{{ item.product_name }}</td>
                     <td class="px-4 py-2">{{ item.quantity }}</td>
                     <td class="px-4 py-2">{{ item.ata }}</td>
+                    <td class="px-4 py-2 text-xs">
+                        {% if item.transport == 'air' %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">✈️ Air</span>
+                        {% elif item.transport == 'sea' %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚢 Sea</span>
+                        {% elif item.transport == 'truck' %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚚 Truck</span>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
                     <td class="px-4 py-2 space-y-1">
                         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">In Stock</span>
-
                     </td>
                     <!-- Actions -->
                     <td class="px-4 py-2 space-y-1">
@@ -120,11 +131,14 @@
                     <!-- Notes -->
                     <td class="px-4 py-2 text-xs">
                         {% if item.notes %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">{{ item.notes }}</span>
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded whitespace-nowrap">
+                            {{ item.notes[:30] }}{% if item.notes|length > 30 %}...{% endif %}
+                            </span>
                         {% else %}
                             —
                         {% endif %}
                     </td>
+
                 </tr>
                 {% endfor %}
             </tbody>
