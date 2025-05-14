@@ -4,6 +4,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from .models import db, User, Order, WarehouseStock, DeliveredGoods
 from datetime import datetime
 from flask import request
+import os
+from werkzeug.utils import secure_filename
+from flask import send_from_directory
+
 
 main = Blueprint('main', __name__)
 
@@ -466,3 +470,44 @@ def restore_from_delivered(item_id):
     flash('Delivered item restored.', 'success')
     return redirect(url_for('main.delivered'))
 
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@main.route('/upload_pod/<int:item_id>', methods=['POST'])
+@login_required
+def upload_pod(item_id):
+    file = request.files['pod']
+    if file and file.filename:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+
+        item = DeliveredGoods.query.get_or_404(item_id)
+        item.pod_filename = filename
+        db.session.commit()
+
+        flash("POD uploaded.", "success")
+    else:
+        flash("No file selected.", "danger")
+
+    return redirect(url_for('main.delivered'))
+
+@main.route('/view_pod/<filename>')
+@login_required
+def view_pod(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+@main.route('/delete_pod/<int:item_id>', methods=['POST'])
+@login_required
+def delete_pod(item_id):
+    item = DeliveredGoods.query.get_or_404(item_id)
+    if item.pod_filename:
+        file_path = os.path.join(UPLOAD_FOLDER, item.pod_filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        item.pod_filename = None
+        db.session.commit()
+        flash("POD deleted.", "success")
+    else:
+        flash("No POD file to delete.", "warning")
+    return redirect(url_for('main.delivered'))

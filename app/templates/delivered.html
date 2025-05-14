@@ -36,7 +36,7 @@
                     <th class="px-4 py-2 cursor-pointer" data-sort="delivery_date">Delivery Date <span class="sort-indicator"></span> ⇅</th>
                     <th class="px-4 py-2 cursor-pointer" data-sort="transport">Transport <span class="sort-indicator"></span> ⇅</th>
                     <th class="px-4 py-2">Actions</th>
-                    <th class="px-4 py-2">Notes</th>
+                    <th class="px-4 py-2">POD</th>
                 </tr>
             </thead>
             <tbody>
@@ -71,15 +71,37 @@
                                     class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">Restore</button>
                         </form>
                     </td>
-                    <td class="px-4 py-2 text-xs">
-                        {% if item.notes %}
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded whitespace-nowrap">
-                                {{ item.notes[:30] }}{% if item.notes|length > 30 %}...{% endif %}
-                            </span>
+                    <td class="px-4 py-2 text-xs text-center">
+                        {% if item.pod_filename %}
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{{ url_for('main.view_pod', filename=item.pod_filename) }}" target="_blank"
+                                    class="text-blue-600 hover:underline">
+                                    📎 View
+                                </a>
+                                <form method="POST" action="{{ url_for('main.delete_pod', item_id=item.id) }}">
+                                    <button type="submit" class="text-red-500 hover:underline" title="Delete POD">
+                                    🗑️
+                                    </button>
+                                </form>
+                            </div>
+
                         {% else %}
-                            —
+                            <form method="POST"
+                                action="{{ url_for('main.upload_pod', item_id=item.id) }}"
+                                enctype="multipart/form-data"
+                                class="flex flex-col items-center space-y-1">
+
+                            <label for="pod-{{ item.id }}" class="cursor-pointer text-blue-600 text-sm hover:underline">
+                                📤 Upload
+                            </label>
+                            <input id="pod-{{ item.id }}" name="pod" type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    class="hidden"
+                                    onchange="this.form.submit()">
+                            </form>
                         {% endif %}
                     </td>
+
                 </tr>
                 {% endfor %}
             </tbody>
