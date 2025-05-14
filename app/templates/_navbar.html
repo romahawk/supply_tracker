@@ -1,0 +1,68 @@
+<header class="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-2 sm:py-3 bg-blue-800 text-white shadow-md">
+  <!-- Left: Logo + Title -->
+  <div class="flex items-center space-x-3">
+    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="h-8 sm:h-10 rounded bg-white p-1" />
+    <h1 class="text-base sm:text-2xl font-semibold">Supply Tracker Dashboard</h1>
+  </div>
+
+  <!-- Right: Navigation & Controls -->
+  <div class="flex items-center space-x-2 sm:space-x-3">
+    <!-- Dark Mode Toggle -->
+    <button id="dark-mode-toggle"
+      class="relative inline-flex items-center h-5 w-10 sm:h-8 sm:w-16 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0"
+      aria-label="Toggle dark mode">
+
+      <!-- Track -->
+      <span id="dark-mode-track"
+            class="absolute inset-0 h-5 w-10 sm:h-8 sm:w-16 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors duration-300">
+      </span>
+
+      <!-- Thumb (glowing ball) -->
+      <span id="dark-mode-thumb"
+            class="absolute left-1 top-1 h-3 w-3 sm:h-6 sm:w-6 rounded-full
+                  bg-gray-800 dark:bg-gray-100 transform transition-transform duration-300
+                  shadow-md dark:shadow-white/50
+                  dark:translate-x-5 sm:dark:translate-x-8">
+      </span>
+    </button>
+
+
+    <!-- Navigation Buttons -->
+    <a href="{{ url_for('main.dashboard') }}"
+       class="px-4 py-1.5 rounded-md font-medium transition-all duration-200
+       {{ 'bg-yellow-500 text-white text-lg font-bold' if current_path == url_for('main.dashboard') else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
+       hover:bg-opacity-80 hover:shadow-md">
+      🧭 Dashboard
+    </a>
+
+    <a href="{{ url_for('main.warehouse') }}"
+       class="px-4 py-1.5 rounded-md font-medium transition-all duration-200
+       {{ 'bg-blue-600 text-white text-lg font-bold' if current_path == url_for('main.warehouse') else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
+       hover:bg-opacity-80 hover:shadow-md">
+      📦 Warehouse
+    </a>
+
+    <a href="{{ url_for('main.delivered') }}"
+       class="px-4 py-1.5 rounded-md font-medium transition-all duration-200
+       {{ 'bg-indigo-600 text-white text-lg font-bold' if current_path == url_for('main.delivered') else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
+       hover:bg-opacity-80 hover:shadow-md">
+      🚚 Delivered
+    </a>
+
+    {% if current_path == url_for('main.dashboard') %}
+    <button class="px-2 py-1 sm:px-3 sm:py-1 bg-green-500 rounded-md hover:bg-green-700 toggle-form-btn text-sm">
+      ➕ Add Order
+    </button>
+    {% endif %}
+
+    <!-- Logout Icon -->
+    <a href="{{ url_for('main.logout') }}" title="Logout" class="text-white hover:text-red-400 ml-1">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+    </a>
+  </div>
+</header>

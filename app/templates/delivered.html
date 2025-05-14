@@ -14,37 +14,8 @@
     
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-    <nav class="bg-blue-800 text-white px-4 py-2 flex justify-between items-center">
-        <!-- Logo and Title -->
-        <div class="flex items-center space-x-2 sm:space-x-4">
-            <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis GmbH Logo" class="h-8 sm:h-12">
-            <h1 class="text-base sm:text-2xl font-semibold">Supply Tracker Dashboard</h1>
-        </div>
-        <div class="space-x-4">
-            <a href="{{ url_for('main.dashboard') }}"
-            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-200">
-            🧭 Dashboard
-            </a>
-
-            <a href="{{ url_for('main.warehouse') }}"
-            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ml-2">
-            🏢 Warehouse
-            </a>
-
-            <a href="{{ url_for('main.delivered') }}"
-            class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ml-2">
-            📦 Delivered
-            </a>
-            <a href="{{ url_for('main.logout') }}" title="Logout" class="text-white hover:text-red-400 ml-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            </a>
-        </div>
-    </nav>
+    {% include '_navbar.html' %}
+   
     <div class="p-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% for category, message in messages %}
@@ -59,9 +30,11 @@
                           bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
         </div>
         <!-- Orders Table -->
-        <table id="warehouse-table" class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
+        <table 
+            id="warehouse-table" 
+            class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
             <thead>
-                <tr class="bg-gray-200 dark:bg-gray-700 text-center">
+                <tr class="text-center bg-gray-200 dark:bg-gray-700">
                     <th class="px-4 py-2">Order #</th>
                     <th class="px-4 py-2">Product Name</th>
                     <th class="px-4 py-2">Quantity</th>
@@ -77,10 +50,30 @@
                     <td class="px-4 py-2">{{ item.product_name }}</td>
                     <td class="px-4 py-2">{{ item.quantity }}</td>
                     <td class="px-4 py-2">{{ item.delivery_source }}</td>
-                    <td class="px-4 py-2">{{ item.delivery_date }}</td>
                     <td class="px-4 py-2">
-                        <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}" class="text-blue-500 hover:underline text-xs">Edit</a>
+                    {% if item.delivery_date.__class__.__name__ == 'datetime' %}
+                        {{ item.delivery_date.strftime('%d.%m.%y') }}
+                    {% else %}
+                        {{ item.delivery_date }}
+                    {% endif %}
                     </td>
+
+                    <td class="px-4 py-2 space-y-1">
+                        <!-- Edit -->
+                        <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}"
+                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">
+                            Edit
+                        </a>
+
+                        <!-- Restore -->
+                        <form method="POST" action="{{ url_for('main.restore_from_delivered', item_id=item.id) }}" class="inline">
+                            <button type="submit"
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">
+                                Restore
+                            </button>
+                        </form>
+                    </td>
+
                 </tr>
                 {% endfor %}
             </tbody>
@@ -88,19 +81,16 @@
     </div>
     <script>
         const toggle = document.getElementById('dark-mode-toggle');
-        const icon = document.getElementById('dark-mode-icon');
-      
-        // Check saved mode in localStorage
+
         if (localStorage.getItem('dark-mode') === 'enabled') {
             document.documentElement.classList.add('dark');
-            icon.textContent = '🌞';
         }
 
         toggle.addEventListener('click', () => {
             document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            icon.textContent = isDark ? '🌞' : '🌙';
-            localStorage.setItem('dark-mode', isDark ? 'enabled' : 'disabled');
+            localStorage.setItem('dark-mode',
+                document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled'
+            );
         });
     </script>
     <script>

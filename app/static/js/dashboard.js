@@ -8,6 +8,41 @@ let visibleStatuses = ['in process', 'en route', 'arrived']; // Global to store 
 let chartInstance = null; // Global to store Chart.js instance
 let sortDirection = { order_date: 'desc' }; // Global sort direction
 
+// isDarkMode
+function isDarkMode() {
+  return document.documentElement.classList.contains('dark');
+}
+
+function getChartColors() {
+  return {
+    text: isDarkMode() ? '#E5E7EB' : '#374151',     // light gray / slate
+    grid: isDarkMode() ? '#4B5563' : '#D1D5DB',
+    title: isDarkMode() ? '#F9FAFB' : '#111827'
+  };
+}
+
+function initDarkModeToggle() {
+  const toggle = document.getElementById('dark-mode-toggle');
+  if (!toggle) return;
+
+  // Load saved preference
+  if (localStorage.getItem('dark-mode') === 'enabled') {
+    document.documentElement.classList.add('dark');
+  }
+
+  toggle.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    const enabled = document.documentElement.classList.contains('dark');
+    localStorage.setItem('dark-mode', enabled ? 'enabled' : 'disabled');
+
+    // Optional: Re-render timeline to update chart theme
+    const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
+    const sortedData = sortData(filteredData, 'order_date', true);
+    renderTimeline(sortedData, currentPage);
+  });
+}
+
+
 // Helper functions needed by filterData and renderTimeline
 function parseDate(dateStr) {
     try {
@@ -225,6 +260,8 @@ function renderTimeline(data, page = 1) {
     const ctx = canvas.getContext('2d');
     if (chartInstance) chartInstance.destroy();
 
+    const colors = getChartColors();
+
     chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -239,41 +276,50 @@ function renderTimeline(data, page = 1) {
         },
         options: {
             indexAxis: 'y',
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'week',
-                        tooltipFormat: 'dd.MM.yyyy'
-                    },
-                    min: yearStart,
-                    max: yearEnd,
-                    title: {
-                        display: true,
-                        text: 'Timeline',
-                        font: { size: 16, weight: '600' },
-                        color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
-                    },
-                    ticks: {
-                        callback: (value) => `W${getWeekNumber(new Date(value))}`,
-                        color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
-                    },
-                    grid: {
-                        color: document.documentElement.classList.contains('dark') ? '#6b7280' : '#d1d5db'
-                    }
-                },
-                y: {
-                    min: 0,
-                    max: chartData.length - 1,
-                    ticks: {
-                        callback: (_, i) => labels[i],
-                        color: document.documentElement.classList.contains('dark') ? '#fff' : '#000',
-                        font: { size: 12 },
-                        stepSize: 1
-                    },
-                    grid: { display: false }
-                }
+
+        scales: {
+        x: {
+            type: 'time',
+            time: {
+            unit: 'week',
+            tooltipFormat: 'dd.MM.yyyy'
             },
+            min: yearStart,
+            max: yearEnd,
+            title: {
+            display: true,
+            text: 'Timeline',
+            font: { size: 16, weight: '600' },
+            color: colors.title
+            },
+            ticks: {
+            callback: (value) => `W${getWeekNumber(new Date(value))}`,
+            color: colors.text,
+            font: { size: 12, weight: '500' },
+            autoSkip: true,
+            maxRotation: 0
+            },
+            grid: {
+            color: colors.grid,
+            borderColor: colors.grid,
+            tickColor: colors.grid,
+            lineWidth: 1
+            }
+        },
+        y: {
+            min: 0,
+            max: chartData.length - 1,
+            ticks: {
+            callback: (_, i) => labels[i],
+            color: colors.text,
+            font: { size: 12, weight: '500' },
+            autoSkip: false
+            },
+            grid: {
+            display: false
+            }
+        }
+        },
             plugins: {
                 legend: { display: false },
                 tooltip: {
@@ -377,6 +423,7 @@ function sortData(data, key, forceDescending = false) {
     });
 }
 
+
 document.addEventListener('DOMContentLoaded', function () {
     // Set initial sort indicator for order_date
     const orderDateHeader = document.querySelector('th[data-sort="order_date"]');
@@ -475,6 +522,26 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         console.log('updateTable: Table updated with data:', data);
     }
+
+    // Add a setupDashboardSearch() function
+    function setupDashboardSearch() {
+    const searchInput = document.getElementById("search-dashboard");
+    if (!searchInput) return;
+
+    searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll("table tbody tr");
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? "" : "none";
+        });
+    });
+
+    initDarkModeToggle();
+}
+
+    setupDashboardSearch(); // 🔁 Rebinds search to updated DOM
 
     function fetchAndRender() {
         console.log('fetchAndRender: Fetching orders from /api/orders...');
@@ -789,36 +856,6 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.style.display = 'none';
         }
     });
-
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const darkModeIcon = document.getElementById('dark-mode-icon');
-
-    if (darkModeToggle && darkModeIcon) {
-        function updateDarkModeToggle(isDarkMode) {
-            if (isDarkMode) {
-                darkModeIcon.textContent = '☀️';
-            } else {
-                darkModeIcon.textContent = '🌙';
-            }
-        }
-
-        if (localStorage.getItem('dark-mode') === 'enabled') {
-            document.documentElement.classList.add('dark');
-            updateDarkModeToggle(true);
-        } else {
-            updateDarkModeToggle(false);
-        }
-
-        darkModeToggle.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            const isDarkMode = document.documentElement.classList.contains('dark');
-            localStorage.setItem('dark-mode', isDarkMode ? 'enabled' : 'disabled');
-            updateDarkModeToggle(isDarkMode);
-            const filteredData = filterData(allOrders, document.getElementById('order-filter')?.value || '');
-            const sortedData = sortData(filteredData, 'order_date', true); // Force descending
-            renderTimeline(sortedData, currentPage);
-        });
-    }
 });
 
 const toggleFormBtn = document.querySelector('.toggle-form-btn');
