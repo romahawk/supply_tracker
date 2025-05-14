@@ -67,11 +67,27 @@
         <table id="warehouse-table" class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
             <thead>
                 <tr class="bg-gray-200 dark:bg-gray-700 text-center">
-                    <th class="px-4 py-2">Order #</th>
-                    <th class="px-4 py-2">Product Name</th>
-                    <th class="px-4 py-2">Quantity</th>
-                    <th class="px-4 py-2">ATA</th>
-                    <th class="px-4 py-2">Transport</th>
+                    <tr class="bg-gray-200 dark:bg-gray-700 text-center">
+                    <th class="px-4 py-2 cursor-pointer" data-sort="order_number">
+                    Order # <span class="sort-indicator"></span>
+                    <span class="text-gray-400 group-hover:text-gray-600 text-xs">⇅</span>
+                    </th>
+                    <th class="px-4 py-2 cursor-pointer" data-sort="product_name">
+                    Product Name <span class="sort-indicator"></span>
+                    <span class="text-gray-400 group-hover:text-gray-600 text-xs">⇅</span>
+                    </th>
+                    <th class="px-4 py-2 cursor-pointer" data-sort="quantity">
+                    Quantity <span class="sort-indicator"></span>
+                    <span class="text-gray-400 group-hover:text-gray-600 text-xs">⇅</span>
+                    </th>
+                    <th class="px-4 py-2 cursor-pointer" data-sort="ata">
+                    ATA <span class="sort-indicator"></span>
+                    <span class="text-gray-400 group-hover:text-gray-600 text-xs">⇅</span>
+                    </th>
+                    <th class="px-4 py-2 cursor-pointer" data-sort="transport">
+                    Transport <span class="sort-indicator"></span>
+                    <span class="text-gray-400 group-hover:text-gray-600 text-xs">⇅</span>
+                    </th>
                     <th class="px-4 py-2">Status</th>
                     <th class="px-4 py-2">Actions</th>
                     <th class="px-4 py-2">Notes</th>
@@ -172,6 +188,66 @@
           });
         });
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+        const headers = document.querySelectorAll('th[data-sort]');
+        const rows = Array.from(document.querySelectorAll('#warehouse-table tbody tr'));
+        let currentSort = { key: '', direction: '' };
+
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+            const key = header.getAttribute('data-sort');
+            const ascending = currentSort.key === key && currentSort.direction === 'asc' ? false : true;
+            currentSort = { key, direction: ascending ? 'asc' : 'desc' };
+
+            sortTableByKey(key, ascending);
+            updateSortIndicators();
+            });
+        });
+
+        function sortTableByKey(key, ascending) {
+            const getValue = (row) => {
+                const cellMap = {
+                order_number: 0,
+                product_name: 1,
+                quantity: 2,
+                ata: 3,
+                transport: 4
+                };
+                return row.cells[cellMap[key]].innerText.trim().toLowerCase();
+            };
+
+            const sortedRows = [...rows].sort((a, b) => {
+                let valA = getValue(a);
+                let valB = getValue(b);
+                if (key === "quantity") {
+                return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+                }
+                return ascending
+                ? valA.localeCompare(valB, undefined, { numeric: true })
+                : valB.localeCompare(valA, undefined, { numeric: true });
+            });
+
+            const tbody = document.querySelector('#warehouse-table tbody');
+            tbody.innerHTML = '';
+            sortedRows.forEach(row => tbody.appendChild(row));
+        }
+
+
+        function updateSortIndicators() {
+            headers.forEach(h => {
+            const indicator = h.querySelector('.sort-indicator');
+            if (h.getAttribute('data-sort') === currentSort.key) {
+                indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+            } else {
+                indicator.textContent = '';
+            }
+            });
+        }
+        });
+    </script>
+
       
 </body>
 </html>
