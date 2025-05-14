@@ -99,7 +99,13 @@
                     <td class="px-4 py-2">{{ item.order_number }}</td>
                     <td class="px-4 py-2">{{ item.product_name }}</td>
                     <td class="px-4 py-2">{{ item.quantity }}</td>
-                    <td class="px-4 py-2">{{ item.ata }}</td>
+                    <td class="px-4 py-2">
+                        {% if item.ata %}
+                            {{ item.ata | format_date }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
                     <td class="px-4 py-2 text-xs">
                         {% if item.transport == 'air' %}
                             <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">✈️ Air</span>
