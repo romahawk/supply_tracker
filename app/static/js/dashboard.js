@@ -825,6 +825,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const orderDate = document.getElementById("order_date").value;
       const etd = document.getElementById("etd").value;
       const eta = document.getElementById("eta").value;
+      const requiredDelivery = document.getElementById('required_delivery').value;
+        if (!requiredDelivery.trim()) {
+            alert('Required Delivery cannot be empty.');
+            return;
+        }
+
 
       if (isNaN(quantity) || quantity <= 0) {
         alert("Quantity must be a positive number (decimals allowed).");
@@ -850,13 +856,14 @@ document.addEventListener("DOMContentLoaded", function () {
       ];
       const convertedFormData = new FormData();
       for (let [key, value] of formData.entries()) {
-        if (dateFields.includes(key) && value) {
-          const date = new Date(value);
-          const day = String(date.getDate()).padStart(2, "0");
-          const month = String(date.getMonth() + 1).padStart(2, "0");
-          const year = String(date.getFullYear()).slice(-2);
-          value = `${day}.${month}.${year}`;
+        if (dateFields.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            const date = new Date(value);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            value = `${day}.${month}.${year}`;
         }
+
         convertedFormData.append(key, value);
       }
 

@@ -7,7 +7,15 @@ from flask import request
 import os
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
+from flask import current_app
 
+PRODUCTS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'products.txt'))
+def load_products():
+    try:
+        with open(PRODUCTS_FILE, 'r', encoding='utf-8') as f:
+            return sorted(set(line.strip() for line in f if line.strip()))
+    except FileNotFoundError:
+        return []
 
 main = Blueprint('main', __name__)
 
@@ -68,7 +76,7 @@ def logout():
 @login_required
 def dashboard():
     orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
-    return render_template('dashboard.html', orders=orders)
+    return render_template('dashboard.html', orders=orders, now=datetime.now(), product_list=load_products())
 
 @main.route('/add_order', methods=['POST'])
 @login_required
@@ -111,13 +119,28 @@ def add_order():
         )
         db.session.add(new_order)
         db.session.commit()
+        # Append product name if not in products.txt
+        new_product = data['product_name'].strip()
+        existing_products = load_products()
+        if new_product and new_product not in existing_products:
+            try:
+                with open(PRODUCTS_FILE, 'a', encoding='utf-8') as f:
+                    f.write(f"{new_product}\n")
+                print(f"✅ Product added to products.txt: {new_product}")
+            except Exception as file_error:
+                print(f"⚠️ Could not write to products.txt – {file_error}")
+
+
         return jsonify({'success': True, 'message': 'Order added successfully!'})
+
     except ValueError:
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Invalid quantity format. Use a valid number.'}), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
+    
+    
 
 @main.route('/edit_order/<int:order_id>', methods=['GET', 'POST'])
 @login_required
