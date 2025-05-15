@@ -186,6 +186,22 @@ def delete_order(order_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
 
+def get_delivery_year_dict(order):
+    try:
+        date_fields = [order.required_delivery, order.eta, order.ata]
+        date_objs = [
+            datetime.strptime(d, '%d.%m.%y')
+            for d in date_fields if d and d.strip()
+        ]
+        if date_objs:
+            return max(date_objs).year
+    except Exception:
+        pass
+    try:
+        return datetime.strptime(order.order_date, '%d.%m.%y').year
+    except:
+        return None
+
 @main.route('/api/orders')
 @login_required
 def get_orders():
@@ -205,7 +221,8 @@ def get_orders():
         'eta': order.eta,
         'ata': order.ata,
         'transit_status': order.transit_status,
-        'transport': order.transport
+        'transport': order.transport,
+        'delivery_year': get_delivery_year_dict(order)  # 🟢 Add this line
     } for order in orders]
     return jsonify(orders_data)
 
