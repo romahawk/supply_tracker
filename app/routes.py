@@ -294,7 +294,8 @@ def add_warehouse_manual():
             quantity=quantity,
             ata=ata,
             transport=transport,
-            notes=notes
+            notes=notes,
+            is_manual=True
         )
         db.session.add(new_item)
         db.session.commit()
@@ -556,3 +557,17 @@ def delete_pod(item_id):
     else:
         flash("No POD file to delete.", "warning")
     return redirect(url_for('main.delivered'))
+
+#Delete Manual Warehouse Entry
+@main.route('/delete_warehouse/<int:item_id>', methods=['POST'])
+@login_required
+def delete_warehouse(item_id):
+    item = WarehouseStock.query.get_or_404(item_id)
+    if item.user_id != current_user.id:
+        flash('Unauthorized action.', 'danger')
+        return redirect(url_for('main.warehouse'))
+
+    db.session.delete(item)
+    db.session.commit()
+    flash('Warehouse item deleted successfully.', 'success')
+    return redirect(url_for('main.warehouse'))
