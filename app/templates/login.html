@@ -20,6 +20,17 @@
                 <h1 class="text-3xl font-bold text-blue-400 tracking-wide">Supply Tracker</h1>
             </div>
 
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="mb-6 text-sm text-red-600 font-medium text-center">
+                {% for message in messages %}
+                <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+
             <!-- 💻 Login + Register Forms Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
