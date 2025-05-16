@@ -363,6 +363,7 @@ def edit_warehouse(item_id):
     if request.method == 'POST':
         item.quantity = float(request.form['quantity'])
         item.ata = request.form['ata']
+        item.notes = request.form.get("notes")
         db.session.commit()
         flash('Warehouse item updated successfully!', 'success')
         return redirect(url_for('main.warehouse'))
@@ -382,6 +383,7 @@ def edit_delivered(item_id):
         item.quantity = float(request.form['quantity'])
         item.delivery_source = request.form['delivery_source']
         item.delivery_date = request.form['delivery_date']
+        item.notes = request.form.get("notes")
         db.session.commit()
         flash('Delivered item updated successfully!', 'success')
         return redirect(url_for('main.delivered'))

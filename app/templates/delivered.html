@@ -85,13 +85,17 @@
                                     class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">Restore</button>
                             </form>
                         </td>
-                        <td class="px-4 py-2 text-xs">
+                        <td class="px-4 py-2">
                             {% if item.notes %}
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded whitespace-nowrap">
+                            <span title="{{ item.notes }}"
+                                class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded whitespace-nowrap max-w-[150px] overflow-hidden text-ellipsis inline-block">
                                 {{ item.notes[:30] }}{% if item.notes|length > 30 %}...{% endif %}
                             </span>
-                            {% else %}—{% endif %}
+                            {% else %}
+                            —
+                            {% endif %}
                         </td>
+
                         <td class="px-4 py-2 text-xs text-center">
                             {% if item.pod_filename %}
                             <div class="flex items-center justify-center space-x-2">
