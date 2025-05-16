@@ -77,7 +77,21 @@ def logout():
 @login_required
 def dashboard():
     orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
-    return render_template('dashboard.html', orders=orders, now=datetime.now(), product_list=load_products())
+
+    # 🧮 Count summaries
+    in_transit_count = Order.query.filter_by(user_id=current_user.id).count()
+    warehouse_count = WarehouseStock.query.filter_by(user_id=current_user.id).count()
+    delivered_count = DeliveredGoods.query.filter_by(user_id=current_user.id).count()
+
+    return render_template(
+        'dashboard.html',
+        orders=orders,
+        now=datetime.now(),
+        product_list=load_products(),
+        in_transit_count=in_transit_count,
+        warehouse_count=warehouse_count,
+        delivered_count=delivered_count
+    )
 
 @main.route('/add_order', methods=['POST'])
 @login_required
@@ -399,21 +413,27 @@ def stock_order(order_id):
         flash('Unauthorized action.', 'danger')
         return redirect(url_for('main.dashboard'))
 
-    # Move order to warehouse stock
-    stock_item = WarehouseStock(
+    if not order.order_number or not order.product_name:
+        flash('Order must have an Order Number and Product Name before stocking.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    # Create WarehouseStock record
+    new_stock = WarehouseStock(
         user_id=current_user.id,
         order_number=order.order_number,
         product_name=order.product_name,
         quantity=order.quantity,
         ata=order.ata,
-        transport=order.transport
+        transport=order.transport,
+        transit_status='In Stock'
     )
-    db.session.add(stock_item)
+    db.session.add(new_stock)
     db.session.delete(order)
     db.session.commit()
 
-    flash('Order successfully moved to Warehouse Stock.', 'success')
+    flash(f'Order {order.order_number} moved to Warehouse.', 'success')
     return redirect(url_for('main.dashboard'))
+
 
 @main.route('/deliver_direct/<int:order_id>', methods=['POST'])
 @login_required
@@ -423,6 +443,10 @@ def deliver_direct(order_id):
         flash("Unauthorized access", "danger")
         return redirect(url_for("main.dashboard"))
 
+    if not order.order_number or not order.product_name:
+        flash('Order must have an Order Number and Product Name before delivering.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
     delivered = DeliveredGoods(
         user_id=current_user.id,
         order_number=order.order_number,
@@ -430,14 +454,16 @@ def deliver_direct(order_id):
         quantity=order.quantity,
         delivery_source="Direct from Transit",
         delivery_date=order.ata,
-        transport=order.transport
+        transport=order.transport,
     )
+
     db.session.add(delivered)
     db.session.delete(order)
     db.session.commit()
 
-    flash("Order delivered successfully", "success")
+    flash(f"Order {order.order_number} delivered successfully.", "success")
     return redirect(url_for("main.dashboard"))
+
 
 @main.route('/restore_to_dashboard/<int:item_id>', methods=['POST'])
 @login_required
@@ -575,3 +601,13 @@ def delete_warehouse(item_id):
     db.session.commit()
     flash('Warehouse item deleted successfully.', 'success')
     return redirect(url_for('main.warehouse'))
+
+@main.route('/stats')
+@login_required
+def stats():
+    from app.models import Order, WarehouseStock, DeliveredGoods
+    return {
+        "orders": Order.query.count(),
+        "warehouse": WarehouseStock.query.count(),
+        "delivered": DeliveredGoods.query.count()
+    }
