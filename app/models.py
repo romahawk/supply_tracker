@@ -58,4 +58,5 @@ class DeliveredGoods(db.Model):
     delivery_source = db.Column(db.String(50), nullable=False)  # e.g., "From Warehouse" or "Direct from Transit"
     delivery_date = db.Column(db.String(10), nullable=False)
     transport = db.Column(db.String(20))  # new field
+    notes = db.Column(db.String(120))  # optional field
     pod_filename = db.Column(db.String(120))  # Path to uploaded file

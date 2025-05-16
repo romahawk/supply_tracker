@@ -342,6 +342,7 @@ def deliver_partial(item_id):
         quantity=qty_to_deliver,
         transport=item.transport,
         delivery_source="From Warehouse",
+        notes=item.notes,
         delivery_date=datetime.now().strftime('%d.%m.%y')
     )
     db.session.add(delivery)
