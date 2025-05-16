@@ -570,7 +570,7 @@ document.addEventListener("DOMContentLoaded", function () {
                       order.delivery_year
                     }">${order.order_date}</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.order_number
+                      order.order_number || '—'
                     }</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
                       order.product_name
@@ -585,19 +585,19 @@ document.addEventListener("DOMContentLoaded", function () {
                       order.quantity
                     }</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.required_delivery
+                      order.required_delivery || '—'
                     }</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.terms_of_delivery
+                      order.terms_of_delivery || '—'
                     }</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.payment_date
+                      order.payment_date || '—'
                     }</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.etd
+                      order.etd || '—'
                     }</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.eta
+                      order.eta || '—'
                     }</td>
                     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
                       order.ata || ""
