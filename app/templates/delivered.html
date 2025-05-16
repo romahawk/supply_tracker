@@ -40,6 +40,7 @@
                                 class="sort-indicator"></span></th>
                         <th class="px-4 py-2 cursor-pointer" data-sort="transport">Transport <span
                                 class="sort-indicator"></span></th>
+                        <th class="px-4 py-2">Source</th>
                         <th class="px-4 py-2">Actions</th>
                         <th class="px-4 py-2">Notes</th>
                         <th class="px-4 py-2">POD</th>
@@ -64,6 +65,17 @@
                             <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚚 Truck</span>
                             {% else %}—{% endif %}
                         </td>
+                        <td class="px-4 py-2 text-xs">
+                            {% if item.delivery_source == 'Direct from Transit' %}
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Direct from Transit</span>
+                            {% elif item.delivery_source == 'From Warehouse' %}
+                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">From Warehouse</span>
+                            {% else %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">—</span>
+                            {% endif %}
+                        </td>
+
+
                         <td class="px-4 py-2 space-y-1">
                             <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}"
                                 class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">Edit</a>
