@@ -234,12 +234,15 @@ function renderTimeline(data, page = 1) {
     const clippedStartDate = startDate < yearStart ? yearStart : startDate;
     const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
 
+    const status = (order.transit_status || '').toLowerCase().trim();
+
     const color =
       {
         "in process": "rgba(255, 165, 0, 0.8)",
         "en route": "rgba(0, 123, 255, 0.8)",
-        arrived: "rgba(144, 238, 144, 0.8)",
-      }[order.transit_status] || "rgba(128, 128, 128, 0.8)";
+        "arrived": "rgba(144, 238, 144, 0.8)",
+      }[status] || "rgba(128, 128, 128, 0.8)";
+
 
     chartData.push({
       x: [clippedStartDate, clippedEndDate],

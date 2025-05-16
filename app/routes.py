@@ -321,9 +321,17 @@ def deliver_partial(item_id):
         flash('Invalid quantity entered.', 'danger')
         return redirect(url_for('main.warehouse'))
 
-    if qty_to_deliver <= 0 or qty_to_deliver > item.quantity:
+    if qty_to_deliver <= 0 or qty_to_deliver > float(item.quantity):
         flash(f"Invalid quantity. Must be between 1 and {item.quantity}.", 'danger')
         return redirect(url_for('main.warehouse'))
+
+    # Adjust warehouse quantity or delete if zero
+    item.quantity = float(item.quantity) - qty_to_deliver
+    if item.quantity <= 0:
+        db.session.delete(item)
+    else:
+        db.session.add(item)
+
 
     # Create a DeliveredGoods entry
     delivery = DeliveredGoods(
@@ -331,15 +339,11 @@ def deliver_partial(item_id):
         order_number=item.order_number,
         product_name=item.product_name,
         quantity=qty_to_deliver,
+        transport=item.transport,
         delivery_source="From Warehouse",
         delivery_date=datetime.now().strftime('%d.%m.%y')
     )
     db.session.add(delivery)
-
-    # Adjust warehouse quantity or delete if zero
-    item.quantity -= qty_to_deliver
-    if item.quantity <= 0:
-        db.session.delete(item)
 
     db.session.commit()
     flash(f'Delivered {qty_to_deliver} from warehouse.', 'success')
