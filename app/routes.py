@@ -4,6 +4,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from .models import db, User, Order, WarehouseStock, DeliveredGoods
 from datetime import datetime
 from flask import request
+import os
+from werkzeug.utils import secure_filename
+from flask import send_from_directory
+from flask import current_app
+
+PRODUCTS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'products.txt'))
+def load_products():
+    try:
+        with open(PRODUCTS_FILE, 'r', encoding='utf-8') as f:
+            return sorted(set(line.strip() for line in f if line.strip()))
+    except FileNotFoundError:
+        return []
 
 main = Blueprint('main', __name__)
 
@@ -28,8 +40,10 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and check_password_hash(user.password, password):
-            login_user(user)
-            return redirect(url_for('main.dashboard'))
+            remember = True if request.form.get('remember') == 'on' else False
+            login_user(user, remember=remember)
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('main.dashboard'))
         else:
             flash('Invalid username or password')
 
@@ -63,7 +77,21 @@ def logout():
 @login_required
 def dashboard():
     orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
-    return render_template('dashboard.html', orders=orders)
+
+    # 🧮 Count summaries
+    in_transit_count = Order.query.filter_by(user_id=current_user.id).count()
+    warehouse_count = WarehouseStock.query.filter_by(user_id=current_user.id).count()
+    delivered_count = DeliveredGoods.query.filter_by(user_id=current_user.id).count()
+
+    return render_template(
+        'dashboard.html',
+        orders=orders,
+        now=datetime.now(),
+        product_list=load_products(),
+        in_transit_count=in_transit_count,
+        warehouse_count=warehouse_count,
+        delivered_count=delivered_count
+    )
 
 @main.route('/add_order', methods=['POST'])
 @login_required
@@ -106,13 +134,28 @@ def add_order():
         )
         db.session.add(new_order)
         db.session.commit()
+        # Append product name if not in products.txt
+        new_product = data['product_name'].strip()
+        existing_products = load_products()
+        if new_product and new_product not in existing_products:
+            try:
+                with open(PRODUCTS_FILE, 'a', encoding='utf-8') as f:
+                    f.write(f"{new_product}\n")
+                print(f"✅ Product added to products.txt: {new_product}")
+            except Exception as file_error:
+                print(f"⚠️ Could not write to products.txt – {file_error}")
+
+
         return jsonify({'success': True, 'message': 'Order added successfully!'})
+
     except ValueError:
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Invalid quantity format. Use a valid number.'}), 400
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
+    
+    
 
 @main.route('/edit_order/<int:order_id>', methods=['GET', 'POST'])
 @login_required
@@ -181,6 +224,22 @@ def delete_order(order_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
 
+def get_delivery_year_dict(order):
+    try:
+        date_fields = [order.required_delivery, order.eta, order.ata]
+        date_objs = [
+            datetime.strptime(d, '%d.%m.%y')
+            for d in date_fields if d and d.strip()
+        ]
+        if date_objs:
+            return max(date_objs).year
+    except Exception:
+        pass
+    try:
+        return datetime.strptime(order.order_date, '%d.%m.%y').year
+    except:
+        return None
+
 @main.route('/api/orders')
 @login_required
 def get_orders():
@@ -200,7 +259,8 @@ def get_orders():
         'eta': order.eta,
         'ata': order.ata,
         'transit_status': order.transit_status,
-        'transport': order.transport
+        'transport': order.transport,
+        'delivery_year': get_delivery_year_dict(order)  # 🟢 Add this line
     } for order in orders]
     return jsonify(orders_data)
 
@@ -227,6 +287,40 @@ def delivered():
 
     return render_template('delivered.html', delivered_items=delivered_items)
 
+@main.route('/add_warehouse_manual', methods=['POST'])
+@login_required
+def add_warehouse_manual():
+    try:
+        order_number = request.form['order_number']
+        product_name = request.form['product_name']
+        quantity = float(request.form['quantity'])
+        ata = request.form['ata']
+        transport = request.form['transport']
+        notes = request.form.get('notes', 'Manual Entry')
+
+        if quantity <= 0:
+            flash("Quantity must be greater than 0", "danger")
+            return redirect(url_for('main.warehouse'))
+
+        new_item = WarehouseStock(
+            user_id=current_user.id,
+            order_number=order_number,
+            product_name=product_name,
+            quantity=quantity,
+            ata=ata,
+            transport=transport,
+            notes=notes,
+            is_manual=True
+        )
+        db.session.add(new_item)
+        db.session.commit()
+
+        flash("Manual order successfully added to warehouse.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error adding manual order: {e}", "danger")
+
+    return redirect(url_for('main.warehouse'))
 
 
 @main.route('/deliver_partial/<int:item_id>', methods=['POST'])
@@ -243,9 +337,17 @@ def deliver_partial(item_id):
         flash('Invalid quantity entered.', 'danger')
         return redirect(url_for('main.warehouse'))
 
-    if qty_to_deliver <= 0 or qty_to_deliver > item.quantity:
+    if qty_to_deliver <= 0 or qty_to_deliver > float(item.quantity):
         flash(f"Invalid quantity. Must be between 1 and {item.quantity}.", 'danger')
         return redirect(url_for('main.warehouse'))
+
+    # Adjust warehouse quantity or delete if zero
+    item.quantity = float(item.quantity) - qty_to_deliver
+    if item.quantity <= 0:
+        db.session.delete(item)
+    else:
+        db.session.add(item)
+
 
     # Create a DeliveredGoods entry
     delivery = DeliveredGoods(
@@ -253,15 +355,12 @@ def deliver_partial(item_id):
         order_number=item.order_number,
         product_name=item.product_name,
         quantity=qty_to_deliver,
+        transport=item.transport,
         delivery_source="From Warehouse",
+        notes=item.notes,
         delivery_date=datetime.now().strftime('%d.%m.%y')
     )
     db.session.add(delivery)
-
-    # Adjust warehouse quantity or delete if zero
-    item.quantity -= qty_to_deliver
-    if item.quantity <= 0:
-        db.session.delete(item)
 
     db.session.commit()
     flash(f'Delivered {qty_to_deliver} from warehouse.', 'success')
@@ -279,6 +378,7 @@ def edit_warehouse(item_id):
     if request.method == 'POST':
         item.quantity = float(request.form['quantity'])
         item.ata = request.form['ata']
+        item.notes = request.form.get("notes")
         db.session.commit()
         flash('Warehouse item updated successfully!', 'success')
         return redirect(url_for('main.warehouse'))
@@ -298,6 +398,7 @@ def edit_delivered(item_id):
         item.quantity = float(request.form['quantity'])
         item.delivery_source = request.form['delivery_source']
         item.delivery_date = request.form['delivery_date']
+        item.notes = request.form.get("notes")
         db.session.commit()
         flash('Delivered item updated successfully!', 'success')
         return redirect(url_for('main.delivered'))
@@ -312,20 +413,27 @@ def stock_order(order_id):
         flash('Unauthorized action.', 'danger')
         return redirect(url_for('main.dashboard'))
 
-    # Move order to warehouse stock
-    stock_item = WarehouseStock(
+    if not order.order_number or not order.product_name:
+        flash('Order must have an Order Number and Product Name before stocking.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    # Create WarehouseStock record
+    new_stock = WarehouseStock(
         user_id=current_user.id,
         order_number=order.order_number,
         product_name=order.product_name,
         quantity=order.quantity,
-        ata=order.ata
+        ata=order.ata,
+        transport=order.transport,
+        transit_status='In Stock'
     )
-    db.session.add(stock_item)
+    db.session.add(new_stock)
     db.session.delete(order)
     db.session.commit()
 
-    flash('Order successfully moved to Warehouse Stock.', 'success')
+    flash(f'Order {order.order_number} moved to Warehouse.', 'success')
     return redirect(url_for('main.dashboard'))
+
 
 @main.route('/deliver_direct/<int:order_id>', methods=['POST'])
 @login_required
@@ -335,20 +443,27 @@ def deliver_direct(order_id):
         flash("Unauthorized access", "danger")
         return redirect(url_for("main.dashboard"))
 
+    if not order.order_number or not order.product_name:
+        flash('Order must have an Order Number and Product Name before delivering.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
     delivered = DeliveredGoods(
         user_id=current_user.id,
         order_number=order.order_number,
         product_name=order.product_name,
         quantity=order.quantity,
         delivery_source="Direct from Transit",
-        delivery_date=order.ata
+        delivery_date=order.ata,
+        transport=order.transport,
     )
+
     db.session.add(delivered)
     db.session.delete(order)
     db.session.commit()
 
-    flash("Order delivered successfully", "success")
+    flash(f"Order {order.order_number} delivered successfully.", "success")
     return redirect(url_for("main.dashboard"))
+
 
 @main.route('/restore_to_dashboard/<int:item_id>', methods=['POST'])
 @login_required
@@ -430,3 +545,69 @@ def restore_from_delivered(item_id):
 
     flash('Delivered item restored.', 'success')
     return redirect(url_for('main.delivered'))
+
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@main.route('/upload_pod/<int:item_id>', methods=['POST'])
+@login_required
+def upload_pod(item_id):
+    file = request.files['pod']
+    if file and file.filename:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+
+        item = DeliveredGoods.query.get_or_404(item_id)
+        item.pod_filename = filename
+        db.session.commit()
+
+        flash("POD uploaded.", "success")
+    else:
+        flash("No file selected.", "danger")
+
+    return redirect(url_for('main.delivered'))
+
+@main.route('/view_pod/<filename>')
+@login_required
+def view_pod(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+@main.route('/delete_pod/<int:item_id>', methods=['POST'])
+@login_required
+def delete_pod(item_id):
+    item = DeliveredGoods.query.get_or_404(item_id)
+    if item.pod_filename:
+        file_path = os.path.join(UPLOAD_FOLDER, item.pod_filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        item.pod_filename = None
+        db.session.commit()
+        flash("POD deleted.", "success")
+    else:
+        flash("No POD file to delete.", "warning")
+    return redirect(url_for('main.delivered'))
+
+#Delete Manual Warehouse Entry
+@main.route('/delete_warehouse/<int:item_id>', methods=['POST'])
+@login_required
+def delete_warehouse(item_id):
+    item = WarehouseStock.query.get_or_404(item_id)
+    if item.user_id != current_user.id:
+        flash('Unauthorized action.', 'danger')
+        return redirect(url_for('main.warehouse'))
+
+    db.session.delete(item)
+    db.session.commit()
+    flash('Warehouse item deleted successfully.', 'success')
+    return redirect(url_for('main.warehouse'))
+
+@main.route('/stats')
+@login_required
+def stats():
+    from app.models import Order, WarehouseStock, DeliveredGoods
+    return {
+        "orders": Order.query.count(),
+        "warehouse": WarehouseStock.query.count(),
+        "delivered": DeliveredGoods.query.count()
+    }

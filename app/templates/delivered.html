@@ -1,84 +1,192 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-        <meta charset="UTF-8">
-        <title>Warehouse Stock</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-            tailwind.config = {
-                darkMode: 'class',
-            };
-        </script>
-        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
+    <meta charset="UTF-8">
+    <title>Delivered Goods</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+<body class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     {% include '_navbar.html' %}
-   
-    <div class="p-4">
+    <main class="flex-grow overflow-y-auto p-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
-          {% for category, message in messages %}
-            <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">{{ message }}</div>
-          {% endfor %}
+        {% for category, message in messages %}
+        <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">{{ message }}</div>
+        {% endfor %}
         {% endwith %}
+
         <h2 class="text-2xl font-bold mb-4">🚚 Delivered Goods</h2>
-        <!-- Search bar -->
+
+        <!-- Search -->
         <div class="mb-4">
-            <input type="text" id="search-warehouse" placeholder="Search stock (product, order #, status)"
-                   class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400
-                          bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            <input type="text" id="search-delivered" placeholder="Search delivered items" class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400
+                    bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" />
         </div>
-        <!-- Orders Table -->
-        <table 
-            id="warehouse-table" 
-            class="min-w-full bg-white dark:bg-gray-800 rounded shadow text-sm">
-            <thead>
-                <tr class="text-center bg-gray-200 dark:bg-gray-700">
-                    <th class="px-4 py-2">Order #</th>
-                    <th class="px-4 py-2">Product Name</th>
-                    <th class="px-4 py-2">Quantity</th>
-                    <th class="px-4 py-2">Delivery Source</th>
-                    <th class="px-4 py-2">Delivery Date</th>
-                    <th class="px-4 py-2">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in delivered_items %}
-                <tr class="text-center even:bg-gray-100 dark:even:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700">
-                    <td class="px-4 py-2">{{ item.order_number }}</td>
-                    <td class="px-4 py-2">{{ item.product_name }}</td>
-                    <td class="px-4 py-2">{{ item.quantity }}</td>
-                    <td class="px-4 py-2">{{ item.delivery_source }}</td>
-                    <td class="px-4 py-2">
-                    {% if item.delivery_date.__class__.__name__ == 'datetime' %}
-                        {{ item.delivery_date.strftime('%d.%m.%y') }}
-                    {% else %}
-                        {{ item.delivery_date }}
-                    {% endif %}
-                    </td>
 
-                    <td class="px-4 py-2 space-y-1">
-                        <!-- Edit -->
-                        <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}"
-                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">
-                            Edit
-                        </a>
+        <div class="orders-table-container overflow-auto h-full border rounded shadow w-full">
+            <table id="delivered-table"
+                class="w-full table-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-sm">
+                <thead class="sticky top-0 z-10 bg-gray-200 dark:bg-gray-800">
+                    <tr class="text-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 uppercase">
+                        <th class="px-4 py-2 cursor-pointer" data-sort="order_number">Order # <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-4 py-2 cursor-pointer" data-sort="product_name">Product Name <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-4 py-2 cursor-pointer" data-sort="quantity">Quantity <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-4 py-2 cursor-pointer" data-sort="delivery_date">Delivery Date <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-4 py-2 cursor-pointer" data-sort="transport">Transport <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-4 py-2">Source</th>
+                        <th class="px-4 py-2">Actions</th>
+                        <th class="px-4 py-2">Notes</th>
+                        <th class="px-4 py-2">POD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in delivered_items %}
+                    <tr
+                        class="text-center even:bg-gray-100 dark:even:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700">
+                        <td class="px-4 py-2">{{ item.order_number }}</td>
+                        <td class="px-4 py-2">{{ item.product_name }}</td>
+                        <td class="px-4 py-2">{{ item.quantity }}</td>
+                        <td class="px-4 py-2">
+                            {% if item.delivery_date %}{{ item.delivery_date | format_date }}{% else %}—{% endif %}
+                        </td>
+                        <td class="px-4 py-2 text-xs">
+                            {% if item.transport == 'air' %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">✈️ Air</span>
+                            {% elif item.transport == 'sea' %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚢 Sea</span>
+                            {% elif item.transport == 'truck' %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚚 Truck</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="px-4 py-2 text-xs">
+                            {% if item.delivery_source == 'Direct from Transit' %}
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Direct from Transit</span>
+                            {% elif item.delivery_source == 'From Warehouse' %}
+                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">From Warehouse</span>
+                            {% else %}
+                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">—</span>
+                            {% endif %}
+                        </td>
 
-                        <!-- Restore -->
-                        <form method="POST" action="{{ url_for('main.restore_from_delivered', item_id=item.id) }}" class="inline">
-                            <button type="submit"
-                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">
-                                Restore
-                            </button>
-                        </form>
-                    </td>
 
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                        <td class="px-4 py-2 space-y-1">
+                            <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}"
+                                class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">Edit</a>
+                            <form method="POST" action="{{ url_for('main.restore_from_delivered', item_id=item.id) }}"
+                                class="inline">
+                                <button type="submit"
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">Restore</button>
+                            </form>
+                        </td>
+                        <td class="px-4 py-2">
+                            {% if item.notes %}
+                            <span title="{{ item.notes }}"
+                                class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded whitespace-nowrap max-w-[150px] overflow-hidden text-ellipsis inline-block">
+                                {{ item.notes[:30] }}{% if item.notes|length > 30 %}...{% endif %}
+                            </span>
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-2 text-xs text-center">
+                            {% if item.pod_filename %}
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{{ url_for('main.view_pod', filename=item.pod_filename) }}" target="_blank"
+                                    class="text-blue-600 hover:underline">📎 View</a>
+                                <form method="POST" action="{{ url_for('main.delete_pod', item_id=item.id) }}">
+                                    <button type="submit" class="text-red-500 hover:underline"
+                                        title="Delete POD">🗑️</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('main.upload_pod', item_id=item.id) }}"
+                                enctype="multipart/form-data" class="flex flex-col items-center space-y-1">
+                                <label for="pod-{{ item.id }}"
+                                    class="cursor-pointer text-blue-600 text-sm hover:underline">📤 Upload</label>
+                                <input id="pod-{{ item.id }}" name="pod" type="file" accept=".pdf,.jpg,.jpeg,.png"
+                                    class="hidden" onchange="this.form.submit()">
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('search-delivered');
+            const headers = document.querySelectorAll('th[data-sort]');
+            let currentSort = { key: '', direction: '' };
+
+            searchInput.addEventListener('input', () => {
+                const term = searchInput.value.toLowerCase();
+                const rows = document.querySelectorAll('#delivered-table tbody tr');
+                rows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    row.style.display = rowText.includes(term) ? '' : 'none';
+                });
+            });
+
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const key = header.getAttribute('data-sort');
+                    const ascending = currentSort.key === key && currentSort.direction === 'asc' ? false : true;
+                    currentSort = { key, direction: ascending ? 'asc' : 'desc' };
+
+                    sortTableByKey(key, ascending);
+                    updateSortIndicators();
+                });
+            });
+
+            function sortTableByKey(key, ascending) {
+                const cellMap = {
+                    order_number: 0,
+                    product_name: 1,
+                    quantity: 2,
+                    delivery_date: 3,
+                    transport: 4
+                };
+
+                const rows = Array.from(document.querySelectorAll('#delivered-table tbody tr'));
+                const sortedRows = rows.sort((a, b) => {
+                    let valA = a.cells[cellMap[key]].innerText.trim().toLowerCase();
+                    let valB = b.cells[cellMap[key]].innerText.trim().toLowerCase();
+                    if (key === "quantity") {
+                        return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+                    }
+                    return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                });
+
+                const tbody = document.querySelector('#delivered-table tbody');
+                tbody.innerHTML = '';
+                sortedRows.forEach(row => tbody.appendChild(row));
+            }
+
+            function updateSortIndicators() {
+                headers.forEach(h => {
+                    const indicator = h.querySelector('.sort-indicator');
+                    if (h.getAttribute('data-sort') === currentSort.key) {
+                        indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                    } else {
+                        indicator.textContent = '';
+                    }
+                });
+            }
+        });
+    </script>
+    <!-- Dark mode -->
     <script>
         const toggle = document.getElementById('dark-mode-toggle');
 
@@ -93,17 +201,6 @@
             );
         });
     </script>
-    <script>
-        const searchWarehouse = document.getElementById('search-warehouse');
-        const warehouseRows = document.querySelectorAll('#warehouse-table tbody tr');
-              
-        searchWarehouse.addEventListener('input', () => {
-            const term = searchWarehouse.value.toLowerCase();
-            warehouseRows.forEach(row => {
-                const rowText = row.textContent.toLowerCase();
-                row.style.display = rowText.includes(term) ? '' : 'none';
-            });
-        });
-    </script>
 </body>
+
 </html>

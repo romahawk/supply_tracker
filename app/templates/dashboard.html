@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Tracker Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -15,89 +18,176 @@
             darkMode: 'class',
         }
     </script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 </head>
-<body 
-    class="m-0 p-0 bg-gray-100 dark:bg-gray-900 ">
+
+<body class="m-0 p-0 bg-gray-100 dark:bg-gray-900 ">
     {% include '_navbar.html' %}
 
     <!-- Add New Order Form (Collapsible) -->
-    <div id="add-order-section" class="form-section p-6 bg-whitedark:bg-gray-900 rounded-lg shadow-md" style="display: none;">
-            <h2 class="text-xl font-semibold mb-4">Add New Order</h2>
-            <form id="add-order-form" class="add-order-form grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="form-group">
-                    <label for="order_date" class="block text-sm font-medium ">Order Date:</label>
-                    <input type="date" id="order_date" name="order_date" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+    <div id="add-order-section" class="form-section p-6 bg-white dark:bg-gray-900 rounded-lg shadow-md"
+        style="display: none;">
+        <h2 class="text-xl font-semibold mb-4">Add New Order</h2>
+        <form id="add-order-form" class="add-order-form grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="form-group">
+                <label for="order_date" class="block text-sm font-medium ">Order Date:</label>
+                <input type="date" id="order_date" name="order_date" required
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="order_number" class="block text-sm font-medium ">Order #:</label>
+                <input type="text" id="order_number" name="order_number" required
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="product_name" class="block text-sm font-medium ">Product Name:</label>
+                <input type="text" id="product_name" name="product_name" required list="product-options"
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                <datalist id="product-options">
+                    {% for product in product_list %}
+                    <option value="{{ product }}">
+                        {% endfor %}
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label for="buyer" class="block text-sm font-medium ">Buyer:</label>
+                <input type="text" id="buyer" name="buyer" required list="buyer-options"
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                <datalist id="buyer-options">
+                    <option value="AN">
+                    <option value="JL">
+                    <option value="LH">
+                    <option value="OS">
+                        <!-- Add more -->
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label for="responsible" class="block text-sm font-medium ">Responsible:</label>
+                <input type="text" id="responsible" name="responsible" required list="responsible-options"
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                <datalist id="responsible-options">
+                    <option value="SM">
+                    <option value="AK">
+                    <option value="ED">
+                    <option value="SS">
+                        <!-- Add more -->
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label for="quantity" class="block text-sm font-medium ">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" step="0.01" required
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="required_delivery" class="block text-sm font-medium ">Required Delivery:</label>
+                <div class="relative">
+                    <input type="text" id="required_delivery" name="required_delivery" required
+                        class="mt-1 p-2 w-full border rounded-md bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        placeholder="e.g. ASAP, Q2 2025" list="delivery-options">
+                    <datalist id="delivery-options">
+                        <option value="ASAP">
+                        <option value="By January {{ now.year }}">
+                        <option value="By February {{ now.year }}">
+                        <option value="By March {{ now.year }}">
+                        <option value="By April {{ now.year }}">
+                        <option value="By May {{ now.year }}">
+                        <option value="By June {{ now.year }}">
+                        <option value="By July {{ now.year }}">
+                        <option value="By August {{ now.year }}">
+                        <option value="By September {{ now.year }}">
+                        <option value="By October {{ now.year }}">
+                        <option value="By November {{ now.year }}">
+                        <option value="By December {{ now.year }}">
+                        <option value="By Q1 {{ now.year }}">
+                        <option value="By Q2 {{ now.year }}">
+                        <option value="By Q3 {{ now.year }}">
+                        <option value="By Q4 {{ now.year }}">
+                        <option value="By End of {{ now.year }}">
+                    </datalist>
                 </div>
-                <div class="form-group">
-                    <label for="order_number" class="block text-sm font-medium ">Order #:</label>
-                    <input type="text" id="order_number" name="order_number" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="product_name" class="block text-sm font-medium ">Product Name:</label>
-                    <input type="text" id="product_name" name="product_name" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="buyer" class="block text-sm font-medium ">Buyer:</label>
-                    <input type="text" id="buyer" name="buyer" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="responsible" class="block text-sm font-medium ">Responsible:</label>
-                    <input type="text" id="responsible" name="responsible" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="quantity" class="block text-sm font-medium ">Quantity:</label>
-                    <input type="number" id="quantity" name="quantity" step="0.01" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="required_delivery" class="block text-sm font-medium ">Required Delivery:</label>
-                    <input type="date" id="required_delivery" name="required_delivery" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="terms_of_delivery" class="block text-sm font-medium ">Terms of Delivery:</label>
-                    <input type="text" id="terms_of_delivery" name="terms_of_delivery" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="payment_date" class="block text-sm font-medium ">Payment Date:</label>
-                    <input type="date" id="payment_date" name="payment_date" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="etd" class="block text-sm font-medium ">ETD:</label>
-                    <input type="date" id="etd" name="etd" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="eta" class="block text-sm font-medium ">ETA:</label>
-                    <input type="date" id="eta" name="eta" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="ata" class="block text-sm font-medium ">ATA:</label>
-                    <input type="date" id="ata" name="ata" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                </div>
-                <div class="form-group">
-                    <label for="transit_status" class="block text-sm font-medium ">Transit Status:</label>
-                    <select id="transit_status" name="transit_status" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                        <option value="in process">In Process</option>
-                        <option value="en route">En Route</option>
-                        <option value="arrived">Arrived</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="transport" class="block text-sm font-medium ">Transport:</label>
-                    <select id="transport" name="transport" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
-                        <option value="sea">Sea</option>
-                        <option value="air">Air</option>
-                        <option value="truck">Truck</option>
-                    </select>
-                </div>
-                <div class="form-group col-span-1 sm:col-span-2 lg:col-span-3">
-                    <button type="submit" class="w-full p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Add Order</button>
-                </div>
-            </form>
+
+            </div>
+            <div class="form-group">
+                <label for="terms_of_delivery" class="block text-sm font-medium ">Terms of Delivery:</label>
+                <input type="text" id="terms_of_delivery" name="terms_of_delivery" required
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="payment_date" class="block text-sm font-medium ">Payment Date:</label>
+                <input type="date" id="payment_date" name="payment_date"
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="etd" class="block text-sm font-medium ">ETD:</label>
+                <input type="date" id="etd" name="etd" required
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="eta" class="block text-sm font-medium ">ETA:</label>
+                <input type="date" id="eta" name="eta" required
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="ata" class="block text-sm font-medium ">ATA:</label>
+                <input type="date" id="ata" name="ata"
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            </div>
+            <div class="form-group">
+                <label for="transit_status" class="block text-sm font-medium ">Transit Status:</label>
+                <select id="transit_status" name="transit_status" required
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                    <option value="in process">In Process</option>
+                    <option value="en route">En Route</option>
+                    <option value="arrived">Arrived</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="transport" class="block text-sm font-medium ">Transport:</label>
+                <select id="transport" name="transport"
+                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                    required>
+                    <option value="sea">Sea</option>
+                    <option value="air">Air</option>
+                    <option value="truck">Truck</option>
+                </select>
+            </div>
+            <div class="form-group col-span-1 sm:col-span-2 lg:col-span-3">
+                <button type="submit"
+                    class="w-full p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Add
+                    Order</button>
+            </div>
+        </form>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endwith %}
+
+    <!-- Dashboard Content -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white dark:bg-gray-800 shadow rounded p-4 text-center">
+            <div class="text-sm text-gray-500 dark:text-gray-400">🚚 Transit / Incoming Orders</div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ in_transit_count }}</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 shadow rounded p-4 text-center">
+            <div class="text-sm text-gray-500 dark:text-gray-400">📦 Stocked Items / In Stock</div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ warehouse_count }}</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 shadow rounded p-4 text-center">
+            <div class="text-sm text-gray-500 dark:text-gray-400">✅ Completed Deliveries</div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ delivered_count }}</div>
+        </div>
     </div>
 
     <div class="p-4 sm:p-6 space-y-6">
         <!-- Your Orders Table -->
-        <h2 class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
-        Your Orders
+        <h2
+            class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
+            Your Orders
         </h2>
         <!-- Search bar -->
         <div class="mb-4">
@@ -108,22 +198,42 @@
         <div class="orders-table-container overflow-x-auto">
             <table class="min-w-[800px] bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
                 <thead class="bg-gray-200 dark:bg-gray-800">
-                    <tr class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs sm:text-sm">
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="order_date">Order Date <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="order_number">Order # <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="product_name">Product Name <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="buyer">Buyer <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="responsible">Responsible <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="quantity">Quantity <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="required_delivery">Required Delivery <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="terms_of_delivery">Terms of Delivery <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="payment_date">Payment Date <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="etd">ETD <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="eta">ETA <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="ata">ATA <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="transit_status">Transit Status <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left" data-sort="transport">Transport <span class="sort-indicator"></span></th>
-                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-left">Actions</th>
+                    <tr
+                        class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs sm:text-sm">
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="order_date">Order Date <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="order_number">Order # <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="product_name">Product Name <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="buyer">Buyer <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="responsible">Responsible <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="quantity">Quantity <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="required_delivery">Required
+                            Delivery
+                            <span class="sort-indicator"></span>
+                        </th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="terms_of_delivery">Terms of
+                            Delivery
+                            <span class="sort-indicator"></span>
+                        </th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="payment_date">Payment Date <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="etd">ETD <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="eta">ETA <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="ata">ATA <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="transit_status">Transit Status
+                            <span class="sort-indicator"></span>
+                        </th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center" data-sort="transport">Transport <span
+                                class="sort-indicator"></span></th>
+                        <th class="px-2 py-1 sm:px-4 sm:py-3 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-300 dark:divide-gray-600 bg-gray-100 dark:bg-gray-900">
@@ -132,94 +242,130 @@
             </table>
         </div>
 
-        <h2 class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
-        📊 Timeline
+        <h2
+            class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
+            📊 Timeline
         </h2>
         <!-- Year Filter Dropdown -->
         <div class="mb-4">
-            <label for="year-filter" class="text-sm font-medium text-gray-900 dark:text-gray-500 mr-2">Select Year:</label>
-            <select id="year-filter" class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+            <label for="year-filter" class="text-sm font-medium text-gray-900 dark:text-gray-500 mr-2">Select
+                Year:</label>
+            <select id="year-filter"
+                class="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
                 <!-- Options will be populated dynamically -->
             </select>
         </div>
         <!-- Legend for Timeline Chart -->
         <div class="legend flex space-x-4 mb-4">
             <span class="legend-item cursor-pointer" data-status="in process">
-                <span class="legend-color inline-block w-4 h-4 mr-2" style="background-color: rgba(255, 165, 0, 0.8);"></span> In Process
+                <span class="legend-color inline-block w-4 h-4 mr-2"
+                    style="background-color: rgba(255, 165, 0, 0.8);"></span> In Process
             </span>
             <span class="legend-item cursor-pointer" data-status="en route">
-                <span class="legend-color inline-block w-4 h-4 mr-2" style="background-color: rgba(0, 123, 255, 0.8);"></span> En Route
+                <span class="legend-color inline-block w-4 h-4 mr-2"
+                    style="background-color: rgba(0, 123, 255, 0.8);"></span> En Route
             </span>
             <span class="legend-item cursor-pointer" data-status="arrived">
-                <span class="legend-color inline-block w-4 h-4 mr-2" style="background-color: rgba(144, 238, 144, 0.8);"></span> Arrived
+                <span class="legend-color inline-block w-4 h-4 mr-2"
+                    style="background-color: rgba(144, 238, 144, 0.8);"></span> Arrived
             </span>
         </div>
-        <div id="timeline-loading" style="overflow-y: auto; max-height: 800px;" class="text-gray-600 dark:text-gray-400">Loading timeline...</div>
+        <div id="timeline-loading" style="overflow-y: auto; max-height: 800px;"
+            class="text-gray-600 dark:text-gray-400">Loading timeline...</div>
         <div class="timeline-container bg-gray-100 dark:bg-gray-900 p-4 rounded-lg shadow-md">
             <canvas id="timelineChart"></canvas>
         </div>
         <div class="flex justify-center space-x-4 mt-4">
-            <button id="back-btn" class="load-more-btn bg-blue-500 hover:bg-blue-700 text-gray-600 dark:text-gray-300 font-bold py-2 px-4 rounded hidden" onclick="loadPreviousOrders()">Back</button>
-            <button id="load-more-btn" class="load-more-btn bg-blue-500 hover:bg-blue-700 text-gray-600 dark:text-gray-300 font-bold py-2 px-4 rounded hidden" onclick="loadMoreOrders()">Load More</button>
+            <button id="back-btn"
+                class="load-more-btn bg-blue-500 hover:bg-blue-700 text-gray-600 dark:text-gray-300 font-bold py-2 px-4 rounded hidden"
+                onclick="loadPreviousOrders()">Back</button>
+            <button id="load-more-btn"
+                class="load-more-btn bg-blue-500 hover:bg-blue-700 text-gray-600 dark:text-gray-300 font-bold py-2 px-4 rounded hidden"
+                onclick="loadMoreOrders()">Load More</button>
         </div>
 
         <!-- Edit Order Modal -->
-        <div id="edit-order-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div id="edit-order-modal"
+            class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-2xl">
                 <h2 class="text-xl font-semibold mb-4 ">Edit Order</h2>
                 <form id="edit-order-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <input type="hidden" id="edit-order-id" name="order_id">
                     <div>
                         <label for="edit-order_date" class="block text-sm font-medium ">Order Date</label>
-                        <input type="date" id="edit-order_date" name="order_date" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="date" id="edit-order_date" name="order_date"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-order_number" class="block text-sm font-medium ">Order Number</label>
-                        <input type="text" id="edit-order_number" name="order_number" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="text" id="edit-order_number" name="order_number"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-product_name" class="block text-sm font-medium ">Product Name</label>
-                        <input type="text" id="edit-product_name" name="product_name" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="text" id="edit-product_name" name="product_name"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-buyer" class="block text-sm font-medium ">Buyer</label>
-                        <input type="text" id="edit-buyer" name="buyer" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="text" id="edit-buyer" name="buyer"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-responsible" class="block text-sm font-medium ">Responsible</label>
-                        <input type="text" id="edit-responsible" name="responsible" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="text" id="edit-responsible" name="responsible"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-quantity" class="block text-sm font-medium ">Quantity</label>
-                        <input type="number" id="edit-quantity" name="quantity" step="0.01" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="number" id="edit-quantity" name="quantity" step="0.01"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-required_delivery" class="block text-sm font-medium ">Required Delivery</label>
-                        <input type="date" id="edit-required_delivery" name="required_delivery" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="text" id="edit-required_delivery" name="required_delivery"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-terms_of_delivery" class="block text-sm font-medium ">Terms of Delivery</label>
-                        <input type="text" id="edit-terms_of_delivery" name="terms_of_delivery" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="text" id="edit-terms_of_delivery" name="terms_of_delivery"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-payment_date" class="block text-sm font-medium ">Payment Date</label>
-                        <input type="date" id="edit-payment_date" name="payment_date" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                        <input type="date" id="edit-payment_date" name="payment_date"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
                     </div>
                     <div>
                         <label for="edit-etd" class="block text-sm font-medium ">ETD</label>
-                        <input type="date" id="edit-etd" name="etd" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="date" id="edit-etd" name="etd"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-eta" class="block text-sm font-medium ">ETA</label>
-                        <input type="date" id="edit-eta" name="eta" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <input type="date" id="edit-eta" name="eta"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                     </div>
                     <div>
                         <label for="edit-ata" class="block text-sm font-medium ">ATA</label>
-                        <input type="date" id="edit-ata" name="ata" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                        <input type="date" id="edit-ata" name="ata"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
                     </div>
                     <div>
                         <label for="edit-transit_status" class="block text-sm font-medium ">Transit Status</label>
-                        <select id="edit-transit_status" name="transit_status" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <select id="edit-transit_status" name="transit_status"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                             <option value="in process">In Process</option>
                             <option value="en route">En Route</option>
                             <option value="arrived">Arrived</option>
@@ -227,15 +373,20 @@
                     </div>
                     <div>
                         <label for="edit-transport" class="block text-sm font-medium ">Transport</label>
-                        <select id="edit-transport" name="transport" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                        <select id="edit-transport" name="transport"
+                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                            required>
                             <option value="sea">Sea</option>
                             <option value="air">Air</option>
                             <option value="truck">Truck</option>
                         </select>
                     </div>
                     <div class="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-end space-x-4">
-                        <button type="button" class="close px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Save Changes</button>
+                        <button type="button"
+                            class="close px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Save
+                            Changes</button>
                     </div>
                 </form>
             </div>
@@ -243,20 +394,21 @@
     </div>
 
     <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const searchInput = document.getElementById("search-dashboard");
-                const orderRows = document.querySelectorAll("table tbody tr");
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchInput = document.getElementById("search-dashboard");
+            const orderRows = document.querySelectorAll("table tbody tr");
 
-                searchInput.addEventListener("input", () => {
-                    const term = searchInput.value.toLowerCase();
-                    orderRows.forEach(row => {
-                        const rowText = row.textContent.toLowerCase();
-                        row.style.display = rowText.includes(term) ? "" : "none";
-                    });
+            searchInput.addEventListener("input", () => {
+                const term = searchInput.value.toLowerCase();
+                orderRows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    row.style.display = rowText.includes(term) ? "" : "none";
                 });
             });
+        });
     </script>
 
-    
+
 </body>
+
 </html>

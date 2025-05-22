@@ -1,47 +1,90 @@
 <!-- templates/login.html -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - Supply Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <h1>Supply Tracker</h1>
 
-        {% with messages = get_flashed_messages() %}
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div class="bg-white shadow-lg rounded-xl w-full max-w-4xl p-8">
+
+            <!-- 🔷 App Logo + Name Header -->
+            <div class="flex flex-col items-center mb-10">
+                <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Supply Tracker Logo"
+                    class="w-16 h-16 mb-2">
+                <h1 class="text-3xl font-bold text-blue-400 tracking-wide">Supply Tracker</h1>
+            </div>
+
+            {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div class="flash-messages">
-                    {% for message in messages %}
-                        <p>{{ message }}</p>
-                    {% endfor %}
-                </div>
+            <div class="mb-6 text-sm text-red-600 font-medium text-center">
+                {% for message in messages %}
+                <p>{{ message }}</p>
+                {% endfor %}
+            </div>
             {% endif %}
-        {% endwith %}
-        
-        <h2>Login</h2>
-        <form method="POST" action="{{ url_for('main.login') }}">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+            {% endwith %}
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
 
-            <button type="submit">Login</button>
-        </form>
+            <!-- 💻 Login + Register Forms Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-        <h2>Register</h2>
-        <form method="POST" action="{{ url_for('main.register') }}">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+                <!-- 🔐 Login Form -->
+                <div class="flex flex-col min-h-[300px]">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">🔐 <span class="ml-1">Login</span></h2>
+                    <form method="POST" action="{{ url_for('main.login') }}" class="flex flex-col flex-grow space-y-4">
+                        <input type="text" name="username" placeholder="Username" autocomplete="username"
+                            class="w-full border px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                        <input type="password" name="password" placeholder="Password" autocomplete="current-password"
+                            class="w-full border px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+                        <div class="mt-auto flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="remember" name="remember" class="mr-2">
+                                <label for="remember" class="text-sm text-gray-700">Remember Me</label>
+                            </div>
+                            <button type="submit"
+                                class="ml-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">
+                                Login
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-            <button type="submit">Register</button>
-        </form>
+                <!-- 📝 Register Form -->
+                <div class="flex flex-col min-h-[300px]">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">📝 <span class="ml-1">Register</span></h2>
+                    <form method="POST" action="{{ url_for('main.register') }}"
+                        class="flex flex-col flex-grow space-y-4">
+                        <input type="text" name="username" placeholder="Username"
+                            class="w-full border px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                            required>
+                        <input type="password" name="password" placeholder="Password"
+                            class="w-full border px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                            required>
+
+                        <div class="mt-auto flex items-center justify-between">
+                            <div class="w-40"></div>
+                            <button type="submit"
+                                class="ml-4 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-200">
+                                Register
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
     </div>
+
+
 </body>
+
 </html>
