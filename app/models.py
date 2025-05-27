@@ -34,6 +34,7 @@ class Order(db.Model):
     ata = db.Column(db.String(10))
     transit_status = db.Column(db.String(20), nullable=False)
     transport = db.Column(db.String(20), nullable=False)
+    pod_filename = db.Column(db.String(120))  # New field added
 
 class WarehouseStock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -46,8 +47,7 @@ class WarehouseStock(db.Model):
     notes = db.Column(db.String(120))        # optional manual tag or comments
     transport = db.Column(db.String(20))
     is_manual = db.Column(db.Boolean, default=False)     # 'sea', 'air', or 'truck'
-
-
+    pod_filename = db.Column(db.String(120))  # New field added
 
 class DeliveredGoods(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -914,14 +914,13 @@ document.addEventListener("DOMContentLoaded", function () {
             ];
             dateFields.forEach((field) => {
               const value = order[field];
-              if (value) {
+              const input = document.getElementById(`edit-${field}`);
+              if (input) {
                 const date = parseDate(value);
-                const formattedDate = date.toISOString().split("T")[0];
-                document.getElementById(`edit-${field}`).value = formattedDate;
-              } else {
-                document.getElementById(`edit-${field}`).value = "";
+                input.value = date ? date.toISOString().split("T")[0] : "";
               }
             });
+
             document.getElementById("edit-order_number").value =
               order.order_number;
             document.getElementById("edit-product_name").value =

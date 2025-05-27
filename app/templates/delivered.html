@@ -98,25 +98,23 @@
                         </td>
 
                         <td class="px-4 py-2 text-xs text-center">
-                            {% if item.pod_filename %}
-                            <div class="flex items-center justify-center space-x-2">
-                                <a href="{{ url_for('upload.view_pod', filename=item.pod_filename) }}" target="_blank"
-                                    class="text-blue-600 hover:underline">📎 View</a>
-                                <form method="POST" action="{{ url_for('upload.delete_pod', item_id=item.id) }}">
-                                    <button type="submit" class="text-red-500 hover:underline"
-                                        title="Delete POD">🗑️</button>
-                                </form>
-                            </div>
-                            {% else %}
-                            <form method="POST" action="{{ url_for('upload.upload_pod', item_id=item.id) }}"
-                                enctype="multipart/form-data" class="flex flex-col items-center space-y-1">
-                                <label for="pod-{{ item.id }}"
-                                    class="cursor-pointer text-blue-600 text-sm hover:underline">📤 Upload</label>
-                                <input id="pod-{{ item.id }}" name="pod" type="file" accept=".pdf,.jpg,.jpeg,.png"
-                                    class="hidden" onchange="this.form.submit()">
-                            </form>
-                            {% endif %}
-                        </td>
+  {% if item.pod_filename %}
+    <div class="flex items-center justify-center space-x-2">
+      <a href="{{ url_for('upload.view_pod', filename=item.pod_filename) }}" target="_blank" class="text-blue-600 hover:underline">📎 View</a>
+
+      <form method="POST" action="{{ url_for('upload.delete_pod', item_id=item.id) }}">
+        <button type="submit" class="text-red-500 hover:underline" title="Delete POD">🗑️</button>
+      </form>
+    </div>
+  {% else %}
+    <form method="POST" action="{{ url_for('upload.upload_pod', item_id=item.id) }}"
+          enctype="multipart/form-data" class="flex flex-col items-center space-y-1">
+      <label for="pod-{{ item.id }}" class="cursor-pointer text-blue-600 text-sm hover:underline">📤 Upload</label>
+      <input id="pod-{{ item.id }}" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" onchange="this.form.submit()">
+    </form>
+  {% endif %}
+</td>
+
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -446,3 +446,38 @@ button:hover {
 .delete-button:hover {
   background-color: #dc2626 !important; /* red-600 */
 }
+
+
+/* Enhanced Edit Order Modal Layer */
+#edit-order-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: none;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Prevent sticky headers from overlapping modal */
+table thead th {
+  z-index: 20;
+}
+
+/* Improved modal content layout */
+#edit-order-modal .modal-content form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+#edit-order-modal .modal-content .form-group {
+  flex: 1 1 45%;
+  min-width: 200px;
+}
+
+/* Modal action buttons layout */
+#edit-order-modal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}

@@ -1,6 +1,7 @@
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from app.models import db, WarehouseStock, DeliveredGoods
+from app.models import db, Order, WarehouseStock, DeliveredGoods
 from datetime import datetime
 
 warehouse_bp = Blueprint('warehouse', __name__)
@@ -38,13 +39,36 @@ def add_warehouse_manual():
         )
         db.session.add(new_item)
         db.session.commit()
-
         flash("Manual order successfully added to warehouse.", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Error adding manual order: {e}", "danger")
 
     return redirect(url_for('warehouse.warehouse'))
+
+@warehouse_bp.route('/stock_order/<int:order_id>', methods=['POST'])
+@login_required
+def stock_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+
+    new_stock = WarehouseStock(
+        user_id=order.user_id,
+        order_number=order.order_number,
+        product_name=order.product_name,
+        quantity=order.quantity,
+        ata=order.ata,
+        transport=order.transport,
+        notes="Stocked from order"
+    )
+    db.session.add(new_stock)
+    db.session.delete(order)
+    db.session.commit()
+
+    flash("Order moved to warehouse.", "success")
+    return redirect(url_for('dashboard.dashboard'))
 
 @warehouse_bp.route('/deliver_partial/<int:item_id>', methods=['POST'])
 @login_required
