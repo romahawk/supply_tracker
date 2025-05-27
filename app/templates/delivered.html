@@ -80,7 +80,8 @@
                         <td class="px-4 py-2 space-y-1">
                             <a href="{{ url_for('delivered.edit_delivered', item_id=item.id) }}"
                                 class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">Edit</a>
-                            <form method="POST" action="{{ url_for('restore.restore_from_delivered', item_id=item.id) }}"
+                            <form method="POST"
+                                action="{{ url_for('restore.restore_from_delivered', item_id=item.id) }}"
                                 class="inline">
                                 <button type="submit"
                                     class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">Restore</button>
@@ -98,22 +99,36 @@
                         </td>
 
                         <td class="px-4 py-2 text-xs text-center">
-  {% if item.pod_filename %}
-    <div class="flex items-center justify-center space-x-2">
-      <a href="{{ url_for('upload.view_pod', filename=item.pod_filename) }}" target="_blank" class="text-blue-600 hover:underline">📎 View</a>
+                            {% if item.pod_filename %}
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{{ url_for('upload.view_pod', filename=item.pod_filename) }}" target="_blank"
+                                    class="text-blue-600 hover:underline">📎 View</a>
+                                <form method="POST" action="{{ url_for('upload.delete_pod', item_id=item.id) }}">
+                                    <button type="submit" class="text-red-500 hover:underline"
+                                        title="Delete POD">🗑️</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('upload.upload_pod', item_id=item.id) }}"
+                                enctype="multipart/form-data" class="flex flex-col items-center space-y-1">
+                                <label for="pod-{{ item.id }}"
+                                    class="cursor-pointer text-blue-600 text-sm hover:underline relative">
+                                    📤 Upload
+                                    <span
+                                        class="absolute top-full mt-1 left-0 w-64 bg-gray-800 text-white text-xs rounded px-2 py-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        Max file size: 100KB. Compress your PDF
+                                        <a href="https://smallpdf.com/compress-pdf" target="_blank"
+                                            class="underline text-blue-400">here</a>.
+                                    </span>
+                                </label>
+                                <input id="pod-{{ item.id }}" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png"
+                                    class="hidden" onchange="this.form.submit()">
+                            </form>
 
-      <form method="POST" action="{{ url_for('upload.delete_pod', item_id=item.id) }}">
-        <button type="submit" class="text-red-500 hover:underline" title="Delete POD">🗑️</button>
-      </form>
-    </div>
-  {% else %}
-    <form method="POST" action="{{ url_for('upload.upload_pod', item_id=item.id) }}"
-          enctype="multipart/form-data" class="flex flex-col items-center space-y-1">
-      <label for="pod-{{ item.id }}" class="cursor-pointer text-blue-600 text-sm hover:underline">📤 Upload</label>
-      <input id="pod-{{ item.id }}" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" onchange="this.form.submit()">
-    </form>
-  {% endif %}
-</td>
+                            {% endif %}
+                        </td>
+
+
 
                     </tr>
                     {% endfor %}
