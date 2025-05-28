@@ -29,11 +29,8 @@ def index():
 @dashboard_bp.route('/dashboard')
 @login_required
 def dashboard():
-    if can_view_all(current_user.role):
-        orders = Order.query.order_by(Order.order_date.asc()).all()
-    else:
-        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
-
+    from app.roles import can_view_all
+    from app.models import Order, WarehouseStock, DeliveredGoods
 
     if can_view_all(current_user.role):
         in_transit_count = Order.query.count()
@@ -44,16 +41,14 @@ def dashboard():
         warehouse_count = WarehouseStock.query.filter_by(user_id=current_user.id).count()
         delivered_count = DeliveredGoods.query.filter_by(user_id=current_user.id).count()
 
-
     return render_template(
         'dashboard.html',
-        orders=orders,
-        now=datetime.now(),
-        product_list=load_products(),
         in_transit_count=in_transit_count,
         warehouse_count=warehouse_count,
-        delivered_count=delivered_count
+        delivered_count=delivered_count,
+        now=datetime.now()  # ✅ Add this line
     )
+
 
 @dashboard_bp.route('/delete_order/<int:order_id>', methods=['POST'])
 @login_required
