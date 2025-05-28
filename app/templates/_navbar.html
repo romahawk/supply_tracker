@@ -44,24 +44,37 @@
 
     <a href="{{ url_for('delivered.delivered') }}"
        class="px-4 py-1.5 rounded-md font-medium transition-all duration-200
-       {{ 'bg-indigo-600 text-white text-lg font-bold' if current_path.startswith(url_for('delivered.delivered')) else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
+       {{ 'bg-purple-600 text-white text-lg font-bold' if current_path.startswith(url_for('delivered.delivered')) else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
        hover:bg-opacity-80 hover:shadow-md">
       📬 Delivered
     </a>
 
     {% if current_path.startswith(url_for('dashboard.dashboard')) %}
-    <button class="w-[180px] px-3 py-1 bg-green-500 text-white text-sm rounded-md hover:bg-green-700 toggle-form-btn">
-      ➕ Add New Order
+  <button 
+    class="w-[180px] flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-emerald-700 transition toggle-form-btn"
+    title="Add a new incoming order"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>
+    Add New Order
+  </button>
+
+  {% elif current_path.startswith(url_for('warehouse.warehouse')) %}
+    <button 
+      onclick="document.getElementById('manual-order-form').classList.toggle('hidden')"
+      class="w-[180px] flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-emerald-700 transition"
+      title="Create a new manually stocked order"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Add Manual Order
     </button>
-    {% elif current_path.startswith(url_for('warehouse.warehouse')) %}
-    <button onclick="document.getElementById('manual-order-form').classList.toggle('hidden')"
-            class="w-[180px] px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
-            title="Create a new manually stocked order">
-      ➕ Add Manual Order
-    </button>
-    {% elif current_path.startswith(url_for('delivered.delivered')) %}
-    <div class="w-[180px]"></div>  {# placeholder to keep layout aligned #}
-    {% endif %}
+
+  {% elif current_path.startswith(url_for('delivered.delivered')) %}
+    <div class="w-[180px]"></div> {# placeholder to maintain layout alignment #}
+  {% endif %}
 
 
     <!-- Logout Icon -->
