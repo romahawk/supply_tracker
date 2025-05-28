@@ -394,6 +394,10 @@
     </div>
 
     <script>
+        window.currentUserRole = "{{ current_user.role }}";
+    </script>
+
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
             const searchInput = document.getElementById("search-dashboard");
             const orderRows = document.querySelectorAll("table tbody tr");

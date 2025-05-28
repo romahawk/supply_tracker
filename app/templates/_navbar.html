@@ -76,6 +76,9 @@
     <div class="w-[180px]"></div> {# placeholder to maintain layout alignment #}
   {% endif %}
 
+    <span class="ml-4 px-2 py-1 rounded bg-gray-700 text-white text-sm">
+  👤 {{ current_user.username }} ({{ current_user.role }})
+</span>
 
     <!-- Logout Icon -->
     <a href="{{ url_for('auth.logout') }}" title="Logout" class="text-white hover:text-red-400 ml-1">

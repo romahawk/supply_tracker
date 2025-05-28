@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
 from app.models import db, Order
 from datetime import datetime
+from app.roles import can_view_all
 import os
 
 order_bp = Blueprint('order', __name__)
@@ -148,7 +149,10 @@ def delete_order(order_id):
 @order_bp.route('/api/orders')
 @login_required
 def get_orders():
-    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
+    if can_view_all(current_user.role):
+        orders = Order.query.order_by(Order.order_date.asc()).all()
+    else:
+        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
 
     def get_delivery_year(order):
         try:

@@ -4,6 +4,7 @@ from app.models import Order, WarehouseStock, DeliveredGoods
 from app.decorators import role_required
 from app.database import db
 from datetime import datetime
+from app.roles import can_view_all
 import os
 
 
@@ -28,11 +29,21 @@ def index():
 @dashboard_bp.route('/dashboard')
 @login_required
 def dashboard():
-    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
+    if can_view_all(current_user.role):
+        orders = Order.query.order_by(Order.order_date.asc()).all()
+    else:
+        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
 
-    in_transit_count = Order.query.filter_by(user_id=current_user.id).count()
-    warehouse_count = WarehouseStock.query.filter_by(user_id=current_user.id).count()
-    delivered_count = DeliveredGoods.query.filter_by(user_id=current_user.id).count()
+
+    if can_view_all(current_user.role):
+        in_transit_count = Order.query.count()
+        warehouse_count = WarehouseStock.query.count()
+        delivered_count = DeliveredGoods.query.count()
+    else:
+        in_transit_count = Order.query.filter_by(user_id=current_user.id).count()
+        warehouse_count = WarehouseStock.query.filter_by(user_id=current_user.id).count()
+        delivered_count = DeliveredGoods.query.filter_by(user_id=current_user.id).count()
+
 
     return render_template(
         'dashboard.html',

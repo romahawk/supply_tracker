@@ -566,75 +566,51 @@ document.addEventListener("DOMContentLoaded", function () {
           "dark:hover:bg-gray-700"
         );
         row.innerHTML = `
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200" title="Delivery Year: ${
-                      order.delivery_year
-                    }">${order.order_date}</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.order_number || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.product_name
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.buyer
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.responsible
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.quantity
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.required_delivery || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.terms_of_delivery || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.payment_date || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.etd || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.eta || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.ata || ""
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.transit_status
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
-                    <td class="px-2 py-2 text-center text-xs sm:text-sm">
-                       <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
-                            <form class="w-full sm:w-auto">
-                                <button type="button" class="edit-order bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${
-                                  order.id
-                                }">Edit</button>
-                            </form>
-                            <form class="w-full sm:w-auto">
-                                <button type="button" class="delete-order bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${
-                                  order.id
-                                }">Delete</button>
-                            </form>
-                            ${
-                              order.transit_status === "arrived"
-                                ? `
-                            <form method="POST" action="/stock_order/${order.id}" class="w-full sm:w-auto">
-                                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Stock</button>
-                            </form>
-                            <form method="POST" action="/deliver_direct/${order.id}" class="w-full sm:w-auto">
-                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Deliver</button>
-                            </form>
-                            `
-                                : ""
-                            }
-                        </div>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200" title="Delivery Year: ${order.delivery_year}">${order.order_date}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.order_number || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.product_name}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.buyer}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.responsible}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.quantity}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.required_delivery || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.terms_of_delivery || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.payment_date || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.etd || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.eta || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.ata || ''}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.transit_status}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
+    <td class="px-2 py-2 text-center text-xs sm:text-sm">
+        <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
+            ${
+              window.currentUserRole !== 'superuser'
+                ? `
+              <form class="w-full sm:w-auto">
+                  <button type="button" class="edit-order bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${order.id}">Edit</button>
+              </form>
+              <form class="w-full sm:w-auto">
+                  <button type="button" class="delete-order bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${order.id}">Delete</button>
+              </form>
+              ${
+                order.transit_status === "arrived"
+                  ? `
+                  <form method="POST" action="/stock_order/${order.id}" class="w-full sm:w-auto">
+                      <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Stock</button>
+                  </form>
+                  <form method="POST" action="/deliver_direct/${order.id}" class="w-full sm:w-auto">
+                      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Deliver</button>
+                  </form>
+                  `
+                  : ""
+              }
+              `
+                : ""
+            }
+        </div>
+    </td>
+`;
 
-                    </td>
 
-                `;
         tbody.appendChild(row);
       });
     }
