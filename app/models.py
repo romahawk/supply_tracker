@@ -1,9 +1,11 @@
 from .database import db
+from datetime import datetime
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    role = db.Column(db.String(50), default='user')  # ✅ New: Role field
 
     def is_active(self):
         return True
@@ -16,6 +18,7 @@ class User(db.Model):
 
     def is_anonymous(self):
         return False
+
 
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,7 +37,8 @@ class Order(db.Model):
     ata = db.Column(db.String(10))
     transit_status = db.Column(db.String(20), nullable=False)
     transport = db.Column(db.String(20), nullable=False)
-    pod_filename = db.Column(db.String(120))  # New field added
+    pod_filename = db.Column(db.String(120))  # existing field
+
 
 class WarehouseStock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -44,10 +48,11 @@ class WarehouseStock(db.Model):
     quantity = db.Column(db.String(50), nullable=False)
     ata = db.Column(db.String(10), nullable=True)
     transit_status = db.Column(db.String(20), default='In Stock', nullable=False)
-    notes = db.Column(db.String(120))        # optional manual tag or comments
+    notes = db.Column(db.String(120))
     transport = db.Column(db.String(20))
-    is_manual = db.Column(db.Boolean, default=False)     # 'sea', 'air', or 'truck'
-    pod_filename = db.Column(db.String(120))  # New field added
+    is_manual = db.Column(db.Boolean, default=False)
+    pod_filename = db.Column(db.String(120))
+
 
 class DeliveredGoods(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -55,8 +60,17 @@ class DeliveredGoods(db.Model):
     order_number = db.Column(db.String(50), nullable=False)
     product_name = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.String(50), nullable=False)
-    delivery_source = db.Column(db.String(50), nullable=False)  # e.g., "From Warehouse" or "Direct from Transit"
+    delivery_source = db.Column(db.String(50), nullable=False)
     delivery_date = db.Column(db.String(10), nullable=False)
-    transport = db.Column(db.String(20))  # new field
-    notes = db.Column(db.String(120))  # optional field
-    pod_filename = db.Column(db.String(120))  # Path to uploaded file
+    transport = db.Column(db.String(20))
+    notes = db.Column(db.String(120))
+    pod_filename = db.Column(db.String(120))
+
+
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    action = db.Column(db.String(100), nullable=False)           # e.g. 'Delete', 'Edit', 'Restore'
+    target_id = db.Column(db.Integer, nullable=False)            # ID of target record
+    target_type = db.Column(db.String(50), nullable=False)       # e.g. 'Order', 'WarehouseStock'
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)  # When it happened

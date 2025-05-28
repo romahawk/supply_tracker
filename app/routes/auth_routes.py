@@ -15,20 +15,40 @@ def index():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.dashboard'))
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
 
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('dashboard.dashboard'))
-        else:
-            flash('Invalid username or password.', 'danger')
-            return render_template('login.html', username=username)
+    if request.method == 'POST':
+        form_type = request.form.get('form_type')
+
+        if form_type == 'login':
+            username = request.form['username']
+            password = request.form['password']
+            remember = True if request.form.get('remember') == 'on' else False
+
+            user = User.query.filter_by(username=username).first()
+            if user and check_password_hash(user.password, password):
+                login_user(user, remember=remember)
+                flash('Logged in successfully!', 'success')
+                return redirect(url_for('dashboard.dashboard'))
+            else:
+                flash('Invalid username or password.', 'danger')
+
+        elif form_type == 'register':
+            username = request.form['username']
+            password = request.form['password']
+
+            if not username or not password:
+                flash('Please fill out all fields.', 'warning')
+            elif User.query.filter_by(username=username).first():
+                flash('Username already taken.', 'danger')
+            else:
+                hashed_password = generate_password_hash(password)
+                new_user = User(username=username, password=hashed_password)
+                db.session.add(new_user)
+                db.session.commit()
+                flash('Registered successfully!', 'success')
 
     return render_template('login.html')
+
 
 @auth_bp.route('/logout')
 @login_required
@@ -36,35 +56,3 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
-
-@auth_bp.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard.dashboard'))
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        password_confirm = request.form.get('password_confirm')
-
-        if not username or not password or not password_confirm:
-            flash('Please fill out all fields.', 'warning')
-            return render_template('register.html', username=username)
-
-        if password != password_confirm:
-            flash('Passwords do not match.', 'danger')
-            return render_template('register.html', username=username)
-
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            flash('Username already taken.', 'danger')
-            return render_template('register.html', username=username)
-
-        hashed_password = generate_password_hash(password)
-        new_user = User(username=username, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash('Registration successful. Please log in.', 'success')
-        return redirect(url_for('auth.login'))
-
-    return render_template('register.html')

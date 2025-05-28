@@ -1,8 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from app.models import Order, WarehouseStock, DeliveredGoods
+from app.decorators import role_required
+from app.database import db
 from datetime import datetime
 import os
+
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -40,3 +43,18 @@ def dashboard():
         warehouse_count=warehouse_count,
         delivered_count=delivered_count
     )
+
+@dashboard_bp.route('/delete_order/<int:order_id>', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id and current_user.role != 'admin':
+        flash("Unauthorized delete attempt.", "error")
+        return redirect(url_for('dashboard.dashboard'))
+    
+    db.session.delete(order)
+    db.session.commit()
+    flash('Order deleted successfully.', 'success')
+    return redirect(url_for('dashboard.dashboard'))
+
