@@ -1,7 +1,7 @@
-
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.models import db, Order, WarehouseStock, DeliveredGoods
+from app.roles import can_edit, can_view_all  # ✅ Import role helpers
 from datetime import datetime
 
 warehouse_bp = Blueprint('warehouse', __name__)
@@ -9,12 +9,19 @@ warehouse_bp = Blueprint('warehouse', __name__)
 @warehouse_bp.route('/warehouse')
 @login_required
 def warehouse():
-    warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).all()
+    if can_view_all(current_user.role):
+        warehouse_items = WarehouseStock.query.order_by(WarehouseStock.ata.desc()).all()
+    else:
+        warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).order_by(WarehouseStock.ata.desc()).all()
     return render_template('warehouse.html', warehouse_items=warehouse_items)
 
 @warehouse_bp.route('/add_warehouse_manual', methods=['POST'])
 @login_required
 def add_warehouse_manual():
+    if not can_edit(current_user.role):
+        flash("Access denied.", "danger")
+        return redirect(url_for('warehouse.warehouse'))
+
     try:
         order_number = request.form['order_number']
         product_name = request.form['product_name']
@@ -49,10 +56,11 @@ def add_warehouse_manual():
 @warehouse_bp.route('/stock_order/<int:order_id>', methods=['POST'])
 @login_required
 def stock_order(order_id):
-    order = Order.query.get_or_404(order_id)
-    if order.user_id != current_user.id:
-        flash("Unauthorized access", "danger")
+    if not can_edit(current_user.role):
+        flash("Access denied.", "danger")
         return redirect(url_for('dashboard.dashboard'))
+
+    order = Order.query.get_or_404(order_id)
 
     new_stock = WarehouseStock(
         user_id=order.user_id,
@@ -73,10 +81,11 @@ def stock_order(order_id):
 @warehouse_bp.route('/deliver_partial/<int:item_id>', methods=['POST'])
 @login_required
 def deliver_partial(item_id):
-    item = WarehouseStock.query.get_or_404(item_id)
-    if item.user_id != current_user.id:
-        flash('Unauthorized access.', 'danger')
+    if not can_edit(current_user.role):
+        flash("Access denied.", "danger")
         return redirect(url_for('warehouse.warehouse'))
+
+    item = WarehouseStock.query.get_or_404(item_id)
 
     try:
         qty_to_deliver = float(request.form['quantity'])
@@ -110,14 +119,14 @@ def deliver_partial(item_id):
     flash(f'Delivered {qty_to_deliver} from warehouse.', 'success')
     return redirect(url_for('warehouse.warehouse'))
 
-
 @warehouse_bp.route('/edit_warehouse/<int:item_id>', methods=['GET', 'POST'])
 @login_required
 def edit_warehouse(item_id):
-    item = WarehouseStock.query.get_or_404(item_id)
-    if item.user_id != current_user.id:
-        flash('Unauthorized access.', 'danger')
+    if not can_edit(current_user.role):
+        flash("Access denied.", "danger")
         return redirect(url_for('warehouse.warehouse'))
+
+    item = WarehouseStock.query.get_or_404(item_id)
 
     if request.method == 'POST':
         item.quantity = float(request.form['quantity'])
@@ -129,15 +138,14 @@ def edit_warehouse(item_id):
 
     return render_template('edit_warehouse.html', item=item)
 
-
 @warehouse_bp.route('/delete_warehouse/<int:item_id>', methods=['POST'])
 @login_required
 def delete_warehouse(item_id):
-    item = WarehouseStock.query.get_or_404(item_id)
-    if item.user_id != current_user.id:
-        flash('Unauthorized action.', 'danger')
+    if not can_edit(current_user.role):
+        flash("Access denied.", "danger")
         return redirect(url_for('warehouse.warehouse'))
 
+    item = WarehouseStock.query.get_or_404(item_id)
     db.session.delete(item)
     db.session.commit()
     flash('Warehouse item deleted successfully.', 'success')
