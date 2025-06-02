@@ -1,9 +1,10 @@
 
 from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required, current_user
-from app.models import db, Order
+from app.models import db, Order, DeliveredGoods
 from datetime import datetime
-from app.roles import can_view_all
+from app.roles import can_view_all, can_edit
+from flask import flash, redirect, url_for
 import os
 
 order_bp = Blueprint('order', __name__)
@@ -23,112 +24,128 @@ def add_order():
     try:
         data = request.form
         quantity = float(data['quantity'])
-        order_date = data['order_date']
-        etd = data['etd']
-        eta = data['eta']
+        order_date = data['order_date'].strip()
+        etd = data.get('etd', '').strip()
+        eta = data.get('eta', '').strip()
+        etd_dt = None
+        eta_dt = None
 
         if quantity <= 0:
             return jsonify({'success': False, 'message': 'Quantity must be a positive number.'}), 400
 
-        order_date_dt = datetime.strptime(order_date, '%d.%m.%y')
-        etd_dt = datetime.strptime(etd, '%d.%m.%y')
-        eta_dt = datetime.strptime(eta, '%d.%m.%y')
+        if etd:
+            etd_dt = datetime.strptime(etd, '%d.%m.%y')
+        if eta:
+            eta_dt = datetime.strptime(eta, '%d.%m.%y')
 
-        if order_date_dt > etd_dt:
-            return jsonify({'success': False, 'message': 'Order Date cannot be later than ETD.'}), 400
-        if etd_dt > eta_dt:
+        if etd_dt and eta_dt and etd_dt > eta_dt:
             return jsonify({'success': False, 'message': 'ETD cannot be later than ETA.'}), 400
+
+        if etd_dt and order_date:
+            order_date_dt = datetime.strptime(order_date, '%d.%m.%y')
+            if order_date_dt > etd_dt:
+                return jsonify({'success': False, 'message': 'Order Date cannot be later than ETD.'}), 400
+
+        order_number = data.get('order_number', '').strip()
+        if not order_number:
+            return jsonify({'success': False, 'message': 'Order must have an Order Number.'}), 400
 
         new_order = Order(
             user_id=current_user.id,
             order_date=order_date,
-            order_number=data['order_number'],
+            order_number=order_number,
             product_name=data['product_name'],
-            buyer=data['buyer'],
-            responsible=data['responsible'],
+            buyer=data.get('buyer', ''),
+            responsible=data.get('responsible', ''),
             quantity=quantity,
-            required_delivery=data['required_delivery'],
-            terms_of_delivery=data['terms_of_delivery'],
-            payment_date=data['payment_date'],
+            required_delivery=data.get('required_delivery', ''),
+            terms_of_delivery=data.get('terms_of_delivery', ''),
+            payment_date=data.get('payment_date', ''),
             etd=etd,
             eta=eta,
-            ata=data['ata'],
-            transit_status=data['transit_status'],
-            transport=data['transport']
+            ata=data.get('ata', ''),
+            transit_status=data.get('transit_status', ''),
+            transport=data.get('transport', '')
         )
+
         db.session.add(new_order)
         db.session.commit()
 
+        # Save new product to products.txt if it's new
         new_product = data['product_name'].strip()
         existing_products = load_products()
         if new_product and new_product not in existing_products:
             try:
                 with open(PRODUCTS_FILE, 'a', encoding='utf-8') as f:
                     f.write(f"{new_product}\n")
-                print(f"✅ Product added to products.txt: {new_product}")
             except Exception as file_error:
                 print(f"⚠️ Could not write to products.txt – {file_error}")
 
-        return jsonify({'success': True, 'message': 'Order added successfully!'})
+        return jsonify({'success': True, 'message': 'Order added successfully!'}), 200
 
     except ValueError:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'Invalid quantity format. Use a valid number.'}), 400
+        return jsonify({'success': False, 'message': 'Invalid input format. Check all fields.'}), 400
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error adding order: {str(e)}'}), 500
 
-@order_bp.route('/edit_order/<int:order_id>', methods=['GET', 'POST'])
+@order_bp.route('/edit_order/<int:order_id>', methods=['POST'])
 @login_required
 def edit_order(order_id):
-    order = Order.query.get_or_404(order_id)
-    if order.user_id != current_user.id:
-        return jsonify({'success': False, 'message': 'You do not have permission to edit this order.'}), 403
+    try:
+        data = request.form
+        order = Order.query.get_or_404(order_id)
 
-    if request.method == 'POST':
-        try:
-            data = request.form
-            quantity = float(data['quantity'])
-            order_date = data['order_date']
-            etd = data['etd']
-            eta = data['eta']
+        if not can_edit(current_user.role) and order.user_id != current_user.id:
+            return jsonify({'success': False, 'message': 'You do not have permission to edit this order.'}), 403
 
-            if quantity <= 0:
-                return jsonify({'success': False, 'message': 'Quantity must be positive.'}), 400
+        quantity = float(data['quantity'])
+        if quantity <= 0:
+            return jsonify({'success': False, 'message': 'Quantity must be a positive number.'}), 400
 
-            order_date_dt = datetime.strptime(order_date, '%d.%m.%y')
-            etd_dt = datetime.strptime(etd, '%d.%m.%y')
-            eta_dt = datetime.strptime(eta, '%d.%m.%y')
+        etd = data.get('etd', '').strip()
+        eta = data.get('eta', '').strip()
+        order_date = data.get('order_date', '').strip()
 
-            if order_date_dt > etd_dt:
-                return jsonify({'success': False, 'message': 'Order Date cannot be later than ETD.'}), 400
-            if etd_dt > eta_dt:
-                return jsonify({'success': False, 'message': 'ETD cannot be later than ETA.'}), 400
+        etd_dt = datetime.strptime(etd, '%d.%m.%y') if etd else None
+        eta_dt = datetime.strptime(eta, '%d.%m.%y') if eta else None
+        order_date_dt = datetime.strptime(order_date, '%d.%m.%y') if order_date else None
 
-            order.order_date = order_date
-            order.order_number = data['order_number']
-            order.product_name = data['product_name']
-            order.buyer = data['buyer']
-            order.responsible = data['responsible']
-            order.quantity = quantity
-            order.required_delivery = data['required_delivery']
-            order.terms_of_delivery = data['terms_of_delivery']
-            order.payment_date = data['payment_date']
-            order.etd = etd
-            order.eta = eta
-            order.ata = data['ata']
-            order.transit_status = data['transit_status']
-            order.transport = data['transport']
-            db.session.commit()
-            return jsonify({'success': True, 'message': 'Order updated successfully!'})
-        except ValueError:
-            db.session.rollback()
-            return jsonify({'success': False, 'message': 'Invalid quantity format.'}), 400
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'success': False, 'message': str(e)}), 400
+        if etd_dt and eta_dt and etd_dt > eta_dt:
+            return jsonify({'success': False, 'message': 'ETD cannot be later than ETA.'}), 400
 
-    return render_template('edit_order.html', order=order)
+        if etd_dt and order_date_dt and order_date_dt > etd_dt:
+            return jsonify({'success': False, 'message': 'Order Date cannot be later than ETD.'}), 400
+
+        order.order_date = order_date
+        order.order_number = data.get('order_number', '').strip()
+        order.product_name = data.get('product_name', '').strip()
+        order.buyer = data.get('buyer', '').strip()
+        order.responsible = data.get('responsible', '').strip()
+        order.quantity = quantity
+        order.required_delivery = data.get('required_delivery', '').strip()
+        order.terms_of_delivery = data.get('terms_of_delivery', '').strip()
+        order.payment_date = data.get('payment_date', '').strip()
+        order.etd = etd
+        order.eta = eta
+        order.ata = data.get('ata', '').strip()
+        order.transit_status = data.get('transit_status', '').strip()
+        order.transport = data.get('transport', '').strip()
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Order updated successfully.'})
+
+    except ValueError:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Invalid input format. Check your fields.'}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error editing order: {str(e)}'}), 500
+
+
 
 @order_bp.route('/delete_order/<int:order_id>')
 @login_required
@@ -190,3 +207,39 @@ def get_orders():
     } for order in orders]
 
     return jsonify(orders_data)
+
+@order_bp.route('/deliver_direct/<int:order_id>', methods=['POST'])
+@login_required
+def deliver_direct(order_id):
+    order = Order.query.get_or_404(order_id)
+
+    if not can_edit(current_user.role) and order.user_id != current_user.id:
+        flash("You don't have permission to deliver this order.", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+
+    if not order.order_number:
+        flash("Order must have an order number to be delivered.", "warning")
+        return redirect(url_for('dashboard.dashboard'))
+
+    # Create new DeliveredGoods record
+    delivered_item = DeliveredGoods(
+        user_id=order.user_id,
+        order_number=order.order_number,
+        product_name=order.product_name,
+        quantity=order.quantity,
+        delivery_source="Direct from Transit",
+        delivery_date=datetime.now().strftime('%Y-%m-%d'),
+        notes="Delivered directly from dashboard",
+        transport=order.transport
+    )
+
+    try:
+        db.session.add(delivered_item)
+        db.session.delete(order)
+        db.session.commit()
+        flash("Order delivered successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error delivering order: {e}", "danger")
+
+    return redirect(url_for('dashboard.dashboard'))

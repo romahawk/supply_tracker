@@ -119,12 +119,12 @@
             </div>
             <div class="form-group">
                 <label for="etd" class="block text-sm font-medium ">ETD:</label>
-                <input type="date" id="etd" name="etd" required
+                <input type="date" id="etd" name="etd" 
                     class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
             </div>
             <div class="form-group">
                 <label for="eta" class="block text-sm font-medium ">ETA:</label>
-                <input type="date" id="eta" name="eta" required
+                <input type="date" id="eta" name="eta" 
                     class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
             </div>
             <div class="form-group">
@@ -160,12 +160,24 @@
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
     {% for category, message in messages %}
-    <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">
+    <div class="border px-4 py-2 rounded my-2 text-sm
+                  {% if category == 'danger' %}
+                    bg-red-100 text-red-800 border-red-300
+                  {% elif category == 'success' %}
+                    bg-green-100 text-green-800 border-green-300
+                  {% elif category == 'warning' %}
+                    bg-yellow-100 text-yellow-800 border-yellow-300
+                  {% else %}
+                    bg-gray-100 text-gray-800 border-gray-300
+                  {% endif %}">
         {{ message }}
     </div>
     {% endfor %}
+    {% endif %}
     {% endwith %}
+
 
     <!-- Dashboard Content -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -348,13 +360,13 @@
                         <label for="edit-etd" class="block text-sm font-medium ">ETD</label>
                         <input type="date" id="edit-etd" name="etd"
                             class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
+                        >
                     </div>
                     <div>
                         <label for="edit-eta" class="block text-sm font-medium ">ETA</label>
                         <input type="date" id="edit-eta" name="eta"
                             class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
+                        >
                     </div>
                     <div>
                         <label for="edit-ata" class="block text-sm font-medium ">ATA</label>

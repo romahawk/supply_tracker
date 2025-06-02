@@ -20,9 +20,10 @@ def upload_pod():
         return redirect(request.referrer or url_for('delivered.delivered'))
 
     item = DeliveredGoods.query.get_or_404(item_id)
-    if item.user_id != current_user.id:
+    if item.user_id != current_user.id and current_user.role != 'admin':
         flash("Unauthorized access", "danger")
         return redirect(url_for('delivered.delivered'))
+
 
     if 'file' not in request.files:
         flash('No file part', 'danger')

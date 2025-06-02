@@ -120,7 +120,7 @@
                                     📤 Upload
                                     ...
                                 </label>
-                                <input id="pod-{{ item.id }}" name="file" type="file" ...>
+                                <input id="pod-{{ item.id }}" name="file" type="file" accept=".pdf" class="hidden" onchange="this.form.submit()">
                             </form>
                             {% endif %}
                             {% endif %}
