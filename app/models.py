@@ -74,3 +74,25 @@ class AuditLog(db.Model):
     target_id = db.Column(db.Integer, nullable=False)            # ID of target record
     target_type = db.Column(db.String(50), nullable=False)       # e.g. 'Order', 'WarehouseStock'
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)  # When it happened
+
+class ArchivedOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    original_order_id = db.Column(db.Integer)
+    user_id = db.Column(db.Integer)
+    order_date = db.Column(db.String(20))
+    order_number = db.Column(db.String(100))
+    product_name = db.Column(db.String(255))
+    buyer = db.Column(db.String(100))
+    responsible = db.Column(db.String(100))
+    quantity = db.Column(db.Float)
+    required_delivery = db.Column(db.String(100))
+    terms_of_delivery = db.Column(db.String(100))
+    payment_date = db.Column(db.String(20))
+    etd = db.Column(db.String(20))
+    eta = db.Column(db.String(20))
+    ata = db.Column(db.String(20))
+    transit_status = db.Column(db.String(100))
+    transport = db.Column(db.String(100))
+    source = db.Column(db.String(100))
+    notes = db.Column(db.Text)
+    archived_at = db.Column(db.DateTime, default=datetime.utcnow)

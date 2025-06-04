@@ -7,6 +7,9 @@ let selectedYear = null; // Global to store selected year
 let visibleStatuses = ["in process", "en route", "arrived"]; // Global to store visible statuses
 let chartInstance = null; // Global to store Chart.js instance
 let sortDirection = { order_date: "desc" }; // Global sort direction
+let lastSortKey = "order_date"; // default sort
+let lastSortDirection = "desc"; // default direction
+
 
 // isDarkMode
 function isDarkMode() {
@@ -449,6 +452,9 @@ function sortData(data, key, forceDescending = false) {
     sortDirection[key] = sortDirection[key] === "asc" ? "desc" : "asc";
   }
   const direction = forceDescending ? "desc" : sortDirection[key];
+  lastSortKey = key;
+  lastSortDirection = direction;
+
 
   // Update sort indicators
   document.querySelectorAll("th[data-sort]").forEach((th) => {
@@ -692,7 +698,8 @@ document.addEventListener("DOMContentLoaded", function () {
           allOrders,
           document.getElementById("order-filter")?.value || ""
         );
-        const sortedData = sortData(filteredData, "order_date", true); // Force descending
+        const sortedData = sortData(filteredData, lastSortKey, lastSortDirection === "desc");
+         // Force descending
         updateTable(sortedData);
         renderTimeline(sortedData, currentPage);
       })

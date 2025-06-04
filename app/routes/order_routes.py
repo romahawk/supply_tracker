@@ -5,6 +5,7 @@ from app.models import db, Order, DeliveredGoods
 from datetime import datetime
 from app.roles import can_view_all, can_edit
 from flask import flash, redirect, url_for
+from app.models import ArchivedOrder
 import os
 
 order_bp = Blueprint('order', __name__)
@@ -213,6 +214,7 @@ def get_orders():
 def deliver_direct(order_id):
     order = Order.query.get_or_404(order_id)
 
+    # Access control
     if not can_edit(current_user.role) and order.user_id != current_user.id:
         flash("You don't have permission to deliver this order.", "danger")
         return redirect(url_for('dashboard.dashboard'))
@@ -221,7 +223,7 @@ def deliver_direct(order_id):
         flash("Order must have an order number to be delivered.", "warning")
         return redirect(url_for('dashboard.dashboard'))
 
-    # Create new DeliveredGoods record
+    # Create DeliveredGoods entry
     delivered_item = DeliveredGoods(
         user_id=order.user_id,
         order_number=order.order_number,
@@ -233,11 +235,33 @@ def deliver_direct(order_id):
         transport=order.transport
     )
 
+    # Archive original order before deletion
+    archived_order = ArchivedOrder(
+        original_order_id=order.id,
+        user_id=order.user_id,
+        order_date=order.order_date,
+        order_number=order.order_number,
+        product_name=order.product_name,
+        buyer=order.buyer,
+        responsible=order.responsible,
+        quantity=order.quantity,
+        required_delivery=order.required_delivery,
+        terms_of_delivery=order.terms_of_delivery,
+        payment_date=order.payment_date,
+        etd=order.etd,
+        eta=order.eta,
+        ata=order.ata,
+        transit_status=order.transit_status,
+        transport=order.transport,
+        source='dashboard'
+    )
+
     try:
+        db.session.add(archived_order)
         db.session.add(delivered_item)
         db.session.delete(order)
         db.session.commit()
-        flash("Order delivered successfully!", "success")
+        flash("Order delivered and archived successfully!", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Error delivering order: {e}", "danger")
