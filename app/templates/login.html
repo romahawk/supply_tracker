@@ -20,15 +20,18 @@
                 <h1 class="text-3xl font-bold text-blue-400 tracking-wide">Supply Tracker</h1>
             </div>
 
-            {% with messages = get_flashed_messages() %}
-            {% if messages %}
-            <div class="mb-6 text-sm text-red-600 font-medium text-center">
-                {% for message in messages %}
-                <p>{{ message }}</p>
-                {% endfor %}
-            </div>
-            {% endif %}
-            {% endwith %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-6 text-sm text-center space-y-2">
+      {% for category, message in messages %}
+        <div class="{% if category == 'success' %}text-green-600{% elif category == 'danger' %}text-red-600{% elif category == 'warning' %}text-yellow-600{% else %}text-gray-700{% endif %} font-medium">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 
 
             <!-- 💻 Login + Register Forms Grid -->
@@ -37,7 +40,8 @@
                 <!-- 🔐 Login Form -->
                 <div class="flex flex-col min-h-[300px]">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">🔐 <span class="ml-1">Login</span></h2>
-                    <form method="POST" action="{{ url_for('main.login') }}" class="flex flex-col flex-grow space-y-4">
+                    <form method="POST" action="{{ url_for('auth.login') }}" class="flex flex-col flex-grow space-y-4">
+                        <input type="hidden" name="form_type" value="login">
                         <input type="text" name="username" placeholder="Username" autocomplete="username"
                             class="w-full border px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required>
@@ -61,8 +65,9 @@
                 <!-- 📝 Register Form -->
                 <div class="flex flex-col min-h-[300px]">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">📝 <span class="ml-1">Register</span></h2>
-                    <form method="POST" action="{{ url_for('main.register') }}"
+                    <form method="POST" action="{{ url_for('auth.login') }}"
                         class="flex flex-col flex-grow space-y-4">
+                        <input type="hidden" name="form_type" value="register">
                         <input type="text" name="username" placeholder="Username"
                             class="w-full border px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                             required>

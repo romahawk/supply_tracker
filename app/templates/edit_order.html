@@ -10,7 +10,7 @@
 <body>
     <div class="container">
         <h1>Edit Order</h1>
-        <p><a href="{{ url_for('main.dashboard') }}">Back to Dashboard</a></p>
+        <p><a href="{{ url_for('dashboard.dashboard') }}">Back to Dashboard</a></p>
         
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -51,10 +51,10 @@
             <input type="text" id="payment_date" name="payment_date" value="{{ order.payment_date }}" required>
 
             <label for="etd">ETD (DD.MM.YY):</label>
-            <input type="text" id="etd" name="etd" value="{{ order.etd }}" required>
+            <input type="text" id="etd" name="etd" value="{{ order.etd }}">
 
             <label for="eta">ETA (DD.MM.YY):</label>
-            <input type="text" id="eta" name="eta" value="{{ order.eta }}" required>
+            <input type="text" id="eta" name="eta" value="{{ order.eta }}">
 
             <label for="ata">ATA (DD.MM.YY):</label>
             <input type="text" id="ata" name="ata" value="{{ order.ata }}">

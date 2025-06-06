@@ -7,6 +7,9 @@ let selectedYear = null; // Global to store selected year
 let visibleStatuses = ["in process", "en route", "arrived"]; // Global to store visible statuses
 let chartInstance = null; // Global to store Chart.js instance
 let sortDirection = { order_date: "desc" }; // Global sort direction
+let lastSortKey = "order_date"; // default sort
+let lastSortDirection = "desc"; // default direction
+
 
 // isDarkMode
 function isDarkMode() {
@@ -449,6 +452,9 @@ function sortData(data, key, forceDescending = false) {
     sortDirection[key] = sortDirection[key] === "asc" ? "desc" : "asc";
   }
   const direction = forceDescending ? "desc" : sortDirection[key];
+  lastSortKey = key;
+  lastSortDirection = direction;
+
 
   // Update sort indicators
   document.querySelectorAll("th[data-sort]").forEach((th) => {
@@ -566,75 +572,51 @@ document.addEventListener("DOMContentLoaded", function () {
           "dark:hover:bg-gray-700"
         );
         row.innerHTML = `
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200" title="Delivery Year: ${
-                      order.delivery_year
-                    }">${order.order_date}</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.order_number || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.product_name
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.buyer
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.responsible
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.quantity
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.required_delivery || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.terms_of_delivery || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.payment_date || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.etd || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.eta || '—'
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.ata || ""
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${
-                      order.transit_status
-                    }</td>
-                    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
-                    <td class="px-2 py-2 text-center text-xs sm:text-sm">
-                       <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
-                            <form class="w-full sm:w-auto">
-                                <button type="button" class="edit-order bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${
-                                  order.id
-                                }">Edit</button>
-                            </form>
-                            <form class="w-full sm:w-auto">
-                                <button type="button" class="delete-order bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${
-                                  order.id
-                                }">Delete</button>
-                            </form>
-                            ${
-                              order.transit_status === "arrived"
-                                ? `
-                            <form method="POST" action="/stock_order/${order.id}" class="w-full sm:w-auto">
-                                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Stock</button>
-                            </form>
-                            <form method="POST" action="/deliver_direct/${order.id}" class="w-full sm:w-auto">
-                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Deliver</button>
-                            </form>
-                            `
-                                : ""
-                            }
-                        </div>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200" title="Delivery Year: ${order.delivery_year}">${order.order_date}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.order_number || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.product_name}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.buyer}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.responsible}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.quantity}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.required_delivery || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.terms_of_delivery || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.payment_date || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.etd || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.eta || '—'}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.ata || ''}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${order.transit_status}</td>
+    <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
+    <td class="px-2 py-2 text-center text-xs sm:text-sm">
+        <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
+            ${
+              window.currentUserRole !== 'superuser'
+                ? `
+              <form class="w-full sm:w-auto">
+                  <button type="button" class="edit-order bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${order.id}">Edit</button>
+              </form>
+              <form class="w-full sm:w-auto">
+                  <button type="button" class="delete-order bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${order.id}">Delete</button>
+              </form>
+              ${
+                order.transit_status === "arrived"
+                  ? `
+                  <form method="POST" action="/stock_order/${order.id}" class="w-full sm:w-auto">
+                      <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Stock</button>
+                  </form>
+                  <form method="POST" action="/deliver_direct/${order.id}" class="w-full sm:w-auto">
+                      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Deliver</button>
+                  </form>
+                  `
+                  : ""
+              }
+              `
+                : ""
+            }
+        </div>
+    </td>
+`;
 
-                    </td>
 
-                `;
         tbody.appendChild(row);
       });
     }
@@ -716,7 +698,8 @@ document.addEventListener("DOMContentLoaded", function () {
           allOrders,
           document.getElementById("order-filter")?.value || ""
         );
-        const sortedData = sortData(filteredData, "order_date", true); // Force descending
+        const sortedData = sortData(filteredData, lastSortKey, lastSortDirection === "desc");
+         // Force descending
         updateTable(sortedData);
         renderTimeline(sortedData, currentPage);
       })
@@ -824,72 +807,72 @@ document.addEventListener("DOMContentLoaded", function () {
     addForm.addEventListener("submit", function (event) {
       event.preventDefault();
 
-      const quantity = parseFloat(document.getElementById("quantity").value);
-      const orderDate = document.getElementById("order_date").value;
-      const etd = document.getElementById("etd").value;
-      const eta = document.getElementById("eta").value;
-      const requiredDelivery = document.getElementById('required_delivery').value;
-        if (!requiredDelivery.trim()) {
-            alert('Required Delivery cannot be empty.');
-            return;
+    const quantity = parseFloat(document.getElementById("quantity").value);
+    const orderDate = document.getElementById("order_date").value;
+    const etd = document.getElementById("etd").value;
+    const eta = document.getElementById("eta").value;
+    const requiredDelivery = document.getElementById("required_delivery").value;
+
+    if (!requiredDelivery.trim()) {
+      alert("Required Delivery cannot be empty.");
+      return;
+    }
+
+    if (isNaN(quantity) || quantity <= 0) {
+      alert("Quantity must be a positive number (decimals allowed).");
+      return;
+    }
+
+    if (etd && orderDate && orderDate > etd) {
+      alert("Order Date cannot be later than ETD.");
+      return;
+    }
+
+    if (etd && eta && etd > eta) {
+      alert("ETD cannot be later than ETA.");
+      return;
+    }
+
+    const formData = new FormData(addForm);
+    const dateFields = [
+      "order_date",
+      "required_delivery",
+      "payment_date",
+      "etd",
+      "eta",
+      "ata",
+    ];
+    const convertedFormData = new FormData();
+
+    for (let [key, value] of formData.entries()) {
+      if (dateFields.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [year, month, day] = value.split("-");
+        value = `${day}.${month}.${year.slice(2)}`;
+      }
+      convertedFormData.append(key, value);
+    }
+
+    fetch("/add_order", {
+      method: "POST",
+      body: convertedFormData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Add response:", data);
+        if (data.success) {
+          alert("Order added successfully!");
+          addForm.reset();
+          console.log("Calling fetchAndRender after adding order");
+          fetchAndRender();
+        } else {
+          alert("Error adding order: " + (data.message || "Unknown error"));
         }
-
-
-      if (isNaN(quantity) || quantity <= 0) {
-        alert("Quantity must be a positive number (decimals allowed).");
-        return;
-      }
-      if (new Date(orderDate) > new Date(etd)) {
-        alert("Order Date cannot be later than ETD.");
-        return;
-      }
-      if (new Date(etd) > new Date(eta)) {
-        alert("ETD cannot be later than ETA.");
-        return;
-      }
-
-      const formData = new FormData(addForm);
-      const dateFields = [
-        "order_date",
-        "required_delivery",
-        "payment_date",
-        "etd",
-        "eta",
-        "ata",
-      ];
-      const convertedFormData = new FormData();
-      for (let [key, value] of formData.entries()) {
-        if (dateFields.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-            const date = new Date(value);
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = String(date.getFullYear()).slice(-2);
-            value = `${day}.${month}.${year}`;
-        }
-
-        convertedFormData.append(key, value);
-      }
-
-      fetch("/add_order", {
-        method: "POST",
-        body: convertedFormData,
       })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            alert("Order added successfully!");
-            addForm.reset();
-            console.log("Calling fetchAndRender after adding order");
-            fetchAndRender();
-          } else {
-            alert("Error adding order: " + (data.message || "Unknown error"));
-          }
-        })
-        .catch((error) => {
-          console.error("Error adding order:", error);
-          alert("Error adding order. Please try again.");
-        });
-    });
+      .catch((error) => {
+        console.error("Error adding order:", error);
+        alert("Error adding order. Please try again.");
+      });
+  });
   } else {
     console.warn("add-order-form not found in the DOM");
   }
@@ -914,14 +897,13 @@ document.addEventListener("DOMContentLoaded", function () {
             ];
             dateFields.forEach((field) => {
               const value = order[field];
-              if (value) {
+              const input = document.getElementById(`edit-${field}`);
+              if (input) {
                 const date = parseDate(value);
-                const formattedDate = date.toISOString().split("T")[0];
-                document.getElementById(`edit-${field}`).value = formattedDate;
-              } else {
-                document.getElementById(`edit-${field}`).value = "";
+                input.value = date ? date.toISOString().split("T")[0] : "";
               }
             });
+
             document.getElementById("edit-order_number").value =
               order.order_number;
             document.getElementById("edit-product_name").value =
@@ -963,76 +945,77 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  const editForm = document.getElementById("edit-order-form");
-  if (editForm) {
-    editForm.addEventListener("submit", function (event) {
-      event.preventDefault();
+const editForm = document.getElementById("edit-order-form");
+if (editForm) {
+  editForm.addEventListener("submit", function (event) {
+    event.preventDefault();
 
-      const quantity = parseFloat(
-        document.getElementById("edit-quantity").value
-      );
-      const orderDate = document.getElementById("edit-order_date").value;
-      const etd = document.getElementById("edit-etd").value;
-      const eta = document.getElementById("edit-eta").value;
+    const quantity = parseFloat(document.getElementById("edit-quantity").value);
+    const orderDate = document.getElementById("edit-order_date").value;
+    const etd = document.getElementById("edit-etd").value;
+    const eta = document.getElementById("edit-eta").value;
 
-      if (isNaN(quantity) || quantity <= 0) {
-        alert("Quantity must be a positive number (decimals allowed).");
-        return;
-      }
-      if (new Date(orderDate) > new Date(etd)) {
-        alert("Order Date cannot be later than ETD.");
-        return;
-      }
-      if (new Date(etd) > new Date(eta)) {
-        alert("ETD cannot be later than ETA.");
-        return;
-      }
+    if (isNaN(quantity) || quantity <= 0) {
+      alert("Quantity must be a positive number (decimals allowed).");
+      return;
+    }
 
-      const formData = new FormData(editForm);
-      const dateFields = [
-        "order_date",
-        "required_delivery",
-        "payment_date",
-        "etd",
-        "eta",
-        "ata",
-      ];
-      const convertedFormData = new FormData();
-      for (let [key, value] of formData.entries()) {
-        if (dateFields.includes(key) && value) {
-          const date = new Date(value);
-          const day = String(date.getDate()).padStart(2, "0");
-          const month = String(date.getMonth() + 1).padStart(2, "0");
-          const year = String(date.getFullYear()).slice(-2);
-          value = `${day}.${month}.${year}`;
+    if (etd && orderDate && orderDate > etd) {
+      alert("Order Date cannot be later than ETD.");
+      return;
+    }
+
+    if (etd && eta && etd > eta) {
+      alert("ETD cannot be later than ETA.");
+      return;
+    }
+
+    const formData = new FormData(editForm);
+    const dateFields = [
+      "order_date",
+      "required_delivery",
+      "payment_date",
+      "etd",
+      "eta",
+      "ata",
+    ];
+
+    const convertedFormData = new FormData();
+
+    for (let [key, value] of formData.entries()) {
+      if (dateFields.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [year, month, day] = value.split("-");
+        value = `${day}.${month}.${year.slice(2)}`;
+      }
+      convertedFormData.append(key, value);
+    }
+
+    const orderId = document.getElementById("edit-order-id").value;
+
+    fetch(`/edit_order/${orderId}`, {
+      method: "POST",
+      body: convertedFormData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Edit response:", data);
+        if (data.success) {
+          alert("Order updated successfully!");
+          editForm.reset();
+          document.getElementById("edit-order-modal").style.display = "none";
+          console.log("Calling fetchAndRender after editing order");
+          fetchAndRender();
+        } else {
+          alert("Error editing order: " + (data.message || "Unknown error"));
         }
-        convertedFormData.append(key, value);
-      }
-
-      const orderId = convertedFormData.get("order_id");
-      fetch(`/edit_order/${orderId}`, {
-        method: "POST",
-        body: convertedFormData,
       })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            alert("Order updated successfully!");
-            document.getElementById("edit-order-modal").style.display = "none";
-            console.log("Calling fetchAndRender after editing order");
-            fetchAndRender();
-          } else {
-            alert("Error updating order: " + (data.message || "Unknown error"));
-          }
-        })
-        .catch((error) => {
-          console.error("Error updating order:", error);
-          alert("Error updating order. Please try again.");
-        });
-    });
-  } else {
-    console.warn("edit-order-form not found in the DOM");
-  }
+      .catch((error) => {
+        console.error("Error editing order:", error);
+        alert("Error editing order. Please try again.");
+      });
+  });
+}
+
 
   const closeButton = document.querySelector(".close");
   if (closeButton) {

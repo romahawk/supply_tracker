@@ -1,0 +1,27 @@
+
+from flask import request
+from flask_login import current_user
+
+def inject_globals():
+    return dict(current_user=current_user, current_path=request.path)
+
+def register_routes(app):
+    from .auth_routes import auth_bp
+    from .dashboard_routes import dashboard_bp
+    from .order_routes import order_bp
+    from .warehouse_routes import warehouse_bp
+    from .delivered_routes import delivered_bp
+    from .restore_routes import restore_bp
+    from .upload_routes import upload_bp
+    from .stats_routes import stats_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(order_bp)
+    app.register_blueprint(warehouse_bp)
+    app.register_blueprint(delivered_bp)
+    app.register_blueprint(restore_bp)
+    app.register_blueprint(upload_bp)
+    app.register_blueprint(stats_bp)
+
+    app.context_processor(inject_globals)

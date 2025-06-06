@@ -21,7 +21,7 @@ with app.app_context():
 
     for _, row in df.iterrows():
         order = Order(
-            user_id=1,  # Replace with actual user ID if needed
+            user_id=2,  # Replace with actual user ID if needed
             order_date=format_date(row['order_date']),
             order_number=row['order_number'],
             product_name=row['product_name'],

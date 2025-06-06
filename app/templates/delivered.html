@@ -54,9 +54,14 @@
                         <td class="px-4 py-2">{{ item.order_number }}</td>
                         <td class="px-4 py-2">{{ item.product_name }}</td>
                         <td class="px-4 py-2">{{ item.quantity }}</td>
-                        <td class="px-4 py-2">
-                            {% if item.delivery_date %}{{ item.delivery_date | format_date }}{% else %}—{% endif %}
-                        </td>
+
+                        <!-- ✅ Updated to include data-key for sortable date -->
+                        <td class="px-4 py-2" data-key="delivery_date" data-sort-value="{{ item.delivery_date }}">
+  {{ item.delivery_date | format_date }}
+</td>
+
+
+
                         <td class="px-4 py-2 text-xs">
                             {% if item.transport == 'air' %}
                             <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">✈️ Air</span>
@@ -66,6 +71,7 @@
                             <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚚 Truck</span>
                             {% else %}—{% endif %}
                         </td>
+
                         <td class="px-4 py-2 text-xs">
                             {% if item.delivery_source == 'Direct from Transit' %}
                             <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Direct from Transit</span>
@@ -76,16 +82,21 @@
                             {% endif %}
                         </td>
 
-
                         <td class="px-4 py-2 space-y-1">
-                            <a href="{{ url_for('main.edit_delivered', item_id=item.id) }}"
+                            {% if current_user.role != 'superuser' %}
+                            <a href="{{ url_for('delivered.edit_delivered', item_id=item.id) }}"
                                 class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">Edit</a>
-                            <form method="POST" action="{{ url_for('main.restore_from_delivered', item_id=item.id) }}"
+                            <form method="POST"
+                                action="{{ url_for('restore.restore_from_delivered', item_id=item.id) }}"
                                 class="inline">
                                 <button type="submit"
-                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">Restore</button>
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">
+                                    Restore
+                                </button>
                             </form>
+                            {% endif %}
                         </td>
+
                         <td class="px-4 py-2">
                             {% if item.notes %}
                             <span title="{{ item.notes }}"
@@ -98,27 +109,33 @@
                         </td>
 
                         <td class="px-4 py-2 text-xs text-center">
+                            {% if current_user.role != 'superuser' %}
                             {% if item.pod_filename %}
                             <div class="flex items-center justify-center space-x-2">
-                                <a href="{{ url_for('main.view_pod', filename=item.pod_filename) }}" target="_blank"
+                                <a href="{{ url_for('upload.view_pod', filename=item.pod_filename) }}" target="_blank"
                                     class="text-blue-600 hover:underline">📎 View</a>
-                                <form method="POST" action="{{ url_for('main.delete_pod', item_id=item.id) }}">
+                                <form method="POST" action="{{ url_for('upload.delete_pod', item_id=item.id) }}">
                                     <button type="submit" class="text-red-500 hover:underline"
                                         title="Delete POD">🗑️</button>
                                 </form>
                             </div>
                             {% else %}
-                            <form method="POST" action="{{ url_for('main.upload_pod', item_id=item.id) }}"
+                            <form method="POST" action="{{ url_for('upload.upload_pod', item_id=item.id) }}"
                                 enctype="multipart/form-data" class="flex flex-col items-center space-y-1">
                                 <label for="pod-{{ item.id }}"
-                                    class="cursor-pointer text-blue-600 text-sm hover:underline">📤 Upload</label>
-                                <input id="pod-{{ item.id }}" name="pod" type="file" accept=".pdf,.jpg,.jpeg,.png"
-                                    class="hidden" onchange="this.form.submit()">
+                                    class="cursor-pointer text-blue-600 text-sm hover:underline relative">
+                                    📤 Upload
+                                    ...
+                                </label>
+                                <input id="pod-{{ item.id }}" name="file" type="file" accept=".pdf" class="hidden"
+                                    onchange="this.form.submit()">
                             </form>
+                            {% endif %}
                             {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
+
                 </tbody>
             </table>
         </div>
@@ -159,13 +176,37 @@
                     transport: 4
                 };
 
+                const parseDate = (str) => {
+    if (!str) return new Date("1970-01-01");
+    const parts = str.trim().split(".");
+    if (parts.length === 3) {
+        const [day, month, year] = parts;
+        const fullYear = year.length === 2 ? `20${year}` : year;
+        return new Date(`${fullYear}-${month}-${day}`);
+    }
+    return new Date(str); // fallback if format already ISO
+};
+
+
                 const rows = Array.from(document.querySelectorAll('#delivered-table tbody tr'));
+
                 const sortedRows = rows.sort((a, b) => {
-                    let valA = a.cells[cellMap[key]].innerText.trim().toLowerCase();
-                    let valB = b.cells[cellMap[key]].innerText.trim().toLowerCase();
+                    const cellA = a.cells[cellMap[key]];
+                    const cellB = b.cells[cellMap[key]];
+
+                    let valA = cellA.getAttribute("data-sort-value") || cellA.innerText.trim().toLowerCase();
+                    let valB = cellB.getAttribute("data-sort-value") || cellB.innerText.trim().toLowerCase();
+
                     if (key === "quantity") {
                         return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
                     }
+
+                    if (key === "delivery_date") {
+                        const dateA = parseDate(valA);
+                        const dateB = parseDate(valB);
+                        return ascending ? dateA - dateB : dateB - dateA;
+                    }
+
                     return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 });
 
@@ -173,6 +214,7 @@
                 tbody.innerHTML = '';
                 sortedRows.forEach(row => tbody.appendChild(row));
             }
+
 
             function updateSortIndicators() {
                 headers.forEach(h => {
