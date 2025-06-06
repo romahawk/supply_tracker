@@ -176,207 +176,204 @@ function filterData(data, query) {
 
 // Render timeline function (pagination removed)
 function renderTimeline(data) {
-  console.log("renderTimeline: Function called with data:", data);
-  const loadingIndicator = document.getElementById("timeline-loading");
-  const canvas = document.getElementById("timelineChart");
+    console.log("renderTimeline: Function called with data:", data);
+    const loadingIndicator = document.getElementById("timeline-loading");
+    const canvas = document.getElementById("timelineChart");
 
-  if (!canvas) {
-    console.error("renderTimeline: Canvas element not found");
-    return;
-  }
-
-  if (loadingIndicator) loadingIndicator.style.display = "block";
-  canvas.style.display = "none";
-
-  if (!Array.isArray(data) || data.length === 0) {
-    console.warn("renderTimeline: No data provided");
-    if (loadingIndicator) {
-      loadingIndicator.textContent =
-        data.length === 0
-          ? `No orders found for ${selectedYear || "selected year"}`
-          : `Loading...`;
-      loadingIndicator.style.display = "block";
+    if (!canvas) {
+        console.error("renderTimeline: Canvas element not found");
+        return;
     }
+
+    if (loadingIndicator) loadingIndicator.style.display = "block";
     canvas.style.display = "none";
-    return;
-  }
 
-  // Render all orders (no pagination)
-  const year = parseInt(selectedYear) || new Date().getFullYear();
-  const yearStart = new Date(year, 0, 1);
-  const yearEnd = new Date(year, 11, 31);
+    if (!Array.isArray(data) || data.length === 0) {
+        console.warn("renderTimeline: No data provided");
+        if (loadingIndicator) {
+            loadingIndicator.textContent =
+                data.length === 0
+                    ? `No orders found for ${selectedYear || "selected year"}`
+                    : `Loading...`;
+            loadingIndicator.style.display = "block";
+        }
+        canvas.style.display = "none";
+        return;
+    }
 
-  const chartData = [];
-  const labels = [];
-  let displayIndex = 0;
+    const year = parseInt(selectedYear) || new Date().getFullYear();
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year, 11, 31);
 
-  data.forEach((order) => {
-    const startDate = parseDate(order.etd);
-    const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
+    const chartData = [];
+    const labels = [];
+    let displayIndex = 0;
 
-    if (!startDate || !endDate) return;
+    data.forEach((order) => {
+        const startDate = parseDate(order.etd);
+        const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
 
-    const orderYear = parseInt(order.delivery_year) || getYearFromDate(order.etd);
-    if (orderYear !== year) return;
+        if (!startDate || !endDate) return;
 
-    const clippedStartDate = startDate < yearStart ? yearStart : startDate;
-    const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
+        const orderYear = parseInt(order.delivery_year) || getYearFromDate(order.etd);
+        if (orderYear !== year) return;
 
-    const status = (order.transit_status || "").toLowerCase().trim();
+        const clippedStartDate = startDate < yearStart ? yearStart : startDate;
+        const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
 
-    const color = {
-      "in process": "rgba(255, 165, 0, 0.8)",
-      "en route": "rgba(0, 123, 255, 0.8)",
-      "arrived": "rgba(144, 238, 144, 0.8)",
-    }[status] || "rgba(128, 128, 128, 0.8)";
+        const status = (order.transit_status || "").toLowerCase().trim();
 
-    chartData.push({
-      x: [clippedStartDate, clippedEndDate],
-      y: displayIndex,
-      backgroundColor: color,
-      borderColor: color.replace("0.8", "1"),
-      borderWidth: 1,
+        const color = {
+            "in process": "rgba(255, 165, 0, 0.8)",
+            "en route": "rgba(0, 123, 255, 0.8)",
+            "arrived": "rgba(144, 238, 144, 0.8)",
+        }[status] || "rgba(128, 128, 128, 0.8)";
+
+        chartData.push({
+            x: [clippedStartDate, clippedEndDate],
+            y: displayIndex,
+            backgroundColor: color,
+            borderColor: color.replace("0.8", "1"),
+            borderWidth: 1,
+        });
+
+        const transportIcon = {
+            sea: "🚢",
+            air: "✈️",
+            truck: "🚚",
+        }[order.transport] || order.transport;
+
+        labels.push(`${transportIcon} ${order.product_name} (${order.order_number})`);
+        displayIndex += 1;
     });
 
-    const transportIcon = {
-      sea: "🚢",
-      air: "✈️",
-      truck: "🚚",
-    }[order.transport] || "";
-order.transport;
-
-    labels.push(`${transportIcon} ${order.product_name} ${order.order_number})`);
-    displayIndex += 1});
-
-  if (chartData.length === 0) {
-    console.warn("renderTimeline: No valid orders found to display");
-    if (loadingIndicator) {
-      loadingIndicator.textContent = `No valid orders found for ${selectedYear || "selected year"}`;      loadingIndicator.style.display = "block";
+    if (chartData.length === 0) {
+        console.warn("renderTimeline: No valid orders found to display");
+        if (loadingIndicator) {
+            loadingIndicator.textContent = `No valid orders found for ${selectedYear || "selected year"}`;
+            loadingIndicator.style.display = "block";
+        }
+        canvas.style.display = "none";
+        return;
     }
-    canvas.style.display = "none";
-    return;
-  }
 
-  // Dynamic canvas height based on ALL orders
-  const heightPerOrder = 50;
-  const headerHeight = 50;
-  const canvasHeight = Math.max(200, chartData.length * heightPerOrder + headerHeight);
-  // Set height to both container and canvas
-  const timelineContainer = canvas.parentElement;
-  timelineContainer.style.height = `${canvasHeight}px`;
-  canvas.style.height = `${canvasHeight}px`;
+    const heightPerOrder = 30;
+    const headerHeight = 50;
+    const canvasHeight = Math.max(200, chartData.length * heightPerOrder + headerHeight);
+    const timelineContainer = canvas.parentElement;
+    timelineContainer.style.height = `${canvasHeight}px`;
+    canvas.style.height = `${canvasHeight}px`;
 
-  if (loadingIndicator) loadingIndicator.style.display = "none";
-  canvas.style.display = "block";
+    if (loadingIndicator) loadingIndicator.style.display = "none";
+    canvas.style.display = "block";
 
-  const today = new Date();
-  const currentWeek = getWeekNumber(today);
-  const startOfWeek = getStartOfWeek(currentWeek, today.getFullYear());
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
+    const today = new Date();
+    const currentWeek = getWeekNumber(today);
+    const startOfWeek = getStartOfWeek(currentWeek, today.getFullYear());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
 
-  const ctx = canvas.getContext("2d");
-  if (chartInstance) chartInstance.destroy();
+    const ctx = canvas.getContext("2d");
+    if (chartInstance) chartInstance.destroy();
 
-  const colors = getChartColors();
+    const colors = getChartColors();
 
-  chartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Orders Timeline",
-          data: chartData,
-          backgroundColor: chartData.map((item) => item.backgroundColor),
-          borderColor: chartData.map((item) => item.borderColor),
-          borderWidth: 1,
+    chartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Orders Timeline",
+                    data: chartData,
+                    backgroundColor: chartData.map((item) => item.backgroundColor),
+                    borderColor: chartData.map((item) => item.borderColor),
+                    borderWidth: 1,
+                },
+            ],
         },
-      ],
-    },
-    options: {
-      indexAxis: "y",
-      scales: {
-        x: {
-          type: "time",
-          time: {
-            unit: "week",
-            tooltipFormat: "dd.MM.yyyy",
-          },
-          min: yearStart,
-          max: yearEnd,
-          title: {
-            display: true,
-            text: "Timeline",
-            font: { size: 16, weight: "600" },
-            color: colors.title,
-          },
-          ticks: {
-            callback: (value) => `W${getWeekNumber(new Date(value))}`,
-            color: colors.text,
-            font: { size: 12, weight: "500" },
-            autoSkip: true,
-            maxRotation: 0,
-          },
-          grid: {
-            color: colors.grid,
-            borderColor: colors.grid,
-            tickColor: colors.grid,
-            lineWidth: 1,
-          },
-        },
-        y: {
-          min: 0,
-          max: chartData.length - 1,
-          ticks: {
-            callback: (_, i) => labels[i],
-            color: colors.text,
-            font: { size: 12, weight: "500" },
-            autoSkip: false,
-          },
-          grid: {
-            display: false,
-          },
-        },
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function (context) {
-              const [start, end] = context.raw.x;
-              const startDate = new Date(start).toLocaleDateString();
-              const endDate = new Date(end).toLocaleDateString();
-              return `Delivery: ${startDate} → ${endDate}`;
+        options: {
+            indexAxis: "y",
+            scales: {
+                x: {
+                    type: "time",
+                    time: { unit: "week", tooltipFormat: "dd.MM.yyyy" },
+                    min: yearStart,
+                    max: yearEnd,
+                    title: {
+                        display: true,
+                        text: "Timeline",
+                        font: { size: 16, weight: "600" },
+                        color: colors.title,
+                    },
+                    ticks: {
+                        callback: (value) => `W${getWeekNumber(new Date(value))}`,
+                        color: colors.text,
+                        font: { size: 12, weight: "500" },
+                        autoSkip: true,
+                        maxRotation: 0,
+                    },
+                    grid: {
+                        color: colors.grid,
+                        borderColor: colors.grid,
+                        tickColor: colors.grid,
+                        lineWidth: 1,
+                    },
+                },
+                y: {
+                    min: 0,
+                    max: chartData.length - 1,
+                    ticks: {
+                        callback: (_, i) => labels[i],
+                        color: colors.text,
+                        font: { size: 16, weight: "500" }, // Increased from 12 to 16 (30% increase)
+                        autoSkip: false,
+                        padding: 5,
+                    },
+                    grid: { display: false },
+                },
             },
-          },
-        },
-        annotation: {
-          annotations: {
-            currentWeek: {
-              type: "box",
-              xMin: startOfWeek,
-              xMax: endOfWeek,
-              yMin: 0,
-              yMax: chartData.length - 1,
-              backgroundColor: "rgba(255,255,0,0.3)",
-              borderColor: "rgba(255,255,0,0.6)",
-              label: {
-                enabled: true,
-                content: `W${currentWeek}`,
-                position: "top",
-              },
+            layout: { padding: 0 },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const [start, end] = context.raw.x;
+                            const startDate = new Date(start).toLocaleDateString();
+                            const endDate = new Date(end).toLocaleDateString();
+                            return `Delivery: ${startDate} → ${endDate}`;
+                        },
+                    },
+                },
+                annotation: {
+                    annotations: {
+                        currentWeek: {
+                            type: "box",
+                            xMin: startOfWeek,
+                            xMax: endOfWeek,
+                            yMin: 0,
+                            yMax: chartData.length - 1,
+                            backgroundColor: "rgba(255,255,0,0.3)",
+                            borderColor: "rgba(255,255,0,0.6)",
+                            label: {
+                                enabled: true,
+                                content: `W${currentWeek}`,
+                                position: "top",
+                            },
+                        },
+                    },
+                },
             },
-          },
+            responsive: true,
+            maintainAspectRatio: false,
         },
-      },
-      responsive: true,
-      maintainAspectRatio: false,
-    },
-  });
+    });
 
-  console.log("renderTimeline: Chart rendered successfully");
+    console.log("renderTimeline: Chart rendered successfully");
 }
+
+// ... Following code ...
 
 // Modified sortData to support forced direction
 function sortData(data, key, forceDescending = false) {
