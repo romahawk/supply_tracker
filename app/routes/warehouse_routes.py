@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app.models import db, Order, WarehouseStock, DeliveredGoods
 from app.roles import can_edit, can_view_all  # ✅ Import role helpers
 from datetime import datetime
+from app.models import StockReportEntry
 
 warehouse_bp = Blueprint('warehouse', __name__)
 
@@ -13,7 +14,18 @@ def warehouse():
         warehouse_items = WarehouseStock.query.order_by(WarehouseStock.ata.desc()).all()
     else:
         warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).order_by(WarehouseStock.ata.desc()).all()
-    return render_template('warehouse.html', warehouse_items=warehouse_items)
+
+    # Collect IDs of items that have stockreport entries
+    reported_ids = {
+        entry.related_order_id
+        for entry in StockReportEntry.query.with_entities(StockReportEntry.related_order_id).distinct()
+    }
+
+    return render_template(
+        'warehouse.html',
+        warehouse_items=warehouse_items,
+        reported_ids=reported_ids
+    )
 
 @warehouse_bp.route('/add_warehouse_manual', methods=['POST'])
 @login_required
@@ -150,3 +162,81 @@ def delete_warehouse(item_id):
     db.session.commit()
     flash('Warehouse item deleted successfully.', 'success')
     return redirect(url_for('warehouse.warehouse'))
+
+@warehouse_bp.route('/stockreport/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def stockreport_entry_form(item_id):
+    if not can_edit(current_user.role):
+        flash("Access denied.", "danger")
+        return redirect(url_for('warehouse.warehouse'))
+
+    item = WarehouseStock.query.get_or_404(item_id)
+
+    if request.method == 'POST':
+        try:
+            entry = StockReportEntry(
+                stage=request.form['stage'],
+                entrance_date=datetime.strptime(request.form['entrance_date'], '%Y-%m-%d'),
+                article_batch=request.form['article_batch'],
+                colli=int(request.form['colli']),
+                packing=request.form['packing'],
+                pcs=int(request.form['pcs']),
+                colli_per_pal=int(request.form['colli_per_pal']),
+                pcs_total=int(request.form['pcs_total']),
+                pal=int(request.form['pal']),
+                product=request.form['product'],
+                gross_kg=float(request.form['gross_kg']),
+                net_kg=float(request.form['net_kg']),
+                sender=request.form['sender'],
+                customs_status=request.form['customs_status'],
+                stockref=request.form['stockref'],
+                warehouse_address=request.form['warehouse_address'],
+                client=request.form['client'],
+                pos_no=request.form['pos_no'],
+                customer_ref=request.form['customer_ref'],
+                related_order_id = item.id
+            )
+
+            db.session.add(entry)
+            db.session.commit()
+            flash("Stockreport entry saved successfully.", "success")
+            return redirect(url_for('warehouse.warehouse'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error saving stockreport entry: {e}", "danger")
+
+    return render_template('stockreport_form.html', item=item)
+
+@warehouse_bp.route('/stockreport/view/<int:item_id>')
+@login_required
+def view_stockreport_entries(item_id):
+    item = WarehouseStock.query.get_or_404(item_id)
+    entries = StockReportEntry.query.filter_by(related_order_id=item_id).all()
+    return render_template('view_stockreport.html', item=item, entries=entries)
+
+@warehouse_bp.route('/stockreport/edit/<int:entry_id>', methods=['GET', 'POST'])
+@login_required
+def edit_stockreport(entry_id):
+    entry = StockReportEntry.query.get_or_404(entry_id)
+
+    if request.method == 'POST':
+        try:
+            entry.entrance_date = request.form['entrance_date']
+            entry.article_batch = request.form['article_batch']
+            entry.colli = request.form['colli']
+            entry.pcs = request.form['pcs']
+            entry.pal = request.form['pal']
+            entry.gross_kg = request.form['gross_kg']
+            entry.net_kg = request.form['net_kg']
+            entry.product = request.form['product']
+            entry.sender = request.form['sender']
+            entry.customs_status = request.form['customs_status']
+            db.session.commit()
+
+            flash("Stockreport updated successfully.", "success")
+            return redirect(url_for('warehouse.view_stockreport_entries', item_id=entry.related_order_id))
+        except Exception as e:
+            flash(f"Error updating entry: {e}", "danger")
+
+    return render_template('edit_stockreport.html', entry=entry)

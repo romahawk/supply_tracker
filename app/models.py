@@ -5,19 +5,12 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
-    role = db.Column(db.String(50), default='user')  # ✅ New: Role field
+    role = db.Column(db.String(50), default='user')
 
-    def is_active(self):
-        return True
-
-    def get_id(self):
-        return str(self.id)
-
-    def is_authenticated(self):
-        return True
-
-    def is_anonymous(self):
-        return False
+    def is_active(self): return True
+    def get_id(self): return str(self.id)
+    def is_authenticated(self): return True
+    def is_anonymous(self): return False
 
 
 class Order(db.Model):
@@ -37,10 +30,11 @@ class Order(db.Model):
     ata = db.Column(db.String(10))
     transit_status = db.Column(db.String(20), nullable=False)
     transport = db.Column(db.String(20), nullable=False)
-    pod_filename = db.Column(db.String(120))  # existing field
+    pod_filename = db.Column(db.String(120))
 
 
 class WarehouseStock(db.Model):
+    __tablename__ = 'warehouse_stock'  # ✅ Ensure FK consistency
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     order_number = db.Column(db.String(50), nullable=False)
@@ -70,10 +64,11 @@ class DeliveredGoods(db.Model):
 class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    action = db.Column(db.String(100), nullable=False)           # e.g. 'Delete', 'Edit', 'Restore'
-    target_id = db.Column(db.Integer, nullable=False)            # ID of target record
-    target_type = db.Column(db.String(50), nullable=False)       # e.g. 'Order', 'WarehouseStock'
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)  # When it happened
+    action = db.Column(db.String(100), nullable=False)
+    target_id = db.Column(db.Integer, nullable=False)
+    target_type = db.Column(db.String(50), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 class ArchivedOrder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -96,3 +91,29 @@ class ArchivedOrder(db.Model):
     source = db.Column(db.String(100))
     notes = db.Column(db.Text)
     archived_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class StockReportEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    stage = db.Column(db.String(20))  # "Arrived", "Stocked", "Delivered"
+    entrance_date = db.Column(db.Date)
+    article_batch = db.Column(db.String(50))
+    colli = db.Column(db.Integer)
+    packing = db.Column(db.String(50))
+    pcs = db.Column(db.Integer)
+    colli_per_pal = db.Column(db.Integer)
+    pcs_total = db.Column(db.Integer)
+    pal = db.Column(db.Integer)
+    product = db.Column(db.String(100))
+    gross_kg = db.Column(db.Float)
+    net_kg = db.Column(db.Float)
+    sender = db.Column(db.String(100))
+    customs_status = db.Column(db.String(10))  # "EU", "T1"
+    stockref = db.Column(db.String(50))
+
+    warehouse_address = db.Column(db.String(255))
+    client = db.Column(db.String(255))
+    pos_no = db.Column(db.String(50))
+    customer_ref = db.Column(db.String(50))
+
+    related_order_id = db.Column(db.Integer, db.ForeignKey('warehouse_stock.id', name='fk_stockreport_warehouse'))

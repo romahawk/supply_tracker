@@ -1,7 +1,5 @@
 let showOrderDate = true;
 let showPaymentDate = true;
-const pageSize = 20; // Maximum 20 orders per page
-let currentPage = 1; // Track current page
 let allOrders = []; // Global to store all orders
 let selectedYear = null; // Global to store selected year
 let visibleStatuses = ["in process", "en route", "arrived"]; // Global to store visible statuses
@@ -9,7 +7,6 @@ let chartInstance = null; // Global to store Chart.js instance
 let sortDirection = { order_date: "desc" }; // Global sort direction
 let lastSortKey = "order_date"; // default sort
 let lastSortDirection = "desc"; // default direction
-
 
 // isDarkMode
 function isDarkMode() {
@@ -38,13 +35,13 @@ function initDarkModeToggle() {
     const enabled = document.documentElement.classList.contains("dark");
     localStorage.setItem("dark-mode", enabled ? "enabled" : "disabled");
 
-    // Optional: Re-render timeline to update chart theme
+    // Re-render timeline to update chart theme
     const filteredData = filterData(
       allOrders,
       document.getElementById("order-filter")?.value || ""
     );
     const sortedData = sortData(filteredData, "order_date", true);
-    renderTimeline(sortedData, currentPage);
+    renderTimeline(sortedData);
   });
 }
 
@@ -132,7 +129,6 @@ function filterData(data, query) {
   }
   query = query.toLowerCase().trim();
   const filtered = data.filter((order) => {
-    // Log order details for debugging
     console.log(
       `filterData: Processing order: ${order.order_number || "unknown"}, ETD: ${
         order.etd
@@ -159,7 +155,6 @@ function filterData(data, query) {
 
     // Filter by query (order_date and order_number)
     let orderDate = order.order_date || "";
-    // Normalize order_date to dd.mm.yy if in yyyy-mm-dd
     if (orderDate.includes("-")) {
       const [year, month, day] = orderDate.split("-");
       orderDate = `${day}.${month}.${year.slice(-2)}`;
@@ -168,7 +163,7 @@ function filterData(data, query) {
     orderDate = orderDate.toLowerCase();
     const matches = query
       ? orderNumber.includes(query) || orderDate.includes(query)
-      : true; // Empty query returns all matching year/status
+      : true;
 
     console.log(
       `filterData: Order ${order.order_number} - Date: ${orderDate}, Number: ${orderNumber}, Query: ${query}, Matches: ${matches}`
@@ -179,275 +174,212 @@ function filterData(data, query) {
   return filtered;
 }
 
-// Render timeline function
-function renderTimeline(data, page = 1) {
-  console.log(
-    "renderTimeline: Function called with data:",
-    data,
-    "Page:",
-    page
-  );
-  const loadingIndicator = document.getElementById("timeline-loading");
-  const canvas = document.getElementById("timelineChart");
+// Render timeline function (pagination removed)
+function renderTimeline(data) {
+    console.log("renderTimeline: Function called with data:", data);
+    const loadingIndicator = document.getElementById("timeline-loading");
+    const canvas = document.getElementById("timelineChart");
 
-  if (!canvas) {
-    console.error("renderTimeline: Canvas element not found");
-    return;
-  }
-
-  if (loadingIndicator) loadingIndicator.style.display = "block";
-  canvas.style.display = "none";
-
-  if (!Array.isArray(data) || data.length === 0) {
-    console.warn("renderTimeline: No data provided");
-    if (loadingIndicator) {
-      loadingIndicator.textContent =
-        data.length === 0
-          ? `No orders found for ${selectedYear || "selected year"}`
-          : `Loading...`;
-      loadingIndicator.style.display = "block";
+    if (!canvas) {
+        console.error("renderTimeline: Canvas element not found");
+        return;
     }
+
+    if (loadingIndicator) loadingIndicator.style.display = "block";
     canvas.style.display = "none";
-    return;
-  }
 
-  // Paginate data
-  const start = (page - 1) * pageSize;
-  const paginatedData = data.slice(start, start + pageSize);
-  console.log("renderTimeline: Paginated data:", paginatedData);
+    if (!Array.isArray(data) || data.length === 0) {
+        console.warn("renderTimeline: No data provided");
+        if (loadingIndicator) {
+            loadingIndicator.textContent =
+                data.length === 0
+                    ? `No orders found for ${selectedYear || "selected year"}`
+                    : `Loading...`;
+            loadingIndicator.style.display = "block";
+        }
+        canvas.style.display = "none";
+        return;
+    }
 
-  const year = parseInt(selectedYear) || new Date().getFullYear();
-  const yearStart = new Date(year, 0, 1);
-  const yearEnd = new Date(year, 11, 31);
+    const year = parseInt(selectedYear) || new Date().getFullYear();
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year, 11, 31);
 
-  const chartData = [];
-  const labels = [];
-  let displayIndex = 0;
+    const chartData = [];
+    const labels = [];
+    let displayIndex = 0;
 
-  paginatedData.forEach((order) => {
-    const startDate = parseDate(order.etd);
-    const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
+    data.forEach((order) => {
+        const startDate = parseDate(order.etd);
+        const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
 
-    if (!startDate || !endDate) return;
+        if (!startDate || !endDate) return;
 
-    const orderYear = parseInt(order.delivery_year) || getYearFromDate(order.etd);
-    if (orderYear !== year) return;
+        const orderYear = parseInt(order.delivery_year) || getYearFromDate(order.etd);
+        if (orderYear !== year) return;
 
+        const clippedStartDate = startDate < yearStart ? yearStart : startDate;
+        const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
 
-    const clippedStartDate = startDate < yearStart ? yearStart : startDate;
-    const clippedEndDate = endDate > yearEnd ? yearEnd : endDate;
+        const status = (order.transit_status || "").toLowerCase().trim();
 
-    const status = (order.transit_status || '').toLowerCase().trim();
+        const color = {
+            "in process": "rgba(255, 165, 0, 0.8)",
+            "en route": "rgba(0, 123, 255, 0.8)",
+            "arrived": "rgba(144, 238, 144, 0.8)",
+        }[status] || "rgba(128, 128, 128, 0.8)";
 
-    const color =
-      {
-        "in process": "rgba(255, 165, 0, 0.8)",
-        "en route": "rgba(0, 123, 255, 0.8)",
-        "arrived": "rgba(144, 238, 144, 0.8)",
-      }[status] || "rgba(128, 128, 128, 0.8)";
+        chartData.push({
+            x: [clippedStartDate, clippedEndDate],
+            y: displayIndex,
+            backgroundColor: color,
+            borderColor: color.replace("0.8", "1"),
+            borderWidth: 1,
+        });
 
+        const transportIcon = {
+            sea: "🚢",
+            air: "✈️",
+            truck: "🚚",
+        }[order.transport] || order.transport;
 
-    chartData.push({
-      x: [clippedStartDate, clippedEndDate],
-      y: displayIndex,
-      backgroundColor: color,
-      borderColor: color.replace("0.8", "1"),
-      borderWidth: 1,
+        labels.push(`${transportIcon} ${order.product_name} (${order.order_number})`);
+        displayIndex += 1;
     });
 
-    const transportIcon =
-      {
-        sea: "🚢",
-        air: "✈️",
-        truck: "🚚",
-      }[order.transport] || order.transport;
-
-    labels.push(
-      `${transportIcon} ${order.product_name} (${order.order_number})`
-    );
-    displayIndex += 1;
-  });
-
-  if (chartData.length === 0) {
-    console.warn("renderTimeline: No valid orders to display");
-    if (loadingIndicator) {
-      loadingIndicator.textContent = `No valid orders for ${
-        selectedYear || "selected year"
-      }`;
-      loadingIndicator.style.display = "block";
+    if (chartData.length === 0) {
+        console.warn("renderTimeline: No valid orders found to display");
+        if (loadingIndicator) {
+            loadingIndicator.textContent = `No valid orders found for ${selectedYear || "selected year"}`;
+            loadingIndicator.style.display = "block";
+        }
+        canvas.style.display = "none";
+        return;
     }
-    canvas.style.display = "none";
-    return;
-  }
 
-  // Dynamic canvas height
-  const heightPerOrder = 50;
-  const headerHeight = 50;
-  const canvasHeight = Math.max(
-    100,
-    chartData.length * heightPerOrder + headerHeight
-  );
-  canvas.style.height = `${canvasHeight}px`;
+    const heightPerOrder = 30;
+    const headerHeight = 50;
+    const canvasHeight = Math.max(200, chartData.length * heightPerOrder + headerHeight);
+    const timelineContainer = canvas.parentElement;
+    timelineContainer.style.height = `${canvasHeight}px`;
+    canvas.style.height = `${canvasHeight}px`;
 
-  // Show/hide Load More and Back buttons
-  const loadMoreBtn = document.getElementById("load-more-btn");
-  const backBtn = document.getElementById("back-btn");
-  if (loadMoreBtn) {
-    loadMoreBtn.style.display =
-      data.length > page * pageSize ? "block" : "none";
-  } else {
-    console.warn("renderTimeline: Load More button not found");
-  }
-  if (backBtn) {
-    backBtn.style.display = page > 1 ? "block" : "none";
-  } else {
-    console.warn("renderTimeline: Back button not found");
-  }
+    if (loadingIndicator) loadingIndicator.style.display = "none";
+    canvas.style.display = "block";
 
-  if (loadingIndicator) loadingIndicator.style.display = "none";
-  canvas.style.display = "block";
+    const today = new Date();
+    const currentWeek = getWeekNumber(today);
+    const startOfWeek = getStartOfWeek(currentWeek, today.getFullYear());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
 
-  const today = new Date();
-  const currentWeek = getWeekNumber(today);
-  const startOfWeek = getStartOfWeek(currentWeek, today.getFullYear());
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
+    const ctx = canvas.getContext("2d");
+    if (chartInstance) chartInstance.destroy();
 
-  const ctx = canvas.getContext("2d");
-  if (chartInstance) chartInstance.destroy();
+    const colors = getChartColors();
 
-  const colors = getChartColors();
-
-  chartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Orders Timeline",
-          data: chartData,
-          backgroundColor: chartData.map((item) => item.backgroundColor),
-          borderColor: chartData.map((item) => item.borderColor),
-          borderWidth: 1,
+    chartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Orders Timeline",
+                    data: chartData,
+                    backgroundColor: chartData.map((item) => item.backgroundColor),
+                    borderColor: chartData.map((item) => item.borderColor),
+                    borderWidth: 1,
+                },
+            ],
         },
-      ],
-    },
-    options: {
-      indexAxis: "y",
-
-      scales: {
-        x: {
-          type: "time",
-          time: {
-            unit: "week",
-            tooltipFormat: "dd.MM.yyyy",
-          },
-          min: yearStart,
-          max: yearEnd,
-          title: {
-            display: true,
-            text: "Timeline",
-            font: { size: 16, weight: "600" },
-            color: colors.title,
-          },
-          ticks: {
-            callback: (value) => `W${getWeekNumber(new Date(value))}`,
-            color: colors.text,
-            font: { size: 12, weight: "500" },
-            autoSkip: true,
-            maxRotation: 0,
-          },
-          grid: {
-            color: colors.grid,
-            borderColor: colors.grid,
-            tickColor: colors.grid,
-            lineWidth: 1,
-          },
-        },
-        y: {
-          min: 0,
-          max: chartData.length - 1,
-          ticks: {
-            callback: (_, i) => labels[i],
-            color: colors.text,
-            font: { size: 12, weight: "500" },
-            autoSkip: false,
-          },
-          grid: {
-            display: false,
-          },
-        },
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function (context) {
-              const [start, end] = context.raw.x;
-              const startDate = new Date(start).toLocaleDateString();
-              const endDate = new Date(end).toLocaleDateString();
-              return `Delivery: ${startDate} → ${endDate}`;
+        options: {
+            indexAxis: "y",
+            scales: {
+                x: {
+                    type: "time",
+                    time: { unit: "week", tooltipFormat: "dd.MM.yyyy" },
+                    min: yearStart,
+                    max: yearEnd,
+                    title: {
+                        display: true,
+                        text: "Timeline",
+                        font: { size: 16, weight: "600" },
+                        color: colors.title,
+                    },
+                    ticks: {
+                        callback: (value) => `W${getWeekNumber(new Date(value))}`,
+                        color: colors.text,
+                        font: { size: 12, weight: "500" },
+                        autoSkip: true,
+                        maxRotation: 0,
+                    },
+                    grid: {
+                        color: colors.grid,
+                        borderColor: colors.grid,
+                        tickColor: colors.grid,
+                        lineWidth: 1,
+                    },
+                },
+                y: {
+                    min: 0,
+                    max: chartData.length - 1,
+                    ticks: {
+                        callback: (_, i) => labels[i],
+                        color: colors.text,
+                        font: { size: 16, weight: "500" }, // Increased from 12 to 16 (30% increase)
+                        autoSkip: false,
+                        padding: 5,
+                    },
+                    grid: { display: false },
+                },
             },
-          },
-        },
-        annotation: {
-          annotations: {
-            currentWeek: {
-              type: "box",
-              xMin: startOfWeek,
-              xMax: endOfWeek,
-              yMin: 0,
-              yMax: chartData.length - 1,
-              backgroundColor: "rgba(255,255,0,0.3)",
-              borderColor: "rgba(255,255,0,0.6)",
-              label: {
-                enabled: true,
-                content: `W${currentWeek}`,
-                position: "top",
-              },
+            layout: { padding: 0 },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const [start, end] = context.raw.x;
+                            const startDate = new Date(start).toLocaleDateString();
+                            const endDate = new Date(end).toLocaleDateString();
+                            return `Delivery: ${startDate} → ${endDate}`;
+                        },
+                    },
+                },
+                annotation: {
+                    annotations: {
+                        currentWeek: {
+                            type: "box",
+                            xMin: startOfWeek,
+                            xMax: endOfWeek,
+                            yMin: 0,
+                            yMax: chartData.length - 1,
+                            backgroundColor: "rgba(255,255,0,0.3)",
+                            borderColor: "rgba(255,255,0,0.6)",
+                            label: {
+                                enabled: true,
+                                content: `W${currentWeek}`,
+                                position: "top",
+                            },
+                        },
+                    },
+                },
             },
-          },
+            responsive: true,
+            maintainAspectRatio: false,
         },
-      },
-      responsive: true,
-      maintainAspectRatio: false,
-    },
-  });
+    });
 
-  console.log("renderTimeline: Chart rendered successfully");
+    console.log("renderTimeline: Chart rendered successfully");
 }
 
-// Load more orders function
-function loadMoreOrders() {
-  currentPage++;
-  const filteredData = filterData(
-    allOrders,
-    document.getElementById("order-filter")?.value || ""
-  );
-  const sortedData = sortData(filteredData, "order_date", true); // Force descending
-  renderTimeline(sortedData, currentPage);
-}
-
-// Load previous orders function
-function loadPreviousOrders() {
-  if (currentPage > 1) {
-    currentPage--;
-    const filteredData = filterData(
-      allOrders,
-      document.getElementById("order-filter")?.value || ""
-    );
-    const sortedData = sortData(filteredData, "order_date", true); // Force descending
-    renderTimeline(sortedData, currentPage);
-  }
-}
+// ... Following code ...
 
 // Modified sortData to support forced direction
 function sortData(data, key, forceDescending = false) {
-  // Initialize sortDirection for the key if not set
   if (!sortDirection[key]) {
     sortDirection[key] = "desc"; // Default to descending
   }
-  // Toggle direction for user-initiated sorting (e.g., header clicks)
   if (!forceDescending) {
     sortDirection[key] = sortDirection[key] === "asc" ? "desc" : "asc";
   }
@@ -455,8 +387,6 @@ function sortData(data, key, forceDescending = false) {
   lastSortKey = key;
   lastSortDirection = direction;
 
-
-  // Update sort indicators
   document.querySelectorAll("th[data-sort]").forEach((th) => {
     const thKey = th.getAttribute("data-sort");
     const indicator = th.querySelector(".sort-indicator");
@@ -500,7 +430,6 @@ function sortData(data, key, forceDescending = false) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Set initial sort indicator for order_date
   const orderDateHeader = document.querySelector('th[data-sort="order_date"]');
   if (orderDateHeader) {
     const indicator = orderDateHeader.querySelector(".sort-indicator");
@@ -518,9 +447,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const years = [
       ...new Set(
-        orders
-          .map((order) => parseInt(order.delivery_year))
-          .filter((year) => year)
+        orders.map((order) => parseInt(order.delivery_year)).filter((year) => year)
       ),
     ].sort((a, b) => b - a);
     console.log("populateYearDropdown: Unique years found:", years);
@@ -558,12 +485,11 @@ document.addEventListener("DOMContentLoaded", function () {
       tbody.appendChild(row);
     } else {
       data.forEach((order) => {
-        const transportIcon =
-          {
-            sea: "🚢",
-            air: "✈️",
-            truck: "🚚",
-          }[order.transport] || order.transport;
+        const transportIcon = {
+          sea: "🚢",
+          air: "✈️",
+          truck: "🚚",
+        }[order.transport] || order.transport;
         const row = document.createElement("tr");
         row.classList.add(
           "bg-gray-100",
@@ -589,7 +515,7 @@ document.addEventListener("DOMContentLoaded", function () {
     <td class="px-2 py-2 text-center text-xs sm:text-sm">
         <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
             ${
-              window.currentUserRole !== 'superuser'
+              window.currentUserRole !== "superuser"
                 ? `
               <form class="w-full sm:w-auto">
                   <button type="button" class="edit-order bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${order.id}">Edit</button>
@@ -615,15 +541,12 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
     </td>
 `;
-
-
         tbody.appendChild(row);
       });
     }
     console.log("updateTable: Table updated with data:", data);
   }
 
-  // Add a setupDashboardSearch() function
   function setupDashboardSearch() {
     const searchInput = document.getElementById("search-dashboard");
     if (!searchInput) return;
@@ -641,7 +564,7 @@ document.addEventListener("DOMContentLoaded", function () {
     initDarkModeToggle();
   }
 
-  setupDashboardSearch(); // 🔁 Rebinds search to updated DOM
+  setupDashboardSearch();
 
   function fetchAndRender() {
     console.log("fetchAndRender: Fetching orders from /api/orders...");
@@ -657,7 +580,6 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .then((data) => {
         console.log("fetchAndRender: Fetched orders:", data.slice(0, 5)); // Log first 5 for brevity
-        // Normalize date formats
         allOrders = data.map((order) => ({
           ...order,
           order_date: order.order_date.includes("-")
@@ -681,7 +603,7 @@ document.addEventListener("DOMContentLoaded", function () {
             order.payment_date && order.payment_date.includes("-")
               ? order.payment_date.split("-").reverse().join(".")
               : order.payment_date,
-          delivery_year: parseInt(order.delivery_year) || null, // ✅ normalized here
+          delivery_year: parseInt(order.delivery_year) || null,
         }));
 
         populateYearDropdown(allOrders);
@@ -693,15 +615,13 @@ document.addEventListener("DOMContentLoaded", function () {
           renderTimeline([]);
           return;
         }
-        currentPage = 1; // Reset page on new fetch
         const filteredData = filterData(
           allOrders,
           document.getElementById("order-filter")?.value || ""
         );
         const sortedData = sortData(filteredData, lastSortKey, lastSortDirection === "desc");
-         // Force descending
         updateTable(sortedData);
-        renderTimeline(sortedData, currentPage);
+        renderTimeline(sortedData);
       })
       .catch((error) => {
         console.error("fetchAndRender: Error fetching or rendering:", error);
@@ -729,7 +649,7 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       const sortedData = sortData(filteredData, key); // User-initiated sort toggles direction
       updateTable(sortedData);
-      renderTimeline(sortedData, currentPage);
+      renderTimeline(sortedData);
     });
   });
 
@@ -740,26 +660,21 @@ document.addEventListener("DOMContentLoaded", function () {
         "order-filter: Input event triggered, query:",
         e.target.value
       );
-      currentPage = 1; // Reset page on filter change
       const query = e.target.value;
       const filteredData = filterData(allOrders, query);
       console.log("order-filter: Filtered data length:", filteredData.length);
-      const sortedData = sortData(filteredData, "order_date", true); // Force descending
+      const sortedData = sortData(filteredData, "order_date", true);
       updateTable(sortedData);
-      renderTimeline(sortedData, currentPage);
+      renderTimeline(sortedData);
     });
   } else {
     console.error("order-filter: Input element not found in DOM");
   }
 
   document.getElementById("year-filter").addEventListener("change", (e) => {
-    currentPage = 1; // Reset page on year change
     selectedYear = e.target.value;
-    sortDirection = { order_date: "desc" }; // Reset sortDirection
-    // Reset sort indicator
-    const orderDateHeader = document.querySelector(
-      'th[data-sort="order_date"]'
-    );
+    sortDirection = { order_date: "desc" };
+    const orderDateHeader = document.querySelector('th[data-sort="order_date"]');
     if (orderDateHeader) {
       const indicator = orderDateHeader.querySelector(".sort-indicator");
       if (indicator) indicator.textContent = "↓";
@@ -775,14 +690,13 @@ document.addEventListener("DOMContentLoaded", function () {
       allOrders,
       document.getElementById("order-filter")?.value || ""
     );
-    const sortedData = sortData(filteredData, "order_date", true); // Force descending
+    const sortedData = sortData(filteredData, "order_date", true);
     updateTable(sortedData);
-    renderTimeline(sortedData, currentPage);
+    renderTimeline(sortedData);
   });
 
   document.querySelectorAll(".legend-item").forEach((item) => {
     item.addEventListener("click", () => {
-      currentPage = 1; // Reset page on status change
       const status = item.getAttribute("data-status");
       if (visibleStatuses.includes(status)) {
         visibleStatuses = visibleStatuses.filter((s) => s !== status);
@@ -796,9 +710,9 @@ document.addEventListener("DOMContentLoaded", function () {
         allOrders,
         document.getElementById("order-filter")?.value || ""
       );
-      const sortedData = sortData(filteredData, "order_date", true); // Force descending
+      const sortedData = sortData(filteredData, "order_date", true);
       updateTable(sortedData);
-      renderTimeline(sortedData, currentPage);
+      renderTimeline(sortedData);
     });
   });
 
@@ -807,72 +721,72 @@ document.addEventListener("DOMContentLoaded", function () {
     addForm.addEventListener("submit", function (event) {
       event.preventDefault();
 
-    const quantity = parseFloat(document.getElementById("quantity").value);
-    const orderDate = document.getElementById("order_date").value;
-    const etd = document.getElementById("etd").value;
-    const eta = document.getElementById("eta").value;
-    const requiredDelivery = document.getElementById("required_delivery").value;
+      const quantity = parseFloat(document.getElementById("quantity").value);
+      const orderDate = document.getElementById("order_date").value;
+      const etd = document.getElementById("etd").value;
+      const eta = document.getElementById("eta").value;
+      const requiredDelivery = document.getElementById("required_delivery").value;
 
-    if (!requiredDelivery.trim()) {
-      alert("Required Delivery cannot be empty.");
-      return;
-    }
-
-    if (isNaN(quantity) || quantity <= 0) {
-      alert("Quantity must be a positive number (decimals allowed).");
-      return;
-    }
-
-    if (etd && orderDate && orderDate > etd) {
-      alert("Order Date cannot be later than ETD.");
-      return;
-    }
-
-    if (etd && eta && etd > eta) {
-      alert("ETD cannot be later than ETA.");
-      return;
-    }
-
-    const formData = new FormData(addForm);
-    const dateFields = [
-      "order_date",
-      "required_delivery",
-      "payment_date",
-      "etd",
-      "eta",
-      "ata",
-    ];
-    const convertedFormData = new FormData();
-
-    for (let [key, value] of formData.entries()) {
-      if (dateFields.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        const [year, month, day] = value.split("-");
-        value = `${day}.${month}.${year.slice(2)}`;
+      if (!requiredDelivery.trim()) {
+        alert("Required Delivery cannot be empty.");
+        return;
       }
-      convertedFormData.append(key, value);
-    }
 
-    fetch("/add_order", {
-      method: "POST",
-      body: convertedFormData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Add response:", data);
-        if (data.success) {
-          alert("Order added successfully!");
-          addForm.reset();
-          console.log("Calling fetchAndRender after adding order");
-          fetchAndRender();
-        } else {
-          alert("Error adding order: " + (data.message || "Unknown error"));
+      if (isNaN(quantity) || quantity <= 0) {
+        alert("Quantity must be a positive number (decimals allowed).");
+        return;
+      }
+
+      if (etd && orderDate && orderDate > etd) {
+        alert("Order Date cannot be later than ETD.");
+        return;
+      }
+
+      if (etd && eta && etd > eta) {
+        alert("ETD cannot be later than ETA.");
+        return;
+      }
+
+      const formData = new FormData(addForm);
+      const dateFields = [
+        "order_date",
+        "required_delivery",
+        "payment_date",
+        "etd",
+        "eta",
+        "ata",
+      ];
+      const convertedFormData = new FormData();
+
+      for (let [key, value] of formData.entries()) {
+        if (dateFields.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          const [year, month, day] = value.split("-");
+          value = `${day}.${month}.${year.slice(2)}`;
         }
+        convertedFormData.append(key, value);
+      }
+
+      fetch("/add_order", {
+        method: "POST",
+        body: convertedFormData,
       })
-      .catch((error) => {
-        console.error("Error adding order:", error);
-        alert("Error adding order. Please try again.");
-      });
-  });
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Add response:", data);
+          if (data.success) {
+            alert("Order added successfully!");
+            addForm.reset();
+            console.log("Calling fetchAndRender after adding order");
+            fetchAndRender();
+          } else {
+            alert("Error adding order: " + (data.message || "Unknown error"));
+          }
+        })
+        .catch((error) => {
+          console.error("Error adding order:", error);
+          alert("Error adding order. Please try again.");
+        });
+    });
   } else {
     console.warn("add-order-form not found in the DOM");
   }
@@ -945,77 +859,76 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-const editForm = document.getElementById("edit-order-form");
-if (editForm) {
-  editForm.addEventListener("submit", function (event) {
-    event.preventDefault();
+  const editForm = document.getElementById("edit-order-form");
+  if (editForm) {
+    editForm.addEventListener("submit", function (event) {
+      event.preventDefault();
 
-    const quantity = parseFloat(document.getElementById("edit-quantity").value);
-    const orderDate = document.getElementById("edit-order_date").value;
-    const etd = document.getElementById("edit-etd").value;
-    const eta = document.getElementById("edit-eta").value;
+      const quantity = parseFloat(document.getElementById("edit-quantity").value);
+      const orderDate = document.getElementById("edit-order_date").value;
+      const etd = document.getElementById("edit-etd").value;
+      const eta = document.getElementById("edit-eta").value;
 
-    if (isNaN(quantity) || quantity <= 0) {
-      alert("Quantity must be a positive number (decimals allowed).");
-      return;
-    }
-
-    if (etd && orderDate && orderDate > etd) {
-      alert("Order Date cannot be later than ETD.");
-      return;
-    }
-
-    if (etd && eta && etd > eta) {
-      alert("ETD cannot be later than ETA.");
-      return;
-    }
-
-    const formData = new FormData(editForm);
-    const dateFields = [
-      "order_date",
-      "required_delivery",
-      "payment_date",
-      "etd",
-      "eta",
-      "ata",
-    ];
-
-    const convertedFormData = new FormData();
-
-    for (let [key, value] of formData.entries()) {
-      if (dateFields.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        const [year, month, day] = value.split("-");
-        value = `${day}.${month}.${year.slice(2)}`;
+      if (isNaN(quantity) || quantity <= 0) {
+        alert("Quantity must be a positive number (decimals allowed).");
+        return;
       }
-      convertedFormData.append(key, value);
-    }
 
-    const orderId = document.getElementById("edit-order-id").value;
+      if (etd && orderDate && orderDate > etd) {
+        alert("Order Date cannot be later than ETD.");
+        return;
+      }
 
-    fetch(`/edit_order/${orderId}`, {
-      method: "POST",
-      body: convertedFormData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Edit response:", data);
-        if (data.success) {
-          alert("Order updated successfully!");
-          editForm.reset();
-          document.getElementById("edit-order-modal").style.display = "none";
-          console.log("Calling fetchAndRender after editing order");
-          fetchAndRender();
-        } else {
-          alert("Error editing order: " + (data.message || "Unknown error"));
+      if (etd && eta && etd > eta) {
+        alert("ETD cannot be later than ETA.");
+        return;
+      }
+
+      const formData = new FormData(editForm);
+      const dateFields = [
+        "order_date",
+        "required_delivery",
+        "payment_date",
+        "etd",
+        "eta",
+        "ata",
+      ];
+
+      const convertedFormData = new FormData();
+
+      for (let [key, value] of formData.entries()) {
+        if (dateFields.includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          const [year, month, day] = value.split("-");
+          value = `${day}.${month}.${year.slice(2)}`;
         }
-      })
-      .catch((error) => {
-        console.error("Error editing order:", error);
-        alert("Error editing order. Please try again.");
-      });
-  });
-}
+        convertedFormData.append(key, value);
+      }
 
+      const orderId = document.getElementById("edit-order-id").value;
+
+      fetch(`/edit_order/${orderId}`, {
+        method: "POST",
+        body: convertedFormData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Edit response:", data);
+          if (data.success) {
+            alert("Order updated successfully!");
+            editForm.reset();
+            document.getElementById("edit-order-modal").style.display = "none";
+            console.log("Calling fetchAndRender after editing order");
+            fetchAndRender();
+          } else {
+            alert("Error editing order: " + (data.message || "Unknown error"));
+          }
+        })
+        .catch((error) => {
+          console.error("Error editing order:", error);
+          alert("Error editing order. Please try again.");
+        });
+    });
+  }
 
   const closeButton = document.querySelector(".close");
   if (closeButton) {
@@ -1030,19 +943,29 @@ if (editForm) {
       modal.style.display = "none";
     }
   });
+
+  const toggleFormBtn = document.querySelector(".toggle-form-btn");
+  const addOrderSection = document.getElementById("add-order-section");
+
+  if (toggleFormBtn && addOrderSection) {
+    toggleFormBtn.addEventListener("click", () => {
+      const isHidden =
+        addOrderSection.style.display === "none" ||
+        addOrderSection.style.display === "";
+      addOrderSection.style.display = isHidden ? "block" : "none";
+      toggleFormBtn.textContent = isHidden
+        ? "Hide Add Order Form"
+        : "Add New Order";
+    });
+  }
 });
 
-const toggleFormBtn = document.querySelector(".toggle-form-btn");
-const addOrderSection = document.getElementById("add-order-section");
-
-if (toggleFormBtn && addOrderSection) {
-  toggleFormBtn.addEventListener("click", () => {
-    const isHidden =
-      addOrderSection.style.display === "none" ||
-      addOrderSection.style.display === "";
-    addOrderSection.style.display = isHidden ? "block" : "none";
-    toggleFormBtn.textContent = isHidden
-      ? "Hide Add Order Form"
-      : "Add New Order";
-  });
-}
+// Add window resize handler to re-render chart
+window.addEventListener("resize", () => {
+  const filteredData = filterData(
+    allOrders,
+    document.getElementById("order-filter")?.value || ""
+  );
+  const sortedData = sortData(filteredData, lastSortKey, lastSortDirection === "desc");
+  renderTimeline(sortedData);
+})
