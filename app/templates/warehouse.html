@@ -98,7 +98,8 @@
                                 <div class="flex items-center gap-2 min-w-[500px] ml-4">
 
                                     <!-- Qty + Deliver -->
-                                    <form method="POST" action="{{ url_for('warehouse.deliver_partial', item_id=item.id) }}"
+                                    <form method="POST"
+                                        action="{{ url_for('warehouse.deliver_partial', item_id=item.id) }}"
                                         class="flex items-center gap-2">
                                         <input type="number" name="quantity" min="1" max="{{ item.quantity }}"
                                             placeholder="Qty"
@@ -112,6 +113,10 @@
                                     <a href="{{ url_for('warehouse.edit_warehouse', item_id=item.id) }}"
                                         class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px] text-center">Edit</a>
 
+                                    <!-- Stockreport -->
+                                    <a href="{{ url_for('warehouse.stockreport_entry_form', item_id=item.id) }}"
+                                        class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 text-xs rounded min-w-[90px] text-center">Stockreport</a>
+
                                     <!-- Restore -->
                                     <form method="POST"
                                         action="{{ url_for('restore.restore_to_dashboard', item_id=item.id) }}"
@@ -122,7 +127,8 @@
 
                                     <!-- Delete (manual only) -->
                                     {% if item.is_manual %}
-                                    <form method="POST" action="{{ url_for('warehouse.delete_warehouse', item_id=item.id) }}"
+                                    <form method="POST"
+                                        action="{{ url_for('warehouse.delete_warehouse', item_id=item.id) }}"
                                         class="inline delete-form">
                                         <button type="submit"
                                             class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded min-w-[70px]">Delete</button>
@@ -132,6 +138,7 @@
                                 </div>
                             </div>
                         </td>
+
 
 
                         <td class="px-4 py-2">

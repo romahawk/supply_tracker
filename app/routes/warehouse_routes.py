@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app.models import db, Order, WarehouseStock, DeliveredGoods
 from app.roles import can_edit, can_view_all  # ✅ Import role helpers
 from datetime import datetime
+from app.models import StockReportEntry
 
 warehouse_bp = Blueprint('warehouse', __name__)
 
@@ -150,3 +151,48 @@ def delete_warehouse(item_id):
     db.session.commit()
     flash('Warehouse item deleted successfully.', 'success')
     return redirect(url_for('warehouse.warehouse'))
+
+@warehouse_bp.route('/stockreport/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def stockreport_entry_form(item_id):
+    if not can_edit(current_user.role):
+        flash("Access denied.", "danger")
+        return redirect(url_for('warehouse.warehouse'))
+
+    item = WarehouseStock.query.get_or_404(item_id)
+
+    if request.method == 'POST':
+        try:
+            entry = StockReportEntry(
+                stage=request.form['stage'],
+                entrance_date=datetime.strptime(request.form['entrance_date'], '%Y-%m-%d'),
+                article_batch=request.form['article_batch'],
+                colli=int(request.form['colli']),
+                packing=request.form['packing'],
+                pcs=int(request.form['pcs']),
+                colli_per_pal=int(request.form['colli_per_pal']),
+                pcs_total=int(request.form['pcs_total']),
+                pal=int(request.form['pal']),
+                product=request.form['product'],
+                gross_kg=float(request.form['gross_kg']),
+                net_kg=float(request.form['net_kg']),
+                sender=request.form['sender'],
+                customs_status=request.form['customs_status'],
+                stockref=request.form['stockref'],
+                warehouse_address=request.form['warehouse_address'],
+                client=request.form['client'],
+                pos_no=request.form['pos_no'],
+                customer_ref=request.form['customer_ref'],
+                related_order_id=item.id
+            )
+
+            db.session.add(entry)
+            db.session.commit()
+            flash("Stockreport entry saved successfully.", "success")
+            return redirect(url_for('warehouse.warehouse'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error saving stockreport entry: {e}", "danger")
+
+    return render_template('stockreport_form.html', item=item)

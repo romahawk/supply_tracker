@@ -96,3 +96,28 @@ class ArchivedOrder(db.Model):
     source = db.Column(db.String(100))
     notes = db.Column(db.Text)
     archived_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class StockReportEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    stage = db.Column(db.String(20))  # "Arrived", "Stocked", "Delivered"
+    entrance_date = db.Column(db.Date)
+    article_batch = db.Column(db.String(50))
+    colli = db.Column(db.Integer)
+    packing = db.Column(db.String(50))
+    pcs = db.Column(db.Integer)
+    colli_per_pal = db.Column(db.Integer)
+    pcs_total = db.Column(db.Integer)
+    pal = db.Column(db.Integer)
+    product = db.Column(db.String(100))
+    gross_kg = db.Column(db.Float)
+    net_kg = db.Column(db.Float)
+    sender = db.Column(db.String(100))
+    customs_status = db.Column(db.String(10))  # "EU", "T1"
+    stockref = db.Column(db.String(50))
+
+    warehouse_address = db.Column(db.String(255))
+    client = db.Column(db.String(255))
+    pos_no = db.Column(db.String(50))
+    customer_ref = db.Column(db.String(50))
+    related_order_id = db.Column(db.Integer, db.ForeignKey('order.id'))  # Link to Order
+
