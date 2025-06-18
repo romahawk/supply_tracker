@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}View Stockreport{% endblock %}
+
+{% block body %}
+<div class="max-w-7xl mx-auto px-6 py-8">
+  <h1 class="text-2xl font-bold mb-6 text-center">Stockreport Entries</h1>
+
+  {% if entries %}
+  <div class="overflow-auto">
+    <table class="min-w-full text-sm border">
+      <thead class="bg-gray-100 dark:bg-gray-700">
+        <tr class="text-xs text-gray-700 dark:text-gray-300">
+          <th class="px-2 py-1 border">Stage</th>
+          <th class="px-2 py-1 border">Entrance</th>
+          <th class="px-2 py-1 border">Article/Batch</th>
+          <th class="px-2 py-1 border">Colli</th>
+          <th class="px-2 py-1 border">PCS</th>
+          <th class="px-2 py-1 border">Pal.</th>
+          <th class="px-2 py-1 border">Gross kg</th>
+          <th class="px-2 py-1 border">Net kg</th>
+          <th class="px-2 py-1 border">Product</th>
+          <th class="px-2 py-1 border">Sender</th>
+          <th class="px-2 py-1 border">Customs</th>
+          <th class="px-2 py-1 border">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr data-entry-id="{{ entry.id }}" class="border-b">
+          <td class="px-2 py-1 border">{{ entry.stage or '-' }}</td>
+          <td class="px-2 py-1 border">
+            <input type="date" name="entrance_date" value="{{ entry.entrance_date.strftime('%Y-%m-%d') }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <input type="text" name="article_batch" value="{{ entry.article_batch }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <input type="number" name="colli" value="{{ entry.colli }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <input type="number" name="pcs" value="{{ entry.pcs }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <input type="number" name="pal" value="{{ entry.pal }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <input type="number" step="0.01" name="gross_kg" value="{{ entry.gross_kg }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <input type="number" step="0.01" name="net_kg" value="{{ entry.net_kg }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <input type="text" name="product" value="{{ entry.product }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <input type="text" name="sender" value="{{ entry.sender }}" class="w-full bg-transparent">
+          </td>
+          <td class="px-2 py-1 border">
+            <select name="customs_status" class="w-full bg-transparent">
+              <option value="EU" {% if entry.customs_status == 'EU' %}selected{% endif %}>EU</option>
+              <option value="T1" {% if entry.customs_status == 'T1' %}selected{% endif %}>T1</option>
+            </select>
+          </td>
+          <td class="px-2 py-1 border text-center">
+            <button class="inline-edit-save bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">
+              Save
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="text-center text-gray-500">No stockreport entries found.</p>
+  {% endif %}
+</div>
+
+<script>
+document.querySelectorAll('.inline-edit-save').forEach(button => {
+  button.addEventListener('click', async function () {
+    const row = this.closest('tr');
+    const entryId = row.dataset.entryId;
+    const inputs = row.querySelectorAll('input, select');
+
+    const data = {};
+    inputs.forEach(input => {
+      data[input.name] = input.value;
+    });
+
+    const response = await fetch(`/stockreport/update/${entryId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      alert('Saved!');
+    } else {
+      alert('Error: ' + result.message);
+    }
+  });
+});
+</script>
+{% endblock %}

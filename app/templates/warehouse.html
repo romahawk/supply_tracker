@@ -114,8 +114,17 @@
                                         class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px] text-center">Edit</a>
 
                                     <!-- Stockreport -->
+                                    {% if item.id in reported_ids %}
+                                    <button data-item-id="{{ item.id }}"
+                                        class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded">
+                                        View Report
+                                    </button>
+                                    {% else %}
                                     <a href="{{ url_for('warehouse.stockreport_entry_form', item_id=item.id) }}"
-                                        class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 text-xs rounded min-w-[90px] text-center">Stockreport</a>
+                                        class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 text-xs rounded">
+                                        Stockreport
+                                    </a>
+                                    {% endif %}
 
                                     <!-- Restore -->
                                     <form method="POST"
@@ -157,6 +166,15 @@
                 </tbody>
             </table>
         </div>
+        <div id="stockreport-modal"
+            class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden z-50">
+            <div class="bg-white max-w-6xl w-full max-h-[80vh] overflow-y-auto rounded shadow-lg relative p-4">
+                <button onclick="closeModal()"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-black text-lg">&times;</button>
+                <div id="stockreport-modal-content">Loading...</div>
+            </div>
+        </div>
+
     </main>
 
     <script>
@@ -248,6 +266,27 @@
                 if (!confirmed) {
                     e.preventDefault();
                 }
+            });
+        });
+    </script>
+
+    <!--  -->
+    <script>
+        function closeModal() {
+            document.getElementById('stockreport-modal').classList.add('hidden');
+            document.getElementById('stockreport-modal-content').innerHTML = '';
+        }
+
+        document.querySelectorAll('.open-stockreport-modal').forEach(button => {
+            button.addEventListener('click', async () => {
+                const itemId = button.dataset.itemId;
+                const modal = document.getElementById('stockreport-modal');
+                const content = document.getElementById('stockreport-modal-content');
+                modal.classList.remove('hidden');
+
+                const response = await fetch(`/stockreport/view/${itemId}`);
+                const html = await response.text();
+                content.innerHTML = html;
             });
         });
     </script>
