@@ -1,106 +1,88 @@
-{% extends "base.html" %}
-{% block title %}View Stockreport{% endblock %}
+<!-- templates/partials/view_stockreport_table.html -->
+<div class="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-full">
+  <div class="flex justify-between items-center mb-4">
+    <div>
+      <h2 class="text-xl font-bold mb-2">Stock IN Report</h2>
+      <div class="text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Warehouse:</strong> PharmaLogis GmbH, Senefelder Ring 34, 21465 Reinbek / Germany</p>
+        <p><strong>Client:</strong> {{ entries[0].client if entries else '' }}</p>
+        <p><strong>Pos. No.:</strong> {{ entries[0].pos_no if entries else '' }}</p>
+        <p><strong>Client Ref.:</strong> {{ entries[0].customer_ref if entries else '' }}</p>
+      </div>
+    </div>
+    <div>
+      <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis Logo" class="h-16">
+    </div>
+    <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-lg font-bold">&times;</button>
+  </div>
 
-{% block body %}
-<div class="max-w-7xl mx-auto px-6 py-8">
-  <h1 class="text-2xl font-bold mb-6 text-center">Stockreport Entries</h1>
-
-  {% if entries %}
   <div class="overflow-auto">
     <table class="min-w-full text-sm border">
-      <thead class="bg-gray-100 dark:bg-gray-700">
-        <tr class="text-xs text-gray-700 dark:text-gray-300">
-          <th class="px-2 py-1 border">Stage</th>
-          <th class="px-2 py-1 border">Entrance</th>
-          <th class="px-2 py-1 border">Article/Batch</th>
-          <th class="px-2 py-1 border">Colli</th>
-          <th class="px-2 py-1 border">PCS</th>
-          <th class="px-2 py-1 border">Pal.</th>
-          <th class="px-2 py-1 border">Gross kg</th>
-          <th class="px-2 py-1 border">Net kg</th>
-          <th class="px-2 py-1 border">Product</th>
-          <th class="px-2 py-1 border">Sender</th>
-          <th class="px-2 py-1 border">Customs</th>
-          <th class="px-2 py-1 border">Action</th>
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="border px-2 py-1">Stage</th>
+          <th class="border px-2 py-1">Entrance</th>
+          <th class="border px-2 py-1">Article/Batch</th>
+          <th class="border px-2 py-1">Colli</th>
+          <th class="border px-2 py-1">Packing</th>
+          <th class="border px-2 py-1">PCS</th>
+          <th class="border px-2 py-1">Colli/Pal.</th>
+          <th class="border px-2 py-1">Pcs Total</th>
+          <th class="border px-2 py-1">Pal.</th>
+          <th class="border px-2 py-1">Product</th>
+          <th class="border px-2 py-1">Gross kg</th>
+          <th class="border px-2 py-1">Net kg</th>
+          <th class="border px-2 py-1">Sender</th>
+          <th class="border px-2 py-1">Customs</th>
+          <th class="border px-2 py-1">Stockref</th>
+          <th class="border px-2 py-1">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for entry in entries %}
-        <tr data-entry-id="{{ entry.id }}" class="border-b">
+        <tr class="border-t hover:bg-gray-50">
           <td class="px-2 py-1 border">{{ entry.stage or '-' }}</td>
-          <td class="px-2 py-1 border">
-            <input type="date" name="entrance_date" value="{{ entry.entrance_date.strftime('%Y-%m-%d') }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <input type="text" name="article_batch" value="{{ entry.article_batch }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <input type="number" name="colli" value="{{ entry.colli }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <input type="number" name="pcs" value="{{ entry.pcs }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <input type="number" name="pal" value="{{ entry.pal }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <input type="number" step="0.01" name="gross_kg" value="{{ entry.gross_kg }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <input type="number" step="0.01" name="net_kg" value="{{ entry.net_kg }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <input type="text" name="product" value="{{ entry.product }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <input type="text" name="sender" value="{{ entry.sender }}" class="w-full bg-transparent">
-          </td>
-          <td class="px-2 py-1 border">
-            <select name="customs_status" class="w-full bg-transparent">
-              <option value="EU" {% if entry.customs_status == 'EU' %}selected{% endif %}>EU</option>
-              <option value="T1" {% if entry.customs_status == 'T1' %}selected{% endif %}>T1</option>
-            </select>
-          </td>
+          <td class="px-2 py-1 border">{{ entry.entrance_date }}</td>
+          <td class="px-2 py-1 border">{{ entry.article_batch }}</td>
+          <td class="px-2 py-1 border">{{ entry.colli }}</td>
+          <td class="px-2 py-1 border">{{ entry.packing }}</td>
+          <td class="px-2 py-1 border">{{ entry.pcs }}</td>
+          <td class="px-2 py-1 border">{{ entry.colli_per_pal }}</td>
+          <td class="px-2 py-1 border">{{ entry.pcs_total }}</td>
+          <td class="px-2 py-1 border">{{ entry.pal }}</td>
+          <td class="px-2 py-1 border truncate" title="{{ entry.product }}">{{ entry.product }}</td>
+          <td class="px-2 py-1 border">{{ entry.gross_kg }}</td>
+          <td class="px-2 py-1 border">{{ entry.net_kg }}</td>
+          <td class="px-2 py-1 border truncate" title="{{ entry.sender }}">{{ entry.sender }}</td>
+          <td class="px-2 py-1 border">{{ entry.customs_status }}</td>
+          <td class="px-2 py-1 border">{{ entry.stockref }}</td>
           <td class="px-2 py-1 border text-center">
-            <button class="inline-edit-save bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">
-              Save
-            </button>
+            <a href="{{ url_for('warehouse.edit_stockreport', entry_id=entry.id) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">Edit</a>
+            <form method="POST" action="{{ url_for('warehouse.delete_stockreport', entry_id=entry.id) }}" class="inline">
+              <button type="submit" onclick="return confirm('Delete this entry?')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs ml-1">Delete</button>
+            </form>
           </td>
         </tr>
         {% endfor %}
+        <tr class="font-semibold bg-gray-50">
+          <td colspan="3" class="px-2 py-1 border text-right">TOTAL:</td>
+          <td class="px-2 py-1 border">{{ entries | sum(attribute='colli') }}</td>
+          <td class="px-2 py-1 border"></td>
+          <td class="px-2 py-1 border">{{ entries | sum(attribute='pcs') }}</td>
+          <td class="px-2 py-1 border"></td>
+          <td class="px-2 py-1 border">{{ entries | sum(attribute='pcs_total') }}</td>
+          <td class="px-2 py-1 border">{{ entries | sum(attribute='pal') }}</td>
+          <td class="px-2 py-1 border"></td>
+          <td class="px-2 py-1 border">{{ entries | sum(attribute='gross_kg') }}</td>
+          <td class="px-2 py-1 border">{{ entries | sum(attribute='net_kg') }}</td>
+          <td colspan="4" class="px-2 py-1 border"></td>
+        </tr>
       </tbody>
     </table>
   </div>
-  {% else %}
-    <p class="text-center text-gray-500">No stockreport entries found.</p>
-  {% endif %}
+
+  <div class="mt-4 text-right">
+    <a href="{{ url_for('warehouse.stockreport_entry_form', item_id=entries[0].related_order_id if entries else 0) }}"
+       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">+ Add New Row</a>
+  </div>
 </div>
-
-<script>
-document.querySelectorAll('.inline-edit-save').forEach(button => {
-  button.addEventListener('click', async function () {
-    const row = this.closest('tr');
-    const entryId = row.dataset.entryId;
-    const inputs = row.querySelectorAll('input, select');
-
-    const data = {};
-    inputs.forEach(input => {
-      data[input.name] = input.value;
-    });
-
-    const response = await fetch(`/stockreport/update/${entryId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-
-    const result = await response.json();
-    if (response.ok) {
-      alert('Saved!');
-    } else {
-      alert('Error: ' + result.message);
-    }
-  });
-});
-</script>
-{% endblock %}

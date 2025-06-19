@@ -4,6 +4,7 @@ from app.models import db, Order, WarehouseStock, DeliveredGoods
 from app.roles import can_edit, can_view_all  # ✅ Import role helpers
 from datetime import datetime
 from app.models import StockReportEntry
+from flask import jsonify
 
 warehouse_bp = Blueprint('warehouse', __name__)
 
@@ -240,3 +241,27 @@ def edit_stockreport(entry_id):
             flash(f"Error updating entry: {e}", "danger")
 
     return render_template('edit_stockreport.html', entry=entry)
+
+@warehouse_bp.route('/stockreport/delete/<int:entry_id>', methods=['POST'])
+@login_required
+def delete_stockreport(entry_id):
+    entry = StockReportEntry.query.get_or_404(entry_id)
+    item_id = entry.related_order_id
+
+    try:
+        db.session.delete(entry)
+        db.session.commit()
+
+        # Check if AJAX request (modal-based)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({"success": True})
+        else:
+            flash("Stockreport deleted.", "success")
+            return redirect(url_for('warehouse.warehouse'))
+
+    except Exception as e:
+        db.session.rollback()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({"success": False, "error": str(e)}), 400
+        flash(f"Delete failed: {e}", "danger")
+        return redirect(url_for('warehouse.warehouse'))
