@@ -1,62 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Stock IN Report{% endblock %}
+{% block body %}
 <!-- templates/partials/view_stockreport_table.html -->
-<div class="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-full">
-  <div class="flex justify-between items-center mb-4">
+<div class="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-full px-[50px] relative">
+  <div class="flex justify-between items-start mb-6">
     <div>
-      <h2 class="text-xl font-bold mb-2">Stock IN Report</h2>
-      <div class="text-sm text-gray-700 dark:text-gray-300">
+      <h2 class="text-2xl font-bold mb-2">Stock IN Report</h2>
+      <div class="text-sm text-gray-700 dark:text-gray-300 space-y-1">
         <p><strong>Warehouse:</strong> PharmaLogis GmbH, Senefelder Ring 34, 21465 Reinbek / Germany</p>
         <p><strong>Client:</strong> {{ entries[0].client if entries else '' }}</p>
         <p><strong>Pos. No.:</strong> {{ entries[0].pos_no if entries else '' }}</p>
         <p><strong>Client Ref.:</strong> {{ entries[0].customer_ref if entries else '' }}</p>
       </div>
     </div>
-    <div>
-      <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="PharmaLogis Logo" class="h-16">
-    </div>
+    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="w-36 object-contain h-auto">
     <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-lg font-bold">&times;</button>
   </div>
 
   <div class="overflow-auto">
-    <table class="min-w-full text-sm border">
-      <thead class="bg-gray-100 text-gray-700">
+    <table class="w-full text-sm text-left border">
+      <thead class="bg-gray-100 dark:bg-gray-700 text-xs text-gray-700 dark:text-gray-300">
         <tr>
-          <th class="border px-2 py-1">Stage</th>
-          <th class="border px-2 py-1">Entrance</th>
-          <th class="border px-2 py-1">Article/Batch</th>
-          <th class="border px-2 py-1">Colli</th>
-          <th class="border px-2 py-1">Packing</th>
-          <th class="border px-2 py-1">PCS</th>
-          <th class="border px-2 py-1">Colli/Pal.</th>
-          <th class="border px-2 py-1">Pcs Total</th>
-          <th class="border px-2 py-1">Pal.</th>
-          <th class="border px-2 py-1">Product</th>
-          <th class="border px-2 py-1">Gross kg</th>
-          <th class="border px-2 py-1">Net kg</th>
-          <th class="border px-2 py-1">Sender</th>
-          <th class="border px-2 py-1">Customs</th>
-          <th class="border px-2 py-1">Stockref</th>
-          <th class="border px-2 py-1">Actions</th>
+          <th class="p-2 border w-[120px]">Entrance</th>
+          <th class="p-2 border">Article/Batch</th>
+          <th class="p-2 border">Colli</th>
+          <th class="p-2 border">Packing</th>
+          <th class="p-2 border">PCS</th>
+          <th class="p-2 border">Colli/Pal.</th>
+          <th class="p-2 border">Pcs Total</th>
+          <th class="p-2 border">Pal.</th>
+          <th class="p-2 border w-[200px]">Product</th>
+          <th class="p-2 border">Gross kg</th>
+          <th class="p-2 border">Net kg</th>
+          <th class="p-2 border w-[200px]">Sender</th>
+          <th class="p-2 border">Customs</th>
+          <th class="p-2 border">Stockref</th>
+          <th class="p-2 border text-center">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for entry in entries %}
-        <tr class="border-t hover:bg-gray-50">
-          <td class="px-2 py-1 border">{{ entry.stage or '-' }}</td>
-          <td class="px-2 py-1 border">{{ entry.entrance_date }}</td>
-          <td class="px-2 py-1 border">{{ entry.article_batch }}</td>
-          <td class="px-2 py-1 border">{{ entry.colli }}</td>
-          <td class="px-2 py-1 border">{{ entry.packing }}</td>
-          <td class="px-2 py-1 border">{{ entry.pcs }}</td>
-          <td class="px-2 py-1 border">{{ entry.colli_per_pal }}</td>
-          <td class="px-2 py-1 border">{{ entry.pcs_total }}</td>
-          <td class="px-2 py-1 border">{{ entry.pal }}</td>
-          <td class="px-2 py-1 border truncate" title="{{ entry.product }}">{{ entry.product }}</td>
-          <td class="px-2 py-1 border">{{ entry.gross_kg }}</td>
-          <td class="px-2 py-1 border">{{ entry.net_kg }}</td>
-          <td class="px-2 py-1 border truncate" title="{{ entry.sender }}">{{ entry.sender }}</td>
-          <td class="px-2 py-1 border">{{ entry.customs_status }}</td>
-          <td class="px-2 py-1 border">{{ entry.stockref }}</td>
-          <td class="px-2 py-1 border text-center">
+        <tr class="border-t">
+          <td class="p-2 border">{{ entry.entrance_date }}</td>
+          <td class="p-2 border">{{ entry.article_batch }}</td>
+          <td class="p-2 border">{{ entry.colli }}</td>
+          <td class="p-2 border">{{ entry.packing }}</td>
+          <td class="p-2 border">{{ entry.pcs }}</td>
+          <td class="p-2 border">{{ entry.colli_per_pal }}</td>
+          <td class="p-2 border">{{ entry.pcs_total }}</td>
+          <td class="p-2 border">{{ entry.pal }}</td>
+          <td class="p-2 border truncate" title="{{ entry.product }}">{{ entry.product }}</td>
+          <td class="p-2 border">{{ entry.gross_kg }}</td>
+          <td class="p-2 border">{{ entry.net_kg }}</td>
+          <td class="p-2 border truncate" title="{{ entry.sender }}">{{ entry.sender }}</td>
+          <td class="p-2 border">{{ entry.customs_status }}</td>
+          <td class="p-2 border">{{ entry.stockref }}</td>
+          <td class="p-2 border text-center">
             <a href="{{ url_for('warehouse.edit_stockreport', entry_id=entry.id) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">Edit</a>
             <form method="POST" action="{{ url_for('warehouse.delete_stockreport', entry_id=entry.id) }}" class="inline">
               <button type="submit" onclick="return confirm('Delete this entry?')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs ml-1">Delete</button>
@@ -64,8 +63,8 @@
           </td>
         </tr>
         {% endfor %}
-        <tr class="font-semibold bg-gray-50">
-          <td colspan="3" class="px-2 py-1 border text-right">TOTAL:</td>
+        <tr class="text-sm font-semibold bg-gray-50">
+          <td colspan="2" class="px-2 py-1 border text-right">TOTAL:</td>
           <td class="px-2 py-1 border">{{ entries | sum(attribute='colli') }}</td>
           <td class="px-2 py-1 border"></td>
           <td class="px-2 py-1 border">{{ entries | sum(attribute='pcs') }}</td>
@@ -81,8 +80,37 @@
     </table>
   </div>
 
-  <div class="mt-4 text-right">
-    <a href="{{ url_for('warehouse.stockreport_entry_form', item_id=entries[0].related_order_id if entries else 0) }}"
-       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">+ Add New Row</a>
+  <!-- Customs & Signature Info -->
+  <div class="grid grid-cols-3 gap-4 mt-8 text-sm">
+    <div>
+      <label class="block font-medium">ATB First:</label>
+      <span class="block mt-1 text-gray-700 dark:text-gray-300">{{ atb_frist or '—' }}</span>
+    </div>
+    <div>
+      <label class="block font-medium">Customs OZL:</label>
+      <span class="block mt-1 text-gray-700 dark:text-gray-300">{{ customs_ozl or '—' }}</span>
+    </div>
+    <div>
+      <label class="block font-medium">Free till:</label>
+      <span class="block mt-1 text-gray-700 dark:text-gray-300">{{ free_till or '—' }}</span>
+    </div>
+  </div>
+
+  <!-- Signature -->
+  <div class="grid grid-cols-2 gap-8 mt-10">
+    <div class="text-center">
+      <p class="text-sm text-gray-700 mb-1">Date: {{ signature_date_client or '—' }}</p>
+      <img src="{{ url_for('static', filename='images/signatures/' + (signature_client or 'signature1.png')) }}" alt="Client Signature" class="mx-auto w-32 h-auto mb-2">
+      <div class="border-t border-black w-2/3 mx-auto"></div>
+      <p class="text-sm mt-1">Date & Signature</p>
+    </div>
+
+    <div class="text-center">
+      <p class="text-sm text-gray-700 mb-1">Date: {{ signature_date_warehouse or '—' }}</p>
+      <img src="{{ url_for('static', filename='images/signatures/' + (signature_warehouse or 'signature1.png')) }}" alt="Warehouse Signature" class="mx-auto w-32 h-auto mb-2">
+      <div class="border-t border-black w-2/3 mx-auto"></div>
+      <p class="text-sm mt-1">Signature Warehouse</p>
+    </div>
   </div>
 </div>
+{% endblock %}

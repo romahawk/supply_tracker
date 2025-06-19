@@ -223,24 +223,42 @@ def edit_stockreport(entry_id):
 
     if request.method == 'POST':
         try:
-            entry.entrance_date = request.form['entrance_date']
-            entry.article_batch = request.form['article_batch']
-            entry.colli = request.form['colli']
-            entry.pcs = request.form['pcs']
-            entry.pal = request.form['pal']
-            entry.gross_kg = request.form['gross_kg']
-            entry.net_kg = request.form['net_kg']
-            entry.product = request.form['product']
-            entry.sender = request.form['sender']
-            entry.customs_status = request.form['customs_status']
-            db.session.commit()
+            # Convert date fields to datetime.date
+            if request.form['entrance_date']:
+                entry.entrance_date = datetime.strptime(request.form['entrance_date'], '%Y-%m-%d').date()
 
+            entry.article_batch = request.form['article_batch']
+            entry.colli = int(request.form['colli'] or 0)
+            entry.packing = request.form.get('packing', '')
+            entry.pcs = int(request.form['pcs'] or 0)
+            entry.colli_per_pal = int(request.form.get('colli_per_pal', 0))
+            entry.pcs_total = int(request.form.get('pcs_total', 0))
+            entry.pal = int(request.form['pal'] or 0)
+            entry.gross_kg = float(request.form['gross_kg'] or 0)
+            entry.net_kg = float(request.form['net_kg'] or 0)
+            entry.product = request.form.get('product', '')
+            entry.sender = request.form.get('sender', '')
+            entry.customs_status = request.form['customs_status']
+            entry.customs_ozl = request.form.get('customs_ozl', '')
+            entry.stockref = request.form.get('stockref', '')
+
+            # Optional signed date
+            if request.form.get('signed_date'):
+                entry.signed_date = datetime.strptime(request.form['signed_date'], '%Y-%m-%d').date()
+
+            # Optional signature image
+            entry.signature_path = request.form.get('signature_path', '')
+
+            db.session.commit()
             flash("Stockreport updated successfully.", "success")
             return redirect(url_for('warehouse.view_stockreport_entries', item_id=entry.related_order_id))
+
         except Exception as e:
+            db.session.rollback()
             flash(f"Error updating entry: {e}", "danger")
 
     return render_template('edit_stockreport.html', entry=entry)
+
 
 @warehouse_bp.route('/stockreport/delete/<int:entry_id>', methods=['POST'])
 @login_required
