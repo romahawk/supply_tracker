@@ -76,3 +76,8 @@ watchdog==6.0.0
 websocket-client==1.8.0
 Werkzeug==2.3.8
 wsproto==1.2.0
+WeasyPrint==65.1
+pydyf==0.11.0
+tinycss2==1.4.0
+cssselect2==0.8.0
+Pyphen==0.17.2

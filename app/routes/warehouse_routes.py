@@ -1,11 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from app.models import db, Order, WarehouseStock, DeliveredGoods
-from app.roles import can_edit, can_view_all  # ✅ Import role helpers
+from app.models import db, Order, WarehouseStock, DeliveredGoods, StockReportEntry
+from app.roles import can_edit, can_view_all
 from datetime import datetime
-from app.models import StockReportEntry
-from flask import jsonify
-from flask import make_response
+from flask import jsonify, make_response
+from weasyprint import HTML
 
 warehouse_bp = Blueprint('warehouse', __name__)
 
@@ -17,17 +16,12 @@ def warehouse():
     else:
         warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).order_by(WarehouseStock.ata.desc()).all()
 
-    # Collect IDs of items that have stockreport entries
     reported_ids = {
         entry.related_order_id
         for entry in StockReportEntry.query.with_entities(StockReportEntry.related_order_id).distinct()
     }
 
-    return render_template(
-        'warehouse.html',
-        warehouse_items=warehouse_items,
-        reported_ids=reported_ids
-    )
+    return render_template('warehouse.html', warehouse_items=warehouse_items, reported_ids=reported_ids)
 
 @warehouse_bp.route('/add_warehouse_manual', methods=['POST'])
 @login_required
@@ -75,7 +69,6 @@ def stock_order(order_id):
         return redirect(url_for('dashboard.dashboard'))
 
     order = Order.query.get_or_404(order_id)
-
     new_stock = WarehouseStock(
         user_id=order.user_id,
         order_number=order.order_number,
@@ -103,18 +96,20 @@ def deliver_partial(item_id):
 
     try:
         qty_to_deliver = float(request.form['quantity'])
+        current_qty = float(item.quantity)
     except ValueError:
         flash('Invalid quantity entered.', 'danger')
         return redirect(url_for('warehouse.warehouse'))
 
-    if qty_to_deliver <= 0 or qty_to_deliver > float(item.quantity):
-        flash(f"Invalid quantity. Must be between 1 and {item.quantity}.", 'danger')
+    if qty_to_deliver <= 0 or qty_to_deliver > current_qty:
+        flash(f"Invalid quantity. Must be between 1 and {current_qty}.", 'danger')
         return redirect(url_for('warehouse.warehouse'))
 
-    item.quantity = float(item.quantity) - qty_to_deliver
-    if item.quantity <= 0:
+    new_qty = current_qty - qty_to_deliver
+    if new_qty <= 0:
         db.session.delete(item)
     else:
+        item.quantity = new_qty
         db.session.add(item)
 
     delivery = DeliveredGoods(
@@ -132,6 +127,7 @@ def deliver_partial(item_id):
 
     flash(f'Delivered {qty_to_deliver} from warehouse.', 'success')
     return redirect(url_for('warehouse.warehouse'))
+
 
 @warehouse_bp.route('/edit_warehouse/<int:item_id>', methods=['GET', 'POST'])
 @login_required
@@ -176,26 +172,30 @@ def stockreport_entry_form(item_id):
 
     if request.method == 'POST':
         try:
+            form = request.form
+            entrance_str = form.get('entrance_date')
+            entrance_date = datetime.strptime(entrance_str, '%Y-%m-%d') if entrance_str else None
+
             entry = StockReportEntry(
-                stage=request.form['stage'],
-                entrance_date=datetime.strptime(request.form['entrance_date'], '%Y-%m-%d'),
-                article_batch=request.form['article_batch'],
-                colli=int(request.form['colli']),
-                packing=request.form['packing'],
-                pcs=int(request.form['pcs']),
-                colli_per_pal=int(request.form['colli_per_pal']),
-                pcs_total=int(request.form['pcs_total']),
-                pal=int(request.form['pal']),
-                product=request.form['product'],
-                gross_kg=float(request.form['gross_kg']),
-                net_kg=float(request.form['net_kg']),
-                sender=request.form['sender'],
-                customs_status=request.form['customs_status'],
-                stockref=request.form['stockref'],
-                warehouse_address=request.form['warehouse_address'],
-                client=request.form['client'],
-                pos_no=request.form['pos_no'],
-                customer_ref=request.form['customer_ref'],
+                stage=form.get('stage'),
+                entrance_date=entrance_date,
+                article_batch=form.get('article_batch'),
+                colli=int(form.get('colli') or 0),
+                packing=form.get('packing', ''),
+                pcs=int(form.get('pcs') or 0),
+                colli_per_pal=int(form.get('colli_per_pal') or 0),
+                pcs_total=int(form.get('pcs_total') or 0),
+                pal=int(form.get('pal') or 0),
+                product=form.get('product', ''),
+                gross_kg=float(form.get('gross_kg') or 0),
+                net_kg=float(form.get('net_kg') or 0),
+                sender=form.get('sender', ''),
+                customs_status=form.get('customs_status', ''),
+                stockref=form.get('stockref', ''),
+                warehouse_address=form.get('warehouse_address', ''),
+                client=form.get('client', ''),
+                pos_no=form.get('pos_no', ''),
+                customer_ref=form.get('customer_ref', ''),
                 related_order_id=item.id
             )
 
@@ -242,7 +242,6 @@ def edit_stockreport(entry_id):
 
     if request.method == 'POST':
         try:
-            # Convert date fields to datetime.date
             if request.form['entrance_date']:
                 entry.entrance_date = datetime.strptime(request.form['entrance_date'], '%Y-%m-%d').date()
 
@@ -261,11 +260,9 @@ def edit_stockreport(entry_id):
             entry.customs_ozl = request.form.get('customs_ozl', '')
             entry.stockref = request.form.get('stockref', '')
 
-            # Optional signed date
             if request.form.get('signed_date'):
                 entry.signed_date = datetime.strptime(request.form['signed_date'], '%Y-%m-%d').date()
 
-            # Optional signature image
             entry.signature_path = request.form.get('signature_path', '')
 
             db.session.commit()
@@ -287,8 +284,6 @@ def delete_stockreport(entry_id):
     try:
         db.session.delete(entry)
         db.session.commit()
-
-        # Check if AJAX request (modal-based)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({"success": True})
         else:
@@ -301,3 +296,14 @@ def delete_stockreport(entry_id):
             return jsonify({"success": False, "error": str(e)}), 400
         flash(f"Delete failed: {e}", "danger")
         return redirect(url_for('warehouse.warehouse'))
+    
+@warehouse_bp.route('/stockreport/view_by_order/<string:order_number>')
+@login_required
+def view_stockreport_by_order(order_number):
+    item = WarehouseStock.query.filter_by(order_number=order_number).first_or_404()
+    if not can_view_all(current_user.role) and current_user.id != item.user_id:
+        flash("Access denied.", "danger")
+        return redirect(url_for('warehouse.warehouse'))
+    entries = StockReportEntry.query.filter_by(related_order_id=item.id).all()
+    return render_template('view_stockreport.html', item=item, entries=entries)
+

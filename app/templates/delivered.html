@@ -22,8 +22,8 @@
 
         <!-- Search -->
         <div class="mb-4">
-            <input type="text" id="search-delivered" placeholder="Search delivered items" class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400
-                    bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" />
+            <input type="text" id="search-delivered" placeholder="Search delivered items"
+                class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" />
         </div>
 
         <div class="orders-table-container overflow-auto h-full border rounded shadow w-full">
@@ -54,34 +54,26 @@
                         <td class="px-4 py-2">{{ item.order_number }}</td>
                         <td class="px-4 py-2">{{ item.product_name }}</td>
                         <td class="px-4 py-2">{{ item.quantity }}</td>
-
-                        <!-- ✅ Updated to include data-key for sortable date -->
                         <td class="px-4 py-2" data-key="delivery_date" data-sort-value="{{ item.delivery_date }}">
-  {{ item.delivery_date | format_date }}
-</td>
-
-
-
+                            {{ item.delivery_date | format_date }}
+                        </td>
                         <td class="px-4 py-2 text-xs">
-                            {% if item.transport == 'air' %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">✈️ Air</span>
-                            {% elif item.transport == 'sea' %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚢 Sea</span>
-                            {% elif item.transport == 'truck' %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚚 Truck</span>
+                            {% if item.transport == 'air' %}<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">✈️
+                                Air</span>
+                            {% elif item.transport == 'sea' %}<span
+                                class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚢 Sea</span>
+                            {% elif item.transport == 'truck' %}<span
+                                class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚚 Truck</span>
                             {% else %}—{% endif %}
                         </td>
-
                         <td class="px-4 py-2 text-xs">
-                            {% if item.delivery_source == 'Direct from Transit' %}
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Direct from Transit</span>
-                            {% elif item.delivery_source == 'From Warehouse' %}
-                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">From Warehouse</span>
-                            {% else %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">—</span>
+                            {% if item.delivery_source == 'Direct from Transit' %}<span
+                                class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Direct from Transit</span>
+                            {% elif item.delivery_source == 'From Warehouse' %}<span
+                                class="bg-purple-100 text-purple-800 px-2 py-1 rounded">From Warehouse</span>
+                            {% else %}<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">—</span>
                             {% endif %}
                         </td>
-
                         <td class="px-4 py-2 space-y-1">
                             {% if current_user.role != 'superuser' %}
                             <a href="{{ url_for('delivered.edit_delivered', item_id=item.id) }}"
@@ -90,24 +82,24 @@
                                 action="{{ url_for('restore.restore_from_delivered', item_id=item.id) }}"
                                 class="inline">
                                 <button type="submit"
-                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">
-                                    Restore
-                                </button>
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">Restore</button>
                             </form>
+                            {% if item.delivery_source == 'From Warehouse' and item.order_number in
+                            reported_order_numbers %}
+                            <button data-order-number="{{ item.order_number }}"
+                                class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded min-w-[90px]">View
+                                Report</button>
+                            {% endif %}
                             {% endif %}
                         </td>
-
                         <td class="px-4 py-2">
                             {% if item.notes %}
                             <span title="{{ item.notes }}"
                                 class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded whitespace-nowrap max-w-[150px] overflow-hidden text-ellipsis inline-block">
                                 {{ item.notes[:30] }}{% if item.notes|length > 30 %}...{% endif %}
                             </span>
-                            {% else %}
-                            —
-                            {% endif %}
+                            {% else %}—{% endif %}
                         </td>
-
                         <td class="px-4 py-2 text-xs text-center">
                             {% if current_user.role != 'superuser' %}
                             {% if item.pod_filename %}
@@ -123,10 +115,8 @@
                             <form method="POST" action="{{ url_for('upload.upload_pod', item_id=item.id) }}"
                                 enctype="multipart/form-data" class="flex flex-col items-center space-y-1">
                                 <label for="pod-{{ item.id }}"
-                                    class="cursor-pointer text-blue-600 text-sm hover:underline relative">
-                                    📤 Upload
-                                    ...
-                                </label>
+                                    class="cursor-pointer text-blue-600 text-sm hover:underline relative">📤
+                                    Upload...</label>
                                 <input id="pod-{{ item.id }}" name="file" type="file" accept=".pdf" class="hidden"
                                     onchange="this.form.submit()">
                             </form>
@@ -135,113 +125,53 @@
                         </td>
                     </tr>
                     {% endfor %}
-
                 </tbody>
             </table>
         </div>
     </main>
 
+    <!-- Modal for Stockreport -->
+    <div id="stockreport-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-5xl relative">
+            <button onclick="closeModal()"
+                class="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-lg font-bold">&times;</button>
+            <iframe id="stockreport-frame" src="" class="w-full h-[80vh] border rounded"></iframe>
+        </div>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const searchInput = document.getElementById('search-delivered');
-            const headers = document.querySelectorAll('th[data-sort]');
-            let currentSort = { key: '', direction: '' };
-
-            searchInput.addEventListener('input', () => {
-                const term = searchInput.value.toLowerCase();
-                const rows = document.querySelectorAll('#delivered-table tbody tr');
-                rows.forEach(row => {
-                    const rowText = row.textContent.toLowerCase();
-                    row.style.display = rowText.includes(term) ? '' : 'none';
-                });
+        document.querySelectorAll('.open-stockreport-modal').forEach(button => {
+            button.addEventListener('click', function () {
+                const orderNumber = this.getAttribute('data-order-number');
+                const modal = document.getElementById('stockreport-modal');
+                const iframe = document.getElementById('stockreport-frame');
+                iframe.src = `/stockreport/view_by_order/${orderNumber}`;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
             });
-
-            headers.forEach(header => {
-                header.addEventListener('click', () => {
-                    const key = header.getAttribute('data-sort');
-                    const ascending = currentSort.key === key && currentSort.direction === 'asc' ? false : true;
-                    currentSort = { key, direction: ascending ? 'asc' : 'desc' };
-
-                    sortTableByKey(key, ascending);
-                    updateSortIndicators();
-                });
-            });
-
-            function sortTableByKey(key, ascending) {
-                const cellMap = {
-                    order_number: 0,
-                    product_name: 1,
-                    quantity: 2,
-                    delivery_date: 3,
-                    transport: 4
-                };
-
-                const parseDate = (str) => {
-    if (!str) return new Date("1970-01-01");
-    const parts = str.trim().split(".");
-    if (parts.length === 3) {
-        const [day, month, year] = parts;
-        const fullYear = year.length === 2 ? `20${year}` : year;
-        return new Date(`${fullYear}-${month}-${day}`);
-    }
-    return new Date(str); // fallback if format already ISO
-};
-
-
-                const rows = Array.from(document.querySelectorAll('#delivered-table tbody tr'));
-
-                const sortedRows = rows.sort((a, b) => {
-                    const cellA = a.cells[cellMap[key]];
-                    const cellB = b.cells[cellMap[key]];
-
-                    let valA = cellA.getAttribute("data-sort-value") || cellA.innerText.trim().toLowerCase();
-                    let valB = cellB.getAttribute("data-sort-value") || cellB.innerText.trim().toLowerCase();
-
-                    if (key === "quantity") {
-                        return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
-                    }
-
-                    if (key === "delivery_date") {
-                        const dateA = parseDate(valA);
-                        const dateB = parseDate(valB);
-                        return ascending ? dateA - dateB : dateB - dateA;
-                    }
-
-                    return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                });
-
-                const tbody = document.querySelector('#delivered-table tbody');
-                tbody.innerHTML = '';
-                sortedRows.forEach(row => tbody.appendChild(row));
-            }
-
-
-            function updateSortIndicators() {
-                headers.forEach(h => {
-                    const indicator = h.querySelector('.sort-indicator');
-                    if (h.getAttribute('data-sort') === currentSort.key) {
-                        indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
-                    } else {
-                        indicator.textContent = '';
-                    }
-                });
-            }
         });
+
+
+        function closeModal() {
+            const modal = document.getElementById('stockreport-modal');
+            const iframe = document.getElementById('stockreport-frame');
+            iframe.src = "";
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
     </script>
-    <!-- Dark mode -->
+
     <script>
         const toggle = document.getElementById('dark-mode-toggle');
-
-        if (localStorage.getItem('dark-mode') === 'enabled') {
+        if (toggle && localStorage.getItem('dark-mode') === 'enabled') {
             document.documentElement.classList.add('dark');
         }
-
-        toggle.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('dark-mode',
-                document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled'
-            );
-        });
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('dark-mode', document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled');
+            });
+        }
     </script>
 </body>
 
