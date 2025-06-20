@@ -5,6 +5,7 @@ from app.roles import can_edit, can_view_all  # ✅ Import role helpers
 from datetime import datetime
 from app.models import StockReportEntry
 from flask import jsonify
+from flask import make_response
 
 warehouse_bp = Blueprint('warehouse', __name__)
 
@@ -195,7 +196,7 @@ def stockreport_entry_form(item_id):
                 client=request.form['client'],
                 pos_no=request.form['pos_no'],
                 customer_ref=request.form['customer_ref'],
-                related_order_id = item.id
+                related_order_id=item.id
             )
 
             db.session.add(entry)
@@ -213,8 +214,26 @@ def stockreport_entry_form(item_id):
 @login_required
 def view_stockreport_entries(item_id):
     item = WarehouseStock.query.get_or_404(item_id)
+    if not can_view_all(current_user.role) and current_user.id != item.user_id:
+        flash("Access denied.", "danger")
+        return redirect(url_for('warehouse.warehouse'))
     entries = StockReportEntry.query.filter_by(related_order_id=item_id).all()
     return render_template('view_stockreport.html', item=item, entries=entries)
+
+@warehouse_bp.route('/stockreport/download/<int:item_id>')
+@login_required
+def download_stockreport(item_id):
+    item = WarehouseStock.query.get_or_404(item_id)
+    if not can_view_all(current_user.role) and current_user.id != item.user_id:
+        flash("Access denied.", "danger")
+        return redirect(url_for('warehouse.warehouse'))
+    entries = StockReportEntry.query.filter_by(related_order_id=item_id).all()
+    html_content = render_template('view_stockreport.html', item=item, entries=entries)
+    pdf_content = HTML(string=html_content, base_url=request.url_root).write_pdf()
+    response = make_response(pdf_content)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename=StockReport.pdf'
+    return response
 
 @warehouse_bp.route('/stockreport/edit/<int:entry_id>', methods=['GET', 'POST'])
 @login_required
@@ -258,7 +277,6 @@ def edit_stockreport(entry_id):
             flash(f"Error updating entry: {e}", "danger")
 
     return render_template('edit_stockreport.html', entry=entry)
-
 
 @warehouse_bp.route('/stockreport/delete/<int:entry_id>', methods=['POST'])
 @login_required
