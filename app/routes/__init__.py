@@ -14,6 +14,7 @@ def register_routes(app):
     from .restore_routes import restore_bp
     from .upload_routes import upload_bp
     from .stats_routes import stats_bp
+    from .onboarding_routes import onboarding_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -23,5 +24,6 @@ def register_routes(app):
     app.register_blueprint(restore_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(stats_bp)
+    app.register_blueprint(onboarding_bp)
 
     app.context_processor(inject_globals)
