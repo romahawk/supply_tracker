@@ -4,6 +4,7 @@ from app.models import db, Order, WarehouseStock, DeliveredGoods, StockReportEnt
 from app.roles import can_edit, can_view_all
 from datetime import datetime
 from flask import jsonify, make_response
+import os
 from weasyprint import HTML
 
 warehouse_bp = Blueprint('warehouse', __name__)
@@ -170,11 +171,22 @@ def stockreport_entry_form(item_id):
 
     item = WarehouseStock.query.get_or_404(item_id)
 
+        # Load existing products (optional legacy support)
+    products_path = os.path.join(os.getcwd(), 'products.txt')
+    if os.path.exists(products_path):
+        with open(products_path, 'r', encoding='utf-8') as f:
+            product_options = sorted({line.strip() for line in f if line.strip()})
+    else:
+        product_options = []
+
     if request.method == 'POST':
         try:
             form = request.form
             entrance_str = form.get('entrance_date')
             entrance_date = datetime.strptime(entrance_str, '%Y-%m-%d') if entrance_str else None
+
+            # Product name is inherited directly from WarehouseStock item
+            product_name = item.product_name
 
             entry = StockReportEntry(
                 stage=form.get('stage'),
@@ -186,7 +198,7 @@ def stockreport_entry_form(item_id):
                 colli_per_pal=int(form.get('colli_per_pal') or 0),
                 pcs_total=int(form.get('pcs_total') or 0),
                 pal=int(form.get('pal') or 0),
-                product=form.get('product', ''),
+                product=product_name,
                 gross_kg=float(form.get('gross_kg') or 0),
                 net_kg=float(form.get('net_kg') or 0),
                 sender=form.get('sender', ''),
@@ -208,7 +220,8 @@ def stockreport_entry_form(item_id):
             db.session.rollback()
             flash(f"Error saving stockreport entry: {e}", "danger")
 
-    return render_template('stockreport_form.html', item=item)
+    return render_template('stockreport_form.html', item=item, product_options=product_options)
+
 
 @warehouse_bp.route('/stockreport/view/<int:item_id>')
 @login_required

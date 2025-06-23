@@ -7,7 +7,7 @@ from app.routes import register_routes
 from datetime import datetime
 
 login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
+login_manager.login_view = 'auth.login'  # type: ignore
 
 def create_app():
     app = Flask(__name__)
@@ -35,8 +35,10 @@ def create_app():
                         break
                     except ValueError:
                         continue
-            return value.strftime("%d %b %Y")
+            if isinstance(value, datetime):  # ✅ Only format datetime
+                return value.strftime("%d %b %Y")
         except Exception:
-            return value
+            pass
+        return value  # fallback
 
     return app
