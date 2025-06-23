@@ -52,6 +52,11 @@
        hover:bg-opacity-80 hover:shadow-md">
       📬 Delivered
     </a>
+    <a href="{{ url_for('analytics.view_analytics') }}" class="px-4 py-1.5 rounded-md font-medium transition-all duration-200
+   {{ 'bg-green-600 text-white text-lg font-bold' if current_path.startswith(url_for('analytics.view_analytics')) else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
+   hover:bg-opacity-80 hover:shadow-md">
+      📊 Analytics
+    </a>
 
     {% if current_path.startswith(url_for('dashboard.dashboard')) %}
     <button

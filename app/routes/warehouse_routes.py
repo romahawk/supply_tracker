@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
+from app import db
 from app.models import db, Order, WarehouseStock, DeliveredGoods, StockReportEntry
 from app.roles import can_edit, can_view_all
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import jsonify, make_response
 import os
 from weasyprint import HTML
@@ -171,7 +172,7 @@ def stockreport_entry_form(item_id):
 
     item = WarehouseStock.query.get_or_404(item_id)
 
-        # Load existing products (optional legacy support)
+    # Load existing products (optional legacy support)
     products_path = os.path.join(os.getcwd(), 'products.txt')
     if os.path.exists(products_path):
         with open(products_path, 'r', encoding='utf-8') as f:
@@ -222,16 +223,37 @@ def stockreport_entry_form(item_id):
 
     return render_template('stockreport_form.html', item=item, product_options=product_options)
 
-
 @warehouse_bp.route('/stockreport/view/<int:item_id>')
 @login_required
 def view_stockreport_entries(item_id):
-    item = WarehouseStock.query.get_or_404(item_id)
-    if not can_view_all(current_user.role) and current_user.id != item.user_id:
-        flash("Access denied.", "danger")
-        return redirect(url_for('warehouse.warehouse'))
     entries = StockReportEntry.query.filter_by(related_order_id=item_id).all()
-    return render_template('view_stockreport.html', item=item, entries=entries)
+
+    if not entries:
+        flash("No stockreport entries found.", "warning")
+        return redirect(url_for('warehouse.warehouse'))
+
+    # Extract metadata from the first entry
+    first_entry = entries[0]
+
+    # Calculate customs info
+    atb_frist = customs_ozl = free_till = None
+    if first_entry.customs_status == "T1" and first_entry.entrance_date:
+        atb_frist = first_entry.entrance_date.strftime("%d.%m.%Y")
+        customs_ozl = "OZL Hamburg"
+        free_till = (first_entry.entrance_date + timedelta(days=90)).strftime("%d.%m.%Y")
+
+    return render_template(
+        "view_stockreport.html",
+        entries=entries,
+        item=first_entry,
+        atb_frist=atb_frist,
+        customs_ozl=customs_ozl,
+        free_till=free_till,
+        signature_date_client=None,
+        signature_date_warehouse=None,
+        signature_client=None,
+        signature_warehouse=None,
+    )
 
 @warehouse_bp.route('/stockreport/download/<int:item_id>')
 @login_required
@@ -319,4 +341,3 @@ def view_stockreport_by_order(order_number):
         return redirect(url_for('warehouse.warehouse'))
     entries = StockReportEntry.query.filter_by(related_order_id=item.id).all()
     return render_template('view_stockreport.html', item=item, entries=entries)
-
