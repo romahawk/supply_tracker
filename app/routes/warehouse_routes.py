@@ -295,6 +295,12 @@ def edit_stockreport(entry_id):
             entry.customs_ozl = request.form.get('customs_ozl', '')
             entry.stockref = request.form.get('stockref', '')
 
+            # ✅ ADD THESE MISSING FIELDS
+            entry.warehouse_address = request.form.get('warehouse_address', '')
+            entry.pos_no = request.form.get('pos_no', '')
+            entry.client = request.form.get('client', '')
+            entry.customer_ref = request.form.get('customer_ref', '')
+
             if request.form.get('signed_date'):
                 entry.signed_date = datetime.strptime(request.form['signed_date'], '%Y-%m-%d').date()
 
@@ -309,6 +315,7 @@ def edit_stockreport(entry_id):
             flash(f"Error updating entry: {e}", "danger")
 
     return render_template('edit_stockreport.html', entry=entry)
+
 
 @warehouse_bp.route('/stockreport/delete/<int:entry_id>', methods=['POST'])
 @login_required
