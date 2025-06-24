@@ -15,25 +15,6 @@
 
   <!-- Right: Navigation & Controls -->
   <div class="flex items-center space-x-2 sm:space-x-3">
-    <!-- Dark Mode Toggle -->
-    <button id="dark-mode-toggle"
-      class="relative inline-flex items-center h-5 w-10 sm:h-8 sm:w-16 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0"
-      aria-label="Toggle dark mode">
-
-      <!-- Track -->
-      <span id="dark-mode-track"
-        class="absolute inset-0 h-5 w-10 sm:h-8 sm:w-16 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors duration-300">
-      </span>
-
-      <!-- Thumb (glowing ball) -->
-      <span id="dark-mode-thumb" class="absolute left-1 top-1 h-3 w-3 sm:h-6 sm:w-6 rounded-full
-                  bg-gray-800 dark:bg-gray-100 transform transition-transform duration-300
-                  shadow-md dark:shadow-white/50
-                  dark:translate-x-5 sm:dark:translate-x-8">
-      </span>
-    </button>
-
-
     <!-- Navigation Buttons -->
     <a href="{{ url_for('dashboard.dashboard') }}" class="px-4 py-1.5 rounded-md font-medium transition-all duration-200
        {{ 'bg-yellow-500 text-white text-lg font-bold' if current_path.startswith(url_for('dashboard.dashboard')) else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
@@ -52,11 +33,16 @@
        hover:bg-opacity-80 hover:shadow-md">
       📬 Delivered
     </a>
+    {#
+    {% if current_user.role in ['Admin', 'Superuser'] %}
     <a href="{{ url_for('analytics.view_analytics') }}" class="px-4 py-1.5 rounded-md font-medium transition-all duration-200
    {{ 'bg-green-600 text-white text-lg font-bold' if current_path.startswith(url_for('analytics.view_analytics')) else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
    hover:bg-opacity-80 hover:shadow-md">
       📊 Analytics
     </a>
+    {% endif %}
+    #}
+
 
     {% if current_path.startswith(url_for('dashboard.dashboard')) %}
     <button
@@ -95,6 +81,23 @@
         <line x1="21" y1="12" x2="9" y2="12" />
       </svg>
     </a>
+        <!-- Dark Mode Toggle -->
+    <button id="dark-mode-toggle"
+      class="relative inline-flex items-center h-5 w-10 sm:h-8 sm:w-16 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0"
+      aria-label="Toggle dark mode">
+
+      <!-- Track -->
+      <span id="dark-mode-track"
+        class="absolute inset-0 h-5 w-10 sm:h-8 sm:w-16 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors duration-300">
+      </span>
+
+      <!-- Thumb (glowing ball) -->
+      <span id="dark-mode-thumb" class="absolute left-1 top-1 h-3 w-3 sm:h-6 sm:w-6 rounded-full
+                  bg-gray-800 dark:bg-gray-100 transform transition-transform duration-300
+                  shadow-md dark:shadow-white/50
+                  dark:translate-x-5 sm:dark:translate-x-8">
+      </span>
+    </button>
   </div>
   <!-- Onboarding Tour Modal -->
   <div id="tourModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">

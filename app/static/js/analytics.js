@@ -71,3 +71,49 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+// === Transit Efficiency Chart (dynamic from API) ===
+fetch("/analytics/api/transit_efficiency")
+  .then(res => res.json())
+  .then(data => {
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+
+    const efficiencyCtx = document.getElementById("transitEfficiencyChart").getContext("2d");
+
+    new Chart(efficiencyCtx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Avg Delivery Time (Days)",
+          data: values,
+          backgroundColor: "#4f46e5",
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: "Transit Efficiency by Transport Type"
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: "Days"
+            }
+          }
+        }
+      }
+    });
+  })
+  .catch(err => {
+    console.error("Transit Efficiency chart failed to load", err);
+  });
+

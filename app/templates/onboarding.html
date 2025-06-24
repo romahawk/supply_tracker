@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>User Onboarding & Help</title>
@@ -15,23 +16,91 @@
   <main class="max-w-5xl mx-auto px-4 py-6">
     <h1 class="text-3xl font-bold mb-6">📘 User Onboarding & Help</h1>
 
-    <!-- Tab Navigation -->
+    <!-- Tab Buttons -->
     <div class="flex space-x-4 mb-4">
-      <button class="tab-button px-4 py-2 bg-blue-600 text-white rounded" data-tab="quickstart">Quick Start</button>
-      <button class="tab-button px-4 py-2 bg-gray-300 dark:bg-gray-800 rounded" data-tab="workflow">Workflow Guide</button>
-      <button class="tab-button px-4 py-2 bg-gray-300 dark:bg-gray-800 rounded" data-tab="faq">FAQ</button>
+      <button class="tab-button px-4 py-2 rounded transition-colors 
+                 bg-blue-600 text-white 
+                 dark:bg-blue-500 dark:text-white 
+                 hover:bg-blue-700 dark:hover:bg-blue-600" data-tab="quickstart">
+        Quick Start
+      </button>
+      <button class="tab-button px-4 py-2 rounded transition-colors 
+                 bg-gray-300 text-black 
+                 dark:bg-gray-800 dark:text-gray-100 
+                 hover:bg-gray-400 dark:hover:bg-gray-700" data-tab="workflow">
+        Workflow Guide
+      </button>
+      <button class="tab-button px-4 py-2 rounded transition-colors 
+                 bg-gray-300 text-black 
+                 dark:bg-gray-800 dark:text-gray-100 
+                 hover:bg-gray-400 dark:hover:bg-gray-700" data-tab="faq">
+        FAQ
+      </button>
     </div>
 
-    <!-- Tab Contents -->
-    <div id="quickstart" class="tab-content">
-      <h2 class="text-xl font-semibold mb-2">🚀 Quick Start Guide</h2>
-      <ul class="list-disc list-inside space-y-1">
-        <li>Login or register to access your dashboard.</li>
-        <li>Use the sidebar to navigate between Dashboard, Warehouse, Delivered, and Stockreport.</li>
-        <li>Use filters and timeline to visualize your supply chain.</li>
-        <li>Upload and view delivery documents (PODs) in each section.</li>
-      </ul>
+    <!-- Quick Start Tab -->
+    <div class="tab-content" data-tab="quickstart">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-sm leading-relaxed">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">🚀 Quick Start Guide</h3>
+        <ol class="list-decimal pl-5 space-y-2 text-gray-800 dark:text-gray-200">
+          <li><strong>Login:</strong> Access your account using the login credentials provided by your admin.</li>
+          <li><strong>Dashboard:</strong> Manage orders. You can add, edit, delete, or filter them.</li>
+          <li><strong>Warehouse:</strong> Track goods in storage. Use the <em>Add Stock Report</em> button for arrivals.
+          </li>
+          <li><strong>Delivered:</strong> View delivered items. Manage POD and restore incorrect entries.</li>
+          <li><strong>Print & Export:</strong> Generate print-friendly reports for logistics partners.</li>
+          <li><strong>Dark Mode:</strong> Toggle light/dark mode from the top-right corner.</li>
+        </ol>
+        <div class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+          Tip: Return to this guide any time using the <strong>❓ Help</strong> menu or “Quick Start” tab.
+        </div>
+      </div>
     </div>
+
+    <!-- Workflow Guide Tab -->
+    <div class="tab-content hidden" data-tab="workflow">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-sm leading-relaxed">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">🔄 Workflow Guide</h3>
+        <ol class="list-decimal pl-5 space-y-2 text-gray-800 dark:text-gray-200">
+          <li>Orders are created from the Dashboard based on client and product needs.</li>
+          <li>Goods marked as “Arrived” are added to the Stockreport under the Warehouse tab.</li>
+          <li>After quality control, items are marked “Stocked” and ready for delivery scheduling.</li>
+          <li>Delivered goods are documented in the Delivered tab, including POD uploads.</li>
+          <li>Partial deliveries are supported directly through the warehouse interface.</li>
+        </ol>
+        <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+          This workflow ensures transparent tracking from order to final delivery.
+        </p>
+      </div>
+    </div>
+
+    <!-- FAQ Tab -->
+    <div class="tab-content hidden" data-tab="faq">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-sm leading-relaxed">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">❓ Frequently Asked Questions</h3>
+        <div class="space-y-3 text-gray-800 dark:text-gray-200">
+          <details class="bg-gray-50 dark:bg-gray-700 rounded p-3">
+            <summary class="cursor-pointer font-medium">Who can access the system?</summary>
+            <p class="mt-2 text-sm">Only registered users with appropriate roles. Access is controlled by the admin.</p>
+          </details>
+          <details class="bg-gray-50 dark:bg-gray-700 rounded p-3">
+            <summary class="cursor-pointer font-medium">How does the Stockreport work?</summary>
+            <p class="mt-2 text-sm">Items move from “Arrived” → “Stocked” → “Delivered”. Partial updates are supported.
+            </p>
+          </details>
+          <details class="bg-gray-50 dark:bg-gray-700 rounded p-3">
+            <summary class="cursor-pointer font-medium">How to upload a delivery document?</summary>
+            <p class="mt-2 text-sm">Use the “Upload POD” button under Delivered. File must be PDF, under 100KB.</p>
+          </details>
+          <details class="bg-gray-50 dark:bg-gray-700 rounded p-3">
+            <summary class="cursor-pointer font-medium">Why is my chart empty?</summary>
+            <p class="mt-2 text-sm">Ensure your orders have valid ETD/ETA and the filter settings are correct.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+
+
 
     <div id="workflow" class="tab-content hidden">
       <h2 class="text-xl font-semibold mb-2">🔄 Order & Stock Workflow</h2>
@@ -66,24 +135,70 @@
       </div>
     </div>
   </main>
+  <script>
+    const tabButtons = document.querySelectorAll(".tab-button");
+    const tabContents = document.querySelectorAll(".tab-content");
+
+    tabButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        const selectedTab = button.getAttribute("data-tab");
+
+        // Update button styles
+        tabButtons.forEach(btn => {
+          btn.classList.remove("bg-blue-600", "dark:bg-blue-500", "text-white");
+          btn.classList.add("bg-gray-300", "dark:bg-gray-800", "text-black", "dark:text-gray-100");
+        });
+        button.classList.remove("bg-gray-300", "dark:bg-gray-800", "text-black", "dark:text-gray-100");
+        button.classList.add("bg-blue-600", "dark:bg-blue-500", "text-white");
+
+        // Toggle tab content visibility
+        tabContents.forEach(content => {
+          content.classList.toggle("hidden", content.getAttribute("data-tab") !== selectedTab);
+        });
+      });
+    });
+  </script>
 
   <script>
     document.querySelectorAll('.tab-button').forEach(button => {
       button.addEventListener('click', () => {
         const tab = button.getAttribute('data-tab');
 
+        // Hide all tab contents
         document.querySelectorAll('.tab-content').forEach(content => {
           content.classList.add('hidden');
         });
-        document.getElementById(tab).classList.remove('hidden');
 
+        // Show selected tab content (matching both data-tab or id)
+        const visibleTab = document.querySelector(`.tab-content[data-tab="${tab}"]`) || document.getElementById(tab);
+        if (visibleTab) visibleTab.classList.remove('hidden');
+
+        // Update button active states
         document.querySelectorAll('.tab-button').forEach(btn => {
           btn.classList.remove('bg-blue-600', 'text-white');
           btn.classList.add('bg-gray-300', 'dark:bg-gray-800');
         });
         button.classList.add('bg-blue-600', 'text-white');
+        button.classList.remove('bg-gray-300', 'dark:bg-gray-800');
       });
     });
+
+    // Optionally activate the first tab on load
+    document.querySelector('.tab-button[data-tab="quickstart"]').click();
+  </script>
+
+  <script>
+    const toggle = document.getElementById('dark-mode-toggle');
+    if (toggle && localStorage.getItem('dark-mode') === 'enabled') {
+      document.documentElement.classList.add('dark');
+    }
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('dark-mode', document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled');
+      });
+    }
   </script>
 </body>
+
 </html>
