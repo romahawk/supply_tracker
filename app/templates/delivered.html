@@ -173,6 +173,85 @@
             });
         }
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const headers = document.querySelectorAll('th[data-sort]');
+            let currentSort = { key: '', direction: '' };
+
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const key = header.getAttribute('data-sort');
+                    const ascending = currentSort.key === key && currentSort.direction === 'asc' ? false : true;
+                    currentSort = { key, direction: ascending ? 'asc' : 'desc' };
+
+                    sortDeliveredTableByKey(key, ascending);
+                    updateSortIndicators();
+                });
+            });
+
+            function sortDeliveredTableByKey(key, ascending) {
+                const cellMap = {
+                    order_number: 0,
+                    product_name: 1,
+                    quantity: 2,
+                    delivery_date: 3,
+                    transport: 4
+                };
+
+                const rows = Array.from(document.querySelectorAll('#delivered-table tbody tr'));
+
+                const sortedRows = rows.sort((a, b) => {
+                    let valA = a.cells[cellMap[key]].innerText.trim();
+                    let valB = b.cells[cellMap[key]].innerText.trim();
+
+                    if (key === "quantity") {
+                        return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+                    } else if (key === "delivery_date") {
+                        const parseDate = (str) => {
+                            const parts = str.split(" ");
+                            if (parts.length !== 3) return new Date(0);
+                            const [day, monthStr, year] = parts;
+                            const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                                .findIndex(m => m.toLowerCase() === monthStr.toLowerCase());
+                            return new Date(parseInt(year), month, parseInt(day));
+                        };
+                        const dateA = parseDate(valA);
+                        const dateB = parseDate(valB);
+                        return ascending ? dateA - dateB : dateB - dateA;
+                    } else {
+                        return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    }
+                });
+
+                const tbody = document.querySelector('#delivered-table tbody');
+                tbody.innerHTML = '';
+                sortedRows.forEach(row => tbody.appendChild(row));
+            }
+
+            function updateSortIndicators() {
+                headers.forEach(h => {
+                    const indicator = h.querySelector('.sort-indicator');
+                    if (h.getAttribute('data-sort') === currentSort.key) {
+                        indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                    } else {
+                        indicator.textContent = '';
+                    }
+                });
+            }
+
+            // Optional: Live search
+            const search = document.getElementById('search-delivered');
+            if (search) {
+                search.addEventListener('input', () => {
+                    const term = search.value.toLowerCase();
+                    document.querySelectorAll('#delivered-table tbody tr').forEach(row => {
+                        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+                    });
+                });
+            }
+        });
+    </script>
+
 </body>
 
 </html>
