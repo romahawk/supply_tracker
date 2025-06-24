@@ -220,8 +220,22 @@
 
                     if (key === "quantity") {
                         return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+                    } else if (key === "ata") {
+                        const parseDate = (str) => {
+                            // expected format: "dd Mon yyyy"
+                            const parts = str.split(" ");
+                            if (parts.length !== 3) return new Date(0); // fallback
+                            const [day, monthStr, year] = parts;
+                            const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                                .findIndex(m => m.toLowerCase() === monthStr.toLowerCase());
+                            return new Date(parseInt(year), month, parseInt(day));
+                        };
+                        const dateA = parseDate(valA);
+                        const dateB = parseDate(valB);
+                        return ascending ? dateA - dateB : dateB - dateA;
                     }
                     return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+
                 });
 
                 const tbody = document.querySelector('#warehouse-table tbody');
