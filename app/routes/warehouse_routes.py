@@ -270,51 +270,35 @@ def download_stockreport(item_id):
     response.headers['Content-Disposition'] = 'attachment; filename=StockReport.pdf'
     return response
 
-@warehouse_bp.route('/stockreport/edit/<int:entry_id>', methods=['GET', 'POST'])
+@warehouse_bp.route('/stockreport/edit/<int:entry_id>', methods=['POST'])
 @login_required
 def edit_stockreport(entry_id):
     entry = StockReportEntry.query.get_or_404(entry_id)
+    order = entry.related_order
 
-    if request.method == 'POST':
-        try:
-            if request.form['entrance_date']:
-                entry.entrance_date = datetime.strptime(request.form['entrance_date'], '%Y-%m-%d').date()
+    # Update entry table fields
+    entry_fields = [
+        'entrance_date', 'article_batch', 'colli', 'packing', 'pcs',
+        'colli_per_pal', 'pcs_total', 'pal', 'product', 'gross_kg',
+        'net_kg', 'sender', 'customs_status', 'stockref'
+    ]
+    for field in entry_fields:
+        if field in request.form:
+            setattr(entry, field, request.form.get(field))
 
-            entry.article_batch = request.form['article_batch']
-            entry.colli = int(request.form['colli'] or 0)
-            entry.packing = request.form.get('packing', '')
-            entry.pcs = int(request.form['pcs'] or 0)
-            entry.colli_per_pal = int(request.form.get('colli_per_pal', 0))
-            entry.pcs_total = int(request.form.get('pcs_total', 0))
-            entry.pal = int(request.form['pal'] or 0)
-            entry.gross_kg = float(request.form['gross_kg'] or 0)
-            entry.net_kg = float(request.form['net_kg'] or 0)
-            entry.product = request.form.get('product', '')
-            entry.sender = request.form.get('sender', '')
-            entry.customs_status = request.form['customs_status']
-            entry.customs_ozl = request.form.get('customs_ozl', '')
-            entry.stockref = request.form.get('stockref', '')
+    # Update related order header fields (if shared model)
+    order_fields = [
+        'warehouse_address', 'pos_no', 'client', 'customer_ref',
+        'atb_first', 'customs_ozl', 'free_till',
+        'signature_date_client', 'signature_client',
+        'signature_date_warehouse', 'signature_warehouse'
+    ]
+    for field in order_fields:
+        if field in request.form:
+            setattr(order, field, request.form.get(field))
 
-            # ✅ ADD THESE MISSING FIELDS
-            entry.warehouse_address = request.form.get('warehouse_address', '')
-            entry.pos_no = request.form.get('pos_no', '')
-            entry.client = request.form.get('client', '')
-            entry.customer_ref = request.form.get('customer_ref', '')
-
-            if request.form.get('signed_date'):
-                entry.signed_date = datetime.strptime(request.form['signed_date'], '%Y-%m-%d').date()
-
-            entry.signature_path = request.form.get('signature_path', '')
-
-            db.session.commit()
-            flash("Stockreport updated successfully.", "success")
-            return redirect(url_for('warehouse.view_stockreport_entries', item_id=entry.related_order_id))
-
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error updating entry: {e}", "danger")
-
-    return render_template('edit_stockreport.html', entry=entry)
+    db.session.commit()
+    return '', 204
 
 
 @warehouse_bp.route('/stockreport/delete/<int:entry_id>', methods=['POST'])

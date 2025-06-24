@@ -5,7 +5,12 @@
   <div class="flex justify-between items-start">
     <h1 class="text-2xl font-bold mb-4">Edit Stock IN Report</h1>
     <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="w-36 object-contain h-auto">
+    <button onclick="closeEditModal()" title="Close"
+      class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-xl font-bold z-10">
+      &times;
+    </button>
   </div>
+
 
   <form method="POST">
     <!-- Warehouse Info -->
@@ -185,4 +190,30 @@
     // Optional: live calculation
   }
 </script>
+<script>
+  function updateSignaturePreview(type) {
+    const selector = document.getElementById(`signature-${type}-selector`);
+    const preview = document.getElementById(`signature-${type}-preview`);
+    preview.src = `/static/images/signatures/${selector.value}`;
+  }
+
+  function updateTotals() {
+    // Optional: live calculation
+  }
+
+  function closeEditModal() {
+    if (window.parent && window.parent.document) {
+      const modal = window.parent.document.getElementById('stockreport-modal');
+      const iframe = window.parent.document.getElementById('stockreport-frame');
+      if (modal && iframe) {
+        iframe.src = '';
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    } else {
+      window.close(); // fallback
+    }
+  }
+</script>
+
 {% endblock %}

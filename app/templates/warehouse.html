@@ -301,8 +301,15 @@
                 const response = await fetch(`/stockreport/view/${itemId}`);
                 const html = await response.text();
                 content.innerHTML = html;
+
+                // ✅ Dynamically attach inline edit logic
+                const script = document.createElement('script');
+                script.src = '/static/js/view_stockreport.js';
+                script.onload = () => console.log("✅ view_stockreport.js loaded");
+                document.body.appendChild(script);
             });
         });
+
     </script>
 
 </body>

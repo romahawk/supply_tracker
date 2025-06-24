@@ -2,47 +2,48 @@
 {% block title %}Stock IN Report{% endblock %}
 {% block body %}
 
-<!-- Print Button -->
-<div class="flex justify-end px-[50px] mt-6 no-print">
-  <button onclick="window.print()" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">
-    🖨️ Print
-  </button>
+<!-- Top Buttons -->
+<div class="flex justify-end gap-3 px-[50px] mt-6 no-print">
+  <form method="POST" action="{{ url_for('warehouse.delete_stockreport', entry_id=entries[0].id) }}"
+    onsubmit="return confirm('Delete this entry?')">
+    <button type="submit" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded shadow text-sm">🗑️
+      Delete</button>
+  </form>
+  <button id="edit-all-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded shadow text-sm">✏️
+    Edit All</button>
+  <button id="save-stockreport-btn"
+    class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow text-sm hidden">💾 Save</button>
+
+  <button onclick="window.print()" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">🖨️
+    Print</button>
 </div>
 
 <!-- Report Block -->
-<div class="print-area" id="pdf-report"
-  class="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-full px-[50px] mt-10 relative">
+<div class="print-area bg-white dark:bg-gray-800 p-6 rounded shadow max-w-full px-[50px] mt-6" id="pdf-report">
   <div class="flex justify-between items-start mb-6">
     <div>
       <h2 class="text-2xl font-bold mb-2">Stock IN Report</h2>
       <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+        {% for label, field in [("Warehouse", "warehouse_address"), ("Pos. No.", "pos_no"), ("Client", "client"),
+        ("Client Ref.", "customer_ref")] %}
         <div>
-          <span class="font-semibold">Warehouse:</span>
-          <span class="ml-2">{{ item.warehouse_address }}</span>
+          <span class="font-semibold">{{ label }}:</span>
+          <span class="ml-2 view-mode">{{ item[field] or '—' }}</span>
+          <input type="text" name="{{ field }}" value="{{ item[field] or '' }}"
+            class="edit-header hidden w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
         </div>
-        <div>
-          <span class="font-semibold">Pos. No.:</span>
-          <span class="ml-2">{{ item.pos_no }}</span>
-        </div>
-        <div>
-          <span class="font-semibold">Client:</span>
-          <span class="ml-2">{{ item.client }}</span>
-        </div>
-        <div>
-          <span class="font-semibold">Client Ref.:</span>
-          <span class="ml-2">{{ item.customer_ref }}</span>
-        </div>
+        {% endfor %}
       </div>
-
     </div>
     <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="w-36 object-contain h-auto">
   </div>
 
+  <!-- Table -->
   <div class="overflow-auto">
-    <table class="w-full text-sm text-left border">
+    <table class="w-full text-sm text-left border" id="stockreport-table">
       <thead class="bg-gray-100 dark:bg-gray-700 text-xs text-gray-700 dark:text-gray-300">
         <tr>
-          <th class="p-2 border w-[120px]">Entrance</th>
+          <th class="p-2 border">Entrance</th>
           <th class="p-2 border">Article/Batch</th>
           <th class="p-2 border">Colli</th>
           <th class="p-2 border">Packing</th>
@@ -50,136 +51,81 @@
           <th class="p-2 border">Colli/Pal.</th>
           <th class="p-2 border">Pcs Total</th>
           <th class="p-2 border">Pal.</th>
-          <th class="p-2 border w-[200px]">Product</th>
+          <th class="p-2 border">Product</th>
           <th class="p-2 border">Gross kg</th>
           <th class="p-2 border">Net kg</th>
-          <th class="p-2 border w-[200px]">Sender</th>
+          <th class="p-2 border">Sender</th>
           <th class="p-2 border">Customs</th>
           <th class="p-2 border">Stockref</th>
-          <th class="p-2 border text-center no-print">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for entry in entries %}
-        <tr class="border-t">
-          <td class="p-2 border">{{ entry.entrance_date }}</td>
-          <td class="p-2 border">{{ entry.article_batch }}</td>
-          <td class="p-2 border">{{ entry.colli }}</td>
-          <td class="p-2 border">{{ entry.packing }}</td>
-          <td class="p-2 border">{{ entry.pcs }}</td>
-          <td class="p-2 border">{{ entry.colli_per_pal }}</td>
-          <td class="p-2 border">{{ entry.pcs_total }}</td>
-          <td class="p-2 border">{{ entry.pal }}</td>
-          <td class="p-2 border truncate" title="{{ entry.product }}">{{ entry.product }}</td>
-          <td class="p-2 border">{{ entry.gross_kg }}</td>
-          <td class="p-2 border">{{ entry.net_kg }}</td>
-          <td class="p-2 border truncate" title="{{ entry.sender }}">{{ entry.sender }}</td>
-          <td class="p-2 border">{{ entry.customs_status }}</td>
-          <td class="p-2 border">{{ entry.stockref }}</td>
-          <td class="p-2 border text-center no-print">
-            <a href="{{ url_for('warehouse.edit_stockreport', entry_id=entry.id) }}"
-              class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">Edit</a>
-            <form method="POST" action="{{ url_for('warehouse.delete_stockreport', entry_id=entry.id) }}"
-              class="inline">
-              <button type="submit" onclick="return confirm('Delete this entry?')"
-                class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs ml-1">Delete</button>
-            </form>
+        <tr class="border-t" data-entry-id="{{ entry.id }}">
+          {% for field in ["entrance_date", "article_batch", "colli", "packing", "pcs", "colli_per_pal", "pcs_total",
+          "pal", "product", "gross_kg", "net_kg", "sender", "customs_status", "stockref"] %}
+          <td class="p-2 border">
+            <span class="view-mode">{{ entry[field] }}</span>
+            {% if field == "customs_status" %}
+            <select class="edit-header hidden" name="{{ field }}">
+              <option value="EU" {% if entry[field]=='EU' %}selected{% endif %}>EU</option>
+              <option value="T1" {% if entry[field]=='T1' %}selected{% endif %}>T1</option>
+            </select>
+            {% elif field in ["colli", "pcs", "colli_per_pal", "pcs_total", "pal", "gross_kg", "net_kg"] %}
+            <input type="number" class="edit-header hidden" name="{{ field }}" value="{{ entry[field] }}">
+            {% elif field == "entrance_date" %}
+            <input type="date" class="edit-header hidden" name="{{ field }}" value="{{ entry[field] }}">
+            {% else %}
+            <input type="text" class="edit-header hidden" name="{{ field }}" value="{{ entry[field] }}">
+            {% endif %}
           </td>
+          {% endfor %}
         </tr>
         {% endfor %}
-        <tr class="text-sm font-semibold bg-gray-50">
-          <td colspan="2" class="px-2 py-1 border text-right">TOTAL:</td>
-          <td class="px-2 py-1 border">{{ entries | sum(attribute='colli') }}</td>
-          <td class="px-2 py-1 border"></td>
-          <td class="px-2 py-1 border">{{ entries | sum(attribute='pcs') }}</td>
-          <td class="px-2 py-1 border"></td>
-          <td class="px-2 py-1 border">{{ entries | sum(attribute='pcs_total') }}</td>
-          <td class="px-2 py-1 border">{{ entries | sum(attribute='pal') }}</td>
-          <td class="px-2 py-1 border"></td>
-          <td class="px-2 py-1 border">{{ entries | sum(attribute='gross_kg') }}</td>
-          <td class="px-2 py-1 border">{{ entries | sum(attribute='net_kg') }}</td>
-          <td colspan="4" class="px-2 py-1 border"></td>
-        </tr>
       </tbody>
     </table>
   </div>
 
-  <!-- Customs & Signature Info -->
+  <!-- Customs Info -->
   <div class="grid grid-cols-3 gap-4 mt-8 text-sm">
+    {% for label, field in [("ATB First", "atb_first"), ("Customs OZL", "customs_ozl"), ("Free till", "free_till")] %}
     <div>
-      <label class="block font-medium">ATB First:</label>
-      <span class="block mt-1 text-gray-700 dark:text-gray-300">{{ atb_frist or '—' }}</span>
+      <label class="font-medium">{{ label }}:</label>
+      <p class="view-mode text-gray-700">{{ item[field] or "—" }}</p>
+      <input type="text" name="{{ field }}" value="{{ item[field] or '' }}"
+        class="edit-header hidden w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
     </div>
-    <div>
-      <label class="block font-medium">Customs OZL:</label>
-      <span class="block mt-1 text-gray-700 dark:text-gray-300">{{ customs_ozl or '—' }}</span>
-    </div>
-    <div>
-      <label class="block font-medium">Free till:</label>
-      <span class="block mt-1 text-gray-700 dark:text-gray-300">{{ free_till or '—' }}</span>
-    </div>
+    {% endfor %}
   </div>
 
-  <!-- Signature -->
+  <!-- Signatures -->
   <div class="grid grid-cols-2 gap-8 mt-10">
+    {% for side, date, sig in [('client', signature_date_client, signature_client), ('warehouse',
+    signature_date_warehouse, signature_warehouse)] %}
     <div class="text-center">
-      <p class="text-sm text-gray-700 mb-1">Date: {{ signature_date_client or '—' }}</p>
-      <img src="{{ url_for('static', filename='images/signatures/' + (signature_client or 'signature1.png')) }}"
-        alt="Client Signature" class="mx-auto w-32 h-auto mb-2">
-      <div class="border-t border-black w-2/3 mx-auto"></div>
-      <p class="text-sm mt-1">Date & Signature</p>
+      <div class="view-mode">
+        <p class="text-sm text-gray-700 mb-1">Date: {{ date or '—' }}</p>
+        <img src="{{ url_for('static', filename='images/signatures/' + (sig or 'signature1.png')) }}" alt="Signature"
+          class="mx-auto w-32 h-auto mb-2">
+        <div class="border-t border-black w-2/3 mx-auto"></div>
+        <p class="text-sm mt-1 capitalize">Signature {{ side }}</p>
+      </div>
+      <div class="edit-header hidden space-y-2">
+        <input type="date" name="signature_date_{{ side }}" value="{{ date or '' }}"
+          class="w-full border px-3 py-1 rounded" />
+        <select name="signature_{{ side }}" class="w-full border rounded px-2 py-1">
+          {% for s in ['signature1.png', 'signature2.png', 'signature3.png'] %}
+          <option value="{{ s }}" {% if sig==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
-    <div class="text-center">
-      <p class="text-sm text-gray-700 mb-1">Date: {{ signature_date_warehouse or '—' }}</p>
-      <img src="{{ url_for('static', filename='images/signatures/' + (signature_warehouse or 'signature1.png')) }}"
-        alt="Warehouse Signature" class="mx-auto w-32 h-auto mb-2">
-      <div class="border-t border-black w-2/3 mx-auto"></div>
-      <p class="text-sm mt-1">Signature Warehouse</p>
-    </div>
+    {% endfor %}
   </div>
 </div>
 
-<!-- Auto PDF Export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    function imagesLoaded(container) {
-      return new Promise((resolve) => {
-        const images = container.querySelectorAll("img");
-        let loadedCount = 0;
-        if (images.length === 0) return resolve();
-        images.forEach((img) => {
-          if (img.complete) {
-            loadedCount++;
-            if (loadedCount === images.length) resolve();
-          } else {
-            img.onload = () => {
-              loadedCount++;
-              if (loadedCount === images.length) resolve();
-            };
-            img.onerror = () => {
-              loadedCount++;
-              if (loadedCount === images.length) resolve();
-            };
-          }
-        });
-      });
-    }
+{% endblock %}
 
-    const element = document.getElementById("pdf-report");
-    if (element) {
-      imagesLoaded(element).then(() => {
-        html2pdf()
-          .set({
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-            margin: 10,
-            filename: "StockReport.pdf",
-          })
-          .from(element)
-          .save();
-      });
-    }
-  });
-</script>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/view_stockreport.js') }}"></script>
 {% endblock %}

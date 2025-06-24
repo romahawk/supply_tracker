@@ -117,3 +117,5 @@ class StockReportEntry(db.Model):
     customer_ref = db.Column(db.String(50))
 
     related_order_id = db.Column(db.Integer, db.ForeignKey('warehouse_stock.id', name='fk_stockreport_warehouse'))
+
+    related_order = db.relationship('WarehouseStock', backref='stock_reports')
