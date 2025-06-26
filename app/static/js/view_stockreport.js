@@ -1,32 +1,59 @@
-
 console.log("✅ view_stockreport.js loaded");
 
-window.toggleHeaderEdit = function () {
+// Ensure buttons are bound when they appear
+function tryBindButtons() {
+  const editBtn = document.getElementById("edit-all-btn");
+  const saveBtn = document.getElementById("save-stockreport-btn");
+
+  if (editBtn && !editBtn.dataset.bound) {
+    editBtn.addEventListener("click", toggleHeaderEdit);
+    editBtn.dataset.bound = "true";
+    console.log("✅ Edit All button bound");
+  }
+
+  if (saveBtn && !saveBtn.dataset.bound) {
+    saveBtn.addEventListener("click", saveAllStockreportFields);
+    saveBtn.dataset.bound = "true";
+    console.log("✅ Save button bound");
+  }
+}
+
+// Initial check
+tryBindButtons();
+
+// Observe for dynamic content (modals, etc.)
+const observer = new MutationObserver(() => {
+  tryBindButtons();
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
+
+
+// ----- Toggle Edit Mode -----
+function toggleHeaderEdit() {
   console.log("🔁 toggleHeaderEdit triggered");
 
-  const editFields = document.querySelectorAll('.edit-header');
-  const viewFields = document.querySelectorAll('.view-mode');
+  const editFields = document.querySelectorAll(".edit-header");
+  const viewFields = document.querySelectorAll(".view-mode");
+
+  console.log("🔍 editFields found:", editFields.length);
+  console.log("🔍 viewFields found:", viewFields.length);
 
   if (editFields.length === 0 || viewFields.length === 0) {
-    console.warn("⚠️ No .edit-header or .view-mode elements found");
+    console.warn("⚠️ No editable fields found — check .edit-header and .view-mode");
     return;
   }
 
-  const isEditMode = !editFields[0].classList.contains("hidden");
+  const isEditMode = editFields[0].classList.contains("hidden") === false;
+  console.log("🔄 Current mode:", isEditMode ? "EDIT" : "VIEW");
 
-  editFields.forEach(el => {
-    el.classList[isEditMode ? 'add' : 'remove']("hidden");
-  });
-
-  viewFields.forEach(el => {
-    el.classList[isEditMode ? 'remove' : 'add']("hidden");
-  });
-
+  editFields.forEach(el => el.classList.toggle("hidden", isEditMode));
+  viewFields.forEach(el => el.classList.toggle("hidden", !isEditMode));
   toggleSaveButton(!isEditMode);
+}
 
-  console.log(`🔄 Mode: ${isEditMode ? "VIEW" : "EDIT"}`);
-};
 
+// ----- Show/Hide Save Button -----
 function toggleSaveButton(show) {
   const saveBtn = document.getElementById("save-stockreport-btn");
   if (saveBtn) {
@@ -34,6 +61,8 @@ function toggleSaveButton(show) {
   }
 }
 
+
+// ----- Save All Edited Fields -----
 function saveAllStockreportFields() {
   const rows = document.querySelectorAll("[data-entry-id]");
   const headerInputs = document.querySelectorAll(".edit-header input, .edit-header select");
@@ -47,16 +76,22 @@ function saveAllStockreportFields() {
 
   rows.forEach(row => {
     const entryId = row.dataset.entryId;
-    const rowInputs = row.querySelectorAll(".edit-header input, .edit-header select");
+    const rowInputs = row.querySelectorAll("input, select");
 
     const formData = new FormData();
 
     // Add row-specific data
-    rowInputs.forEach(input => formData.append(input.name, input.value));
+    rowInputs.forEach(input => {
+      if (input.name && input.value != null) {
+        formData.append(input.name, input.value);
+      }
+    });
 
     // Add shared header fields
     for (let key in headerData) {
-      formData.append(key, headerData[key]);
+      if (headerData[key] != null) {
+        formData.append(key, headerData[key]);
+      }
     }
 
     promises.push(
@@ -71,7 +106,7 @@ function saveAllStockreportFields() {
     .then(responses => {
       if (responses.every(res => res.ok)) {
         alert("✅ All changes saved");
-        location.reload(); // Reload the page or modal
+        location.reload();
       } else {
         alert("⚠️ Some entries failed to save");
       }
@@ -81,13 +116,3 @@ function saveAllStockreportFields() {
       alert("❌ Error saving changes");
     });
 }
-
-document.addEventListener("click", function (e) {
-  if (e.target && e.target.id === "edit-all-btn") {
-    toggleHeaderEdit();
-  }
-
-  if (e.target && e.target.id === "save-stockreport-btn") {
-    saveAllStockreportFields();
-  }
-});

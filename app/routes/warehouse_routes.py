@@ -276,29 +276,40 @@ def edit_stockreport(entry_id):
     entry = StockReportEntry.query.get_or_404(entry_id)
     order = entry.related_order
 
-    # Update entry table fields
-    entry_fields = [
-        'entrance_date', 'article_batch', 'colli', 'packing', 'pcs',
-        'colli_per_pal', 'pcs_total', 'pal', 'product', 'gross_kg',
-        'net_kg', 'sender', 'customs_status', 'stockref'
-    ]
-    for field in entry_fields:
-        if field in request.form:
-            setattr(entry, field, request.form.get(field))
+    try:
+        # Handle special field types
+        if 'entrance_date' in request.form:
+            date_str = request.form.get('entrance_date')
+            if date_str:
+                entry.entrance_date = datetime.strptime(date_str, '%Y-%m-%d')
 
-    # Update related order header fields (if shared model)
-    order_fields = [
-        'warehouse_address', 'pos_no', 'client', 'customer_ref',
-        'atb_first', 'customs_ozl', 'free_till',
-        'signature_date_client', 'signature_client',
-        'signature_date_warehouse', 'signature_warehouse'
-    ]
-    for field in order_fields:
-        if field in request.form:
-            setattr(order, field, request.form.get(field))
+        # Update other fields
+        entry_fields = [
+            'article_batch', 'colli', 'packing', 'pcs', 'colli_per_pal', 'pcs_total',
+            'pal', 'product', 'gross_kg', 'net_kg', 'sender', 'customs_status', 'stockref'
+        ]
+        for field in entry_fields:
+            if field in request.form:
+                setattr(entry, field, request.form.get(field))
 
-    db.session.commit()
-    return '', 204
+        # Order-level header fields
+        order_fields = [
+            'warehouse_address', 'pos_no', 'client', 'customer_ref',
+            'atb_first', 'customs_ozl', 'free_till',
+            'signature_date_client', 'signature_client',
+            'signature_date_warehouse', 'signature_warehouse'
+        ]
+        for field in order_fields:
+            if field in request.form:
+                setattr(order, field, request.form.get(field))
+
+        db.session.commit()
+        return '', 204
+
+    except Exception as e:
+        print("❌ Error saving stockreport edit:", e)
+        return "Internal server error", 500
+
 
 
 @warehouse_bp.route('/stockreport/delete/<int:entry_id>', methods=['POST'])

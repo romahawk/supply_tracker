@@ -16,6 +16,8 @@ def register_routes(app):
     from .stats_routes import stats_bp
     from .onboarding_routes import onboarding_bp
     from .analytics_routes import analytics_bp
+    import time
+
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -28,3 +30,5 @@ def register_routes(app):
     app.register_blueprint(onboarding_bp)
     app.register_blueprint(analytics_bp)
     app.context_processor(inject_globals)
+    app.config['VERSION'] = str(int(time.time()))
+

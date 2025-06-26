@@ -13,7 +13,6 @@
     Edit All</button>
   <button id="save-stockreport-btn"
     class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow text-sm hidden">💾 Save</button>
-
   <button onclick="window.print()" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">🖨️
     Print</button>
 </div>
@@ -28,9 +27,11 @@
         ("Client Ref.", "customer_ref")] %}
         <div>
           <span class="font-semibold">{{ label }}:</span>
-          <span class="ml-2 view-mode">{{ item[field] or '—' }}</span>
-          <input type="text" name="{{ field }}" value="{{ item[field] or '' }}"
-            class="edit-header hidden w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
+          <div class="ml-2 view-mode">{{ item[field] or '—' }}</div>
+          <div class="edit-header hidden">
+            <input type="text" name="{{ field }}" value="{{ item[field] or '' }}"
+              class="w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
+          </div>
         </div>
         {% endfor %}
       </div>
@@ -65,19 +66,21 @@
           {% for field in ["entrance_date", "article_batch", "colli", "packing", "pcs", "colli_per_pal", "pcs_total",
           "pal", "product", "gross_kg", "net_kg", "sender", "customs_status", "stockref"] %}
           <td class="p-2 border">
-            <span class="view-mode">{{ entry[field] }}</span>
-            {% if field == "customs_status" %}
-            <select class="edit-header hidden" name="{{ field }}">
-              <option value="EU" {% if entry[field]=='EU' %}selected{% endif %}>EU</option>
-              <option value="T1" {% if entry[field]=='T1' %}selected{% endif %}>T1</option>
-            </select>
-            {% elif field in ["colli", "pcs", "colli_per_pal", "pcs_total", "pal", "gross_kg", "net_kg"] %}
-            <input type="number" class="edit-header hidden" name="{{ field }}" value="{{ entry[field] }}">
-            {% elif field == "entrance_date" %}
-            <input type="date" class="edit-header hidden" name="{{ field }}" value="{{ entry[field] }}">
-            {% else %}
-            <input type="text" class="edit-header hidden" name="{{ field }}" value="{{ entry[field] }}">
-            {% endif %}
+            <div class="view-mode">{{ entry[field] }}</div>
+            <div class="edit-header hidden">
+              {% if field == "customs_status" %}
+              <select name="{{ field }}">
+                <option value="EU" {% if entry[field]=='EU' %}selected{% endif %}>EU</option>
+                <option value="T1" {% if entry[field]=='T1' %}selected{% endif %}>T1</option>
+              </select>
+              {% elif field in ["colli", "pcs", "colli_per_pal", "pcs_total", "pal", "gross_kg", "net_kg"] %}
+              <input type="number" name="{{ field }}" value="{{ entry[field] }}">
+              {% elif field == "entrance_date" %}
+              <input type="date" name="{{ field }}" value="{{ entry[field] }}">
+              {% else %}
+              <input type="text" name="{{ field }}" value="{{ entry[field] }}">
+              {% endif %}
+            </div>
           </td>
           {% endfor %}
         </tr>
@@ -91,9 +94,11 @@
     {% for label, field in [("ATB First", "atb_first"), ("Customs OZL", "customs_ozl"), ("Free till", "free_till")] %}
     <div>
       <label class="font-medium">{{ label }}:</label>
-      <p class="view-mode text-gray-700">{{ item[field] or "—" }}</p>
-      <input type="text" name="{{ field }}" value="{{ item[field] or '' }}"
-        class="edit-header hidden w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
+      <div class="view-mode text-gray-700">{{ item[field] or "—" }}</div>
+      <div class="edit-header hidden">
+        <input type="text" name="{{ field }}" value="{{ item[field] or '' }}"
+          class="w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
+      </div>
     </div>
     {% endfor %}
   </div>
@@ -127,5 +132,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/view_stockreport.js') }}"></script>
+<script src="{{ url_for('static', filename='js/view_stockreport.js') }}?v={{ config['VERSION'] }}"></script>
 {% endblock %}
