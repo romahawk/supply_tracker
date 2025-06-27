@@ -135,14 +135,16 @@
                                     </form>
 
                                     <!-- Delete (manual only) -->
-                                    {% if item.is_manual %}
+                                    {% if entries|length > 0 %}
                                     <form method="POST"
-                                        action="{{ url_for('warehouse.delete_warehouse', item_id=item.id) }}"
-                                        class="inline delete-form">
+                                        action="{{ url_for('warehouse.delete_stockreport', entry_id=entries[0].id) }}"
+                                        onsubmit="return confirm('Delete this entry?')">
                                         <button type="submit"
-                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded min-w-[70px]">Delete</button>
+                                            class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded shadow text-sm">🗑️
+                                            Delete</button>
                                     </form>
                                     {% endif %}
+
 
                                 </div>
                             </div>

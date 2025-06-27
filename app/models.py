@@ -46,6 +46,10 @@ class WarehouseStock(db.Model):
     transport = db.Column(db.String(20))
     is_manual = db.Column(db.Boolean, default=False)
     pod_filename = db.Column(db.String(120))
+    warehouse_address = db.Column(db.String(255))
+    client = db.Column(db.String(255))
+    pos_no = db.Column(db.String(50))
+    customer_ref = db.Column(db.String(50))
 
 
 class DeliveredGoods(db.Model):
@@ -59,7 +63,10 @@ class DeliveredGoods(db.Model):
     transport = db.Column(db.String(20))
     notes = db.Column(db.String(120))
     pod_filename = db.Column(db.String(120))
-
+    warehouse_address = db.Column(db.String(255))
+    client = db.Column(db.String(255))
+    pos_no = db.Column(db.String(50))
+    customer_ref = db.Column(db.String(50))
 
 class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)

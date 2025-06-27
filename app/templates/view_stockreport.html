@@ -4,24 +4,26 @@
 
 <!-- Top Buttons -->
 <div class="flex justify-end gap-3 px-[50px] mt-6 no-print">
-  <form method="POST" action="{{ url_for('warehouse.delete_stockreport', entry_id=entries[0].id) }}"
-    onsubmit="return confirm('Delete this entry?')">
-    <button type="submit" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded shadow text-sm">🗑️
-      Delete</button>
-  </form>
-  <button id="edit-all-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded shadow text-sm">✏️
-    Edit All</button>
+  {% if entries and entries|length > 0 %}
+    <form method="POST" action="{{ url_for('warehouse.delete_stockreport', entry_id=entries[0].id) }}"
+      onsubmit="return confirm('Delete this entry?')">
+      <button type="submit" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded shadow text-sm">🗑️ Delete</button>
+    </form>
+  {% endif %}
+  <button id="edit-all-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded shadow text-sm">✏️ Edit All</button>
   <button id="save-stockreport-btn"
     class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow text-sm hidden">💾 Save</button>
-  <button onclick="window.print()" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">🖨️
-    Print</button>
+  <button onclick="window.print()" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">🖨️ Print</button>
 </div>
+
 
 <!-- Report Block -->
 <div class="print-area bg-white dark:bg-gray-800 p-6 rounded shadow max-w-full px-[50px] mt-6" id="pdf-report">
   <div class="flex justify-between items-start mb-6">
     <div>
       <h2 class="text-2xl font-bold mb-2">Stock IN Report</h2>
+      <pre class="text-xs text-red-500 bg-yellow-100 p-2 rounded">DEBUG: {{ item }}</pre>
+
       <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
         {% for label, field in [("Warehouse", "warehouse_address"), ("Pos. No.", "pos_no"), ("Client", "client"),
         ("Client Ref.", "customer_ref")] %}

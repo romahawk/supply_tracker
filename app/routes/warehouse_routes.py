@@ -114,6 +114,7 @@ def deliver_partial(item_id):
         item.quantity = new_qty
         db.session.add(item)
 
+    # Not mandatory, but good future-proofing
     delivery = DeliveredGoods(
         user_id=current_user.id,
         order_number=item.order_number,
@@ -122,8 +123,13 @@ def deliver_partial(item_id):
         transport=item.transport,
         delivery_source="From Warehouse",
         notes=item.notes,
+        warehouse_address=item.warehouse_address,
+        client=item.client,
+        pos_no=item.pos_no,
+        customer_ref=item.customer_ref,
         delivery_date=datetime.now().strftime('%d.%m.%y')
     )
+
     db.session.add(delivery)
     db.session.commit()
 
@@ -337,9 +343,27 @@ def delete_stockreport(entry_id):
 @warehouse_bp.route('/stockreport/view_by_order/<string:order_number>')
 @login_required
 def view_stockreport_by_order(order_number):
-    item = WarehouseStock.query.filter_by(order_number=order_number).first_or_404()
-    if not can_view_all(current_user.role) and current_user.id != item.user_id:
+    # Always get stockreport using WarehouseStock (ID used as foreign key)
+    warehouse_item = WarehouseStock.query.filter_by(order_number=order_number).first()
+    
+    if not warehouse_item:
+        flash("No matching warehouse item found for stockreport.", "warning")
+        return redirect(url_for('warehouse.warehouse'))
+
+    # Check access rights
+    if not can_view_all(current_user.role) and current_user.id != warehouse_item.user_id:
         flash("Access denied.", "danger")
         return redirect(url_for('warehouse.warehouse'))
-    entries = StockReportEntry.query.filter_by(related_order_id=item.id).all()
-    return render_template('view_stockreport.html', item=item, entries=entries)
+
+    # Convert item to dict so view_stockreport.html can use item[field]
+    item_data = warehouse_item.__dict__.copy()
+    item_data.pop('_sa_instance_state', None)
+
+    entries = StockReportEntry.query.filter_by(related_order_id=warehouse_item.id).all()
+
+    if not entries:
+        flash("No stockreport entries found.", "warning")
+        return redirect(url_for('warehouse.warehouse'))
+
+    return render_template('view_stockreport.html', item=item_data, entries=entries)
+
