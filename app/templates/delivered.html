@@ -87,8 +87,10 @@
                             {% if item.delivery_source == 'From Warehouse' and item.order_number in
                             reported_order_numbers %}
                             <button data-order-number="{{ item.order_number }}"
-                                class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded min-w-[90px]">View
-                                Report</button>
+                                class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded min-w-[90px]">
+                                View Report
+                            </button>
+
                             {% endif %}
                             {% endif %}
                         </td>
@@ -135,33 +137,12 @@
         <div class="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-5xl relative">
             <button onclick="closeModal()"
                 class="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-lg font-bold">&times;</button>
-            <iframe id="stockreport-frame" src="" class="w-full h-[80vh] border rounded"></iframe>
+            <div id="modal-body" class="w-full h-[80vh] overflow-auto"></div>
         </div>
     </div>
 
     <script>
-        document.querySelectorAll('.open-stockreport-modal').forEach(button => {
-            button.addEventListener('click', function () {
-                const orderNumber = this.getAttribute('data-order-number');
-                const modal = document.getElementById('stockreport-modal');
-                const iframe = document.getElementById('stockreport-frame');
-                iframe.src = `/stockreport/view_by_order/${orderNumber}`;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            });
-        });
-
-
-        function closeModal() {
-            const modal = document.getElementById('stockreport-modal');
-            const iframe = document.getElementById('stockreport-frame');
-            iframe.src = "";
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
-    </script>
-
-    <script>
+        // Toggle dark mode if saved
         const toggle = document.getElementById('dark-mode-toggle');
         if (toggle && localStorage.getItem('dark-mode') === 'enabled') {
             document.documentElement.classList.add('dark');
@@ -169,12 +150,15 @@
         if (toggle) {
             toggle.addEventListener('click', () => {
                 document.documentElement.classList.toggle('dark');
-                localStorage.setItem('dark-mode', document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled');
+                localStorage.setItem('dark-mode',
+                    document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled');
             });
         }
     </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Sorting
             const headers = document.querySelectorAll('th[data-sort]');
             let currentSort = { key: '', direction: '' };
 
@@ -183,7 +167,6 @@
                     const key = header.getAttribute('data-sort');
                     const ascending = currentSort.key === key && currentSort.direction === 'asc' ? false : true;
                     currentSort = { key, direction: ascending ? 'asc' : 'desc' };
-
                     sortDeliveredTableByKey(key, ascending);
                     updateSortIndicators();
                 });
@@ -199,7 +182,6 @@
                 };
 
                 const rows = Array.from(document.querySelectorAll('#delivered-table tbody tr'));
-
                 const sortedRows = rows.sort((a, b) => {
                     let valA = a.cells[cellMap[key]].innerText.trim();
                     let valB = b.cells[cellMap[key]].innerText.trim();
@@ -215,9 +197,7 @@
                                 .findIndex(m => m.toLowerCase() === monthStr.toLowerCase());
                             return new Date(parseInt(year), month, parseInt(day));
                         };
-                        const dateA = parseDate(valA);
-                        const dateB = parseDate(valB);
-                        return ascending ? dateA - dateB : dateB - dateA;
+                        return ascending ? parseDate(valA) - parseDate(valB) : parseDate(valB) - parseDate(valA);
                     } else {
                         return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
                     }
@@ -239,7 +219,7 @@
                 });
             }
 
-            // Optional: Live search
+            // Live search
             const search = document.getElementById('search-delivered');
             if (search) {
                 search.addEventListener('input', () => {
@@ -249,8 +229,51 @@
                     });
                 });
             }
+
+            // View Report Modal Trigger (via order_number)
+            document.querySelectorAll('.open-stockreport-modal').forEach(button => {
+                button.addEventListener('click', () => {
+                    const orderNumber = button.getAttribute('data-order-number');
+                    openStockReportByOrder(orderNumber);
+                });
+            });
         });
+
+        function openStockReportByOrder(orderNumber) {
+            fetch(`/stockreport/view_by_order/${orderNumber}`)
+                .then(res => res.text())
+                .then(html => {
+                    const modal = document.getElementById('stockreport-modal');
+                    const modalBody = document.getElementById('modal-body');
+                    modalBody.innerHTML = html;
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+
+                    // Inject script only once
+                    if (!document.querySelector('script[data-id="view-stockreport"]')) {
+                        const script = document.createElement('script');
+                        script.src = '/static/js/view_stockreport.js';
+                        script.setAttribute('data-id', 'view-stockreport');
+                        script.onload = () => console.log("✅ view_stockreport.js loaded in Delivered");
+                        document.body.appendChild(script);
+                    }
+                })
+                .catch(err => {
+                    console.error("❌ Could not load stockreport modal:", err);
+                    alert("Failed to open stockreport modal.");
+                });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('stockreport-modal');
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = '';
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
     </script>
+
+
 
 </body>
 
