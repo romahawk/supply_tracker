@@ -7,12 +7,16 @@
   {% if entries and entries|length > 0 %}
   <form method="POST" action="{{ url_for('warehouse.delete_stockreport', entry_id=entries[0].id) }}"
     onsubmit="return confirm('Delete this entry?')">
-    <button type="submit" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded shadow text-sm">🗑️ Delete</button>
+    <button type="submit" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded shadow text-sm">🗑️
+      Delete</button>
   </form>
   {% endif %}
-  <button id="edit-all-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded shadow text-sm">✏️ Edit All</button>
-  <button id="save-stockreport-btn" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow text-sm hidden">💾 Save</button>
-  <button onclick="window.print()" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">🖨️ Print</button>
+  <button id="edit-all-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded shadow text-sm">✏️
+    Edit All</button>
+  <button id="save-stockreport-btn"
+    class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow text-sm hidden">💾 Save</button>
+  <button onclick="window.print()" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">🖨️
+    Print</button>
 </div>
 
 <!-- Report Block -->
@@ -20,19 +24,58 @@
   <div class="flex justify-between items-start mb-6">
     <div>
       <h2 class="text-2xl font-bold mb-2">Stock IN Report</h2>
-      <pre class="text-xs text-red-500 bg-yellow-100 p-2 rounded">DEBUG: {{ item }}</pre>
-
       <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
-        {% for label, field in [("Warehouse", "warehouse_address"), ("Pos. No.", "pos_no"), ("Client", "client"), ("Client Ref.", "customer_ref")] %}
+        <!-- Warehouse -->
         <div>
-          <span class="font-semibold">{{ label }}:</span>
-          <div class="ml-2 view-mode">{{ item | lookup(field) or '—' }}</div>
+          <span class="font-semibold">Warehouse:</span>
+          <div class="ml-2 view-mode">{{ item.warehouse_address or '—' }}</div>
           <div class="edit-header hidden">
-            <input type="text" name="{{ field }}" value="{{ item | lookup(field) or '' }}"
+            <select name="warehouse_address"
+              class="w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700">
+              <option value="">Select Warehouse</option>
+              {% for option in ['Pharmalogis', 'iCargo', 'Quehenberger', 'Systra', 'Schwarze'] %}
+              <option value="{{ option }}" {% if item.warehouse_address==option %}selected{% endif %}>{{ option }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Pos. No. -->
+        <div>
+          <span class="font-semibold">Pos. No.:</span>
+          <div class="ml-2 view-mode">{{ item.pos_no or '—' }}</div>
+          <div class="edit-header hidden">
+            <input type="text" name="pos_no" value="{{ item.pos_no or '' }}"
               class="w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
           </div>
         </div>
-        {% endfor %}
+
+        <!-- Client -->
+        <div>
+          <span class="font-semibold">Client:</span>
+          <div class="ml-2 view-mode">{{ item.client or '—' }}</div>
+          <div class="edit-header hidden">
+            <select name="client" class="w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700">
+              <option value="">Select Client</option>
+              {% for option in ['Anariti', 'Aurora', 'Jinling', 'Lanhai', 'Lekhim Vilnius', 'Lekhim Kiev', 'Osta',
+              'PCC', 'Pharmalogis'] %}
+              <option value="{{ option }}" {% if item.client==option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Client Ref. -->
+        <div>
+          <span class="font-semibold">Client Ref.:</span>
+          <div class="ml-2 view-mode">{{ item.customer_ref or '—' }}</div>
+          <div class="edit-header hidden">
+            <input type="text" name="customer_ref" value="{{ item.customer_ref or '' }}"
+              class="w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
+          </div>
+        </div>
+
       </div>
     </div>
     <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="w-36 object-contain h-auto">
@@ -62,14 +105,15 @@
       <tbody>
         {% for entry in entries %}
         <tr class="border-t" data-entry-id="{{ entry.id }}">
-          {% for field in ["entrance_date", "article_batch", "colli", "packing", "pcs", "colli_per_pal", "pcs_total", "pal", "product", "gross_kg", "net_kg", "sender", "customs_status", "stockref"] %}
+          {% for field in ["entrance_date", "article_batch", "colli", "packing", "pcs", "colli_per_pal", "pcs_total",
+          "pal", "product", "gross_kg", "net_kg", "sender", "customs_status", "stockref"] %}
           <td class="p-2 border">
             <div class="view-mode">{{ entry | lookup(field) }}</div>
             <div class="edit-header hidden">
               {% if field == "customs_status" %}
               <select name="{{ field }}">
-                <option value="EU" {% if entry | lookup(field) == 'EU' %}selected{% endif %}>EU</option>
-                <option value="T1" {% if entry | lookup(field) == 'T1' %}selected{% endif %}>T1</option>
+                <option value="EU" {% if entry | lookup(field)=='EU' %}selected{% endif %}>EU</option>
+                <option value="T1" {% if entry | lookup(field)=='T1' %}selected{% endif %}>T1</option>
               </select>
               {% elif field in ["colli", "pcs", "colli_per_pal", "pcs_total", "pal", "gross_kg", "net_kg"] %}
               <input type="number" name="{{ field }}" value="{{ entry | lookup(field) }}">
@@ -103,7 +147,8 @@
 
   <!-- Signatures -->
   <div class="grid grid-cols-2 gap-8 mt-10">
-    {% for side, date, sig in [('client', signature_date_client, signature_client), ('warehouse', signature_date_warehouse, signature_warehouse)] %}
+    {% for side, date, sig in [('client', signature_date_client, signature_client), ('warehouse',
+    signature_date_warehouse, signature_warehouse)] %}
     <div class="text-center">
       <div class="view-mode">
         <p class="text-sm text-gray-700 mb-1">Date: {{ date or '—' }}</p>
@@ -117,7 +162,7 @@
           class="w-full border px-3 py-1 rounded" />
         <select name="signature_{{ side }}" class="w-full border rounded px-2 py-1">
           {% for s in ['signature1.png', 'signature2.png', 'signature3.png'] %}
-          <option value="{{ s }}" {% if sig == s %}selected{% endif %}>{{ s }}</option>
+          <option value="{{ s }}" {% if sig==s %}selected{% endif %}>{{ s }}</option>
           {% endfor %}
         </select>
       </div>
