@@ -343,27 +343,42 @@ def delete_stockreport(entry_id):
 @warehouse_bp.route('/stockreport/view_by_order/<string:order_number>')
 @login_required
 def view_stockreport_by_order(order_number):
-    # Always get stockreport using WarehouseStock (ID used as foreign key)
-    warehouse_item = WarehouseStock.query.filter_by(order_number=order_number).first()
-    
-    if not warehouse_item:
-        flash("No matching warehouse item found for stockreport.", "warning")
-        return redirect(url_for('warehouse.warehouse'))
+    # Try WarehouseStock first
+    item = WarehouseStock.query.filter_by(order_number=order_number).first()
 
-    # Check access rights
-    if not can_view_all(current_user.role) and current_user.id != warehouse_item.user_id:
-        flash("Access denied.", "danger")
-        return redirect(url_for('warehouse.warehouse'))
+    # Fallback to DeliveredGoods
+    if not item:
+        item = DeliveredGoods.query.filter_by(order_number=order_number).first_or_404()
 
-    # Convert item to dict so view_stockreport.html can use item[field]
-    item_data = warehouse_item.__dict__.copy()
-    item_data.pop('_sa_instance_state', None)
+    # Permission check (only if from WarehouseStock)
+    if isinstance(item, WarehouseStock):
+        if not can_view_all(current_user.role) and current_user.id != item.user_id:
+            flash("Access denied.", "danger")
+            return redirect(url_for('warehouse.warehouse'))
 
-    entries = StockReportEntry.query.filter_by(related_order_id=warehouse_item.id).all()
+    # Load stock entries
+    entries = StockReportEntry.query.filter_by(related_order_id=item.id).all()
 
-    if not entries:
-        flash("No stockreport entries found.", "warning")
-        return redirect(url_for('warehouse.warehouse'))
+    # Inherit report header fields from StockReportEntry (first entry)
+    first_entry = entries[0] if entries else None
 
-    return render_template('view_stockreport.html', item=item_data, entries=entries)
+    # Calculate customs info
+    atb_frist = customs_ozl = free_till = None
+    if first_entry and first_entry.customs_status == "T1" and first_entry.entrance_date:
+        atb_frist = first_entry.entrance_date.strftime("%d.%m.%Y")
+        customs_ozl = "OZL Hamburg"
+        free_till = (first_entry.entrance_date + timedelta(days=90)).strftime("%d.%m.%Y")
 
+    return render_template(
+        "view_stockreport.html",
+        entries=entries,
+        item=item,
+        atb_frist=atb_frist,
+        customs_ozl=customs_ozl,
+        free_till=free_till,
+        signature_date_client=getattr(first_entry, 'signature_date_client', None),
+        signature_client=getattr(first_entry, 'signature_client', None),
+        signature_date_warehouse=getattr(first_entry, 'signature_date_warehouse', None),
+        signature_warehouse=getattr(first_entry, 'signature_warehouse', None),
+        report_header=getattr(first_entry, '__dict__', {})  # 🚨 Pass extra fields
+    )

@@ -40,5 +40,16 @@ def create_app():
         except Exception:
             pass
         return value  # fallback
+    
+    app.jinja_env.globals['getattr'] = getattr
+    
+    @app.template_filter('getattr')
+    def jinja_getattr(obj, name):
+        return getattr(obj, name, None)
+
+    @app.template_filter('lookup')
+    def jinja_lookup(obj, key):
+        return obj.get(key) if isinstance(obj, dict) else getattr(obj, key, None)
 
     return app
+
