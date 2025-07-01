@@ -115,9 +115,13 @@ def edit_order(order_id):
         if etd_dt and order_date_dt and order_date_dt > etd_dt:
             return jsonify({'success': False, 'message': 'Order Date cannot be later than ETD.'}), 400
 
+        # ✅ Save product name + track new ones
+        product_name = data.get('product_name', '').strip()
+        add_product_if_new(product_name)
+        order.product_name = product_name
+
         order.order_date = order_date
         order.order_number = data.get('order_number', '').strip()
-        order.product_name = data.get('product_name', '').strip()
         order.buyer = data.get('buyer', '').strip()
         order.responsible = data.get('responsible', '').strip()
         order.quantity = quantity
@@ -141,7 +145,6 @@ def edit_order(order_id):
         traceback.print_exc()
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error editing order: {str(e)}'}), 500
-
 
 
 @order_bp.route('/delete_order/<int:order_id>')

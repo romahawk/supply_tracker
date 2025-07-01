@@ -1,80 +1,128 @@
-<!-- templates/edit_order.html -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Order - Supply Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Order - Supply Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <!-- TomSelect -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Edit Order</h1>
-        <p><a href="{{ url_for('dashboard.dashboard') }}">Back to Dashboard</a></p>
-        
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for message in messages %}
-                        <p>{{ message }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+  <div class="container">
+    <h1>Edit Order</h1>
+    <p><a href="{{ url_for('dashboard.dashboard') }}">Back to Dashboard</a></p>
 
-        <form method="POST">
-            <label for="order_date">Order Date (DD.MM.YY):</label>
-            <input type="text" id="order_date" name="order_date" value="{{ order.order_date }}" required>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-            <label for="order_number">Order #:</label>
-            <input type="text" id="order_number" name="order_number" value="{{ order.order_number }}" required>
+    <form method="POST">
+      <label for="order_date">Order Date (DD.MM.YY):</label>
+      <input type="text" id="order_date" name="order_date" value="{{ order.order_date }}" required />
 
-            <label for="product_name">Product Name:</label>
-            <input type="text" id="product_name" name="product_name" value="{{ order.product_name }}" required>
+      <label for="order_number">Order #:</label>
+      <input type="text" id="order_number" name="order_number" value="{{ order.order_number }}" required />
 
-            <label for="buyer">Buyer:</label>
-            <input type="text" id="buyer" name="buyer" value="{{ order.buyer }}" required>
+      <label for="product_name">Product Name:</label>
+      <select id="edit-product_name" name="product_name" required data-current="{{ order.product_name | e }}"></select>
 
-            <label for="responsible">Responsible:</label>
-            <input type="text" id="responsible" name="responsible" value="{{ order.responsible }}" required>
+      <label for="buyer">Buyer:</label>
+      <input type="text" id="buyer" name="buyer" value="{{ order.buyer }}" required />
 
-            <label for="quantity">Quantity:</label>
-            <input type="number" step="0.01" id="quantity" name="quantity" value="{{ order.quantity }}" required>
+      <label for="responsible">Responsible:</label>
+      <input type="text" id="responsible" name="responsible" value="{{ order.responsible }}" required />
 
-            <label for="required_delivery">Required Delivery (DD.MM.YY):</label>
-            <input type="text" id="required_delivery" name="required_delivery" value="{{ order.required_delivery }}" required>
+      <label for="quantity">Quantity:</label>
+      <input type="number" step="0.01" id="quantity" name="quantity" value="{{ order.quantity }}" required />
 
-            <label for="terms_of_delivery">Terms of Delivery:</label>
-            <input type="text" id="terms_of_delivery" name="terms_of_delivery" value="{{ order.terms_of_delivery }}" required>
+      <label for="required_delivery">Required Delivery (DD.MM.YY):</label>
+      <input type="text" id="required_delivery" name="required_delivery" value="{{ order.required_delivery }}" required />
 
-            <label for="payment_date">Payment Date (DD.MM.YY):</label>
-            <input type="text" id="payment_date" name="payment_date" value="{{ order.payment_date }}" required>
+      <label for="terms_of_delivery">Terms of Delivery:</label>
+      <input type="text" id="terms_of_delivery" name="terms_of_delivery" value="{{ order.terms_of_delivery }}" required />
 
-            <label for="etd">ETD (DD.MM.YY):</label>
-            <input type="text" id="etd" name="etd" value="{{ order.etd }}">
+      <label for="payment_date">Payment Date (DD.MM.YY):</label>
+      <input type="text" id="payment_date" name="payment_date" value="{{ order.payment_date }}" required />
 
-            <label for="eta">ETA (DD.MM.YY):</label>
-            <input type="text" id="eta" name="eta" value="{{ order.eta }}">
+      <label for="etd">ETD (DD.MM.YY):</label>
+      <input type="text" id="etd" name="etd" value="{{ order.etd }}" />
 
-            <label for="ata">ATA (DD.MM.YY):</label>
-            <input type="text" id="ata" name="ata" value="{{ order.ata }}">
+      <label for="eta">ETA (DD.MM.YY):</label>
+      <input type="text" id="eta" name="eta" value="{{ order.eta }}" />
 
-            <label for="transit_status">Transit Status:</label>
-            <select id="transit_status" name="transit_status" required>
-                <option value="in process" {% if order.transit_status == 'in process' %}selected{% endif %}>In Process</option>
-                <option value="en route" {% if order.transit_status == 'en route' %}selected{% endif %}>En Route</option>
-                <option value="arrived" {% if order.transit_status == 'arrived' %}selected{% endif %}>Arrived</option>
-            </select>
+      <label for="ata">ATA (DD.MM.YY):</label>
+      <input type="text" id="ata" name="ata" value="{{ order.ata }}" />
 
-            <label for="transport">Transport:</label>
-            <select id="transport" name="transport" required>
-                <option value="sea" {% if order.transport == 'sea' %}selected{% endif %}>Sea</option>
-                <option value="air" {% if order.transport == 'air' %}selected{% endif %}>Air</option>
-                <option value="truck" {% if order.transport == 'truck' %}selected{% endif %}>Truck</option>
-            </select>
+      <label for="transit_status">Transit Status:</label>
+      <select id="transit_status" name="transit_status" required>
+        <option value="in process" {% if order.transit_status == 'in process' %}selected{% endif %}>In Process</option>
+        <option value="en route" {% if order.transit_status == 'en route' %}selected{% endif %}>En Route</option>
+        <option value="arrived" {% if order.transit_status == 'arrived' %}selected{% endif %}>Arrived</option>
+      </select>
 
-            <button type="submit">Update Order</button>
-        </form>
-    </div>
+      <label for="transport">Transport:</label>
+      <select id="transport" name="transport" required>
+        <option value="sea" {% if order.transport == 'sea' %}selected{% endif %}>Sea</option>
+        <option value="air" {% if order.transport == 'air' %}selected{% endif %}>Air</option>
+        <option value="truck" {% if order.transport == 'truck' %}selected{% endif %}>Truck</option>
+      </select>
+
+      <button type="submit">Update Order</button>
+    </form>
+  </div>
+
+  <!-- JS -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const selectEl = document.getElementById("edit-product_name");
+      if (!selectEl) {
+        console.warn("⚠️ product_name field not found");
+        return;
+      }
+
+      const current = selectEl.getAttribute("data-current") || "";
+      console.log("📦 Current product from order:", current);
+
+      fetch("/api/products")
+        .then(res => res.json())
+        .then(products => {
+          console.log("📄 Loaded products:", products);
+          const unique = [...new Set([current, ...products])];
+
+          selectEl.innerHTML = "";
+          unique.forEach(product => {
+            const option = document.createElement("option");
+            option.value = product;
+            option.textContent = product;
+            selectEl.appendChild(option);
+          });
+
+          selectEl.value = current;
+
+          new TomSelect(selectEl, {
+            create: true,
+            sortField: {
+              field: "text",
+              direction: "asc"
+            },
+            maxOptions: 200
+          });
+        })
+        .catch(error => {
+          console.error("❌ Failed to load product list:", error);
+        });
+    });
+  </script>
 </body>
 </html>
