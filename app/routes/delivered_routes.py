@@ -10,21 +10,42 @@ delivered_bp = Blueprint('delivered', __name__)
 @delivered_bp.route('/delivered')
 @login_required
 def delivered():
-    if can_view_all(current_user.role):
-        delivered_items = DeliveredGoods.query.order_by(DeliveredGoods.delivery_date.desc()).all()
-    else:
-        delivered_items = DeliveredGoods.query.filter_by(user_id=current_user.id).order_by(DeliveredGoods.delivery_date.desc()).all()
+    page = request.args.get('page', 1, type=int)
+    per_page = 25
+
+    query = DeliveredGoods.query
+    if not can_view_all(current_user.role):
+        query = query.filter_by(user_id=current_user.id)
+
+    # Filters
+    client = request.args.get('client')
+    transport = request.args.get('transport')
+    month = request.args.get('month')
+    year = request.args.get('year')
+
+    if client:
+        query = query.filter(DeliveredGoods.client == client)
+    if transport:
+        query = query.filter(DeliveredGoods.transport == transport)
+    if month and year:
+        query = query.filter(DeliveredGoods.delivery_date.like(f"{year}-{month.zfill(2)}-%"))
+
+    query = query.order_by(DeliveredGoods.delivery_date.desc())
+    pagination = query.paginate(page=page, per_page=per_page)
 
     reported_order_numbers = {
-    ws.order_number
-    for ws in WarehouseStock.query.join(StockReportEntry, WarehouseStock.id == StockReportEntry.related_order_id)
-}
+        ws.order_number
+        for ws in WarehouseStock.query.join(StockReportEntry, WarehouseStock.id == StockReportEntry.related_order_id)
+    }
 
+    client_names = [r[0] for r in db.session.query(DeliveredGoods.client).distinct().all() if r[0]]
 
     return render_template(
         'delivered.html',
-        delivered_items=delivered_items,
-        reported_order_numbers=reported_order_numbers
+        delivered_items=pagination.items,
+        pagination=pagination,
+        reported_order_numbers=reported_order_numbers,
+        client_names=client_names
     )
 
 
@@ -55,6 +76,7 @@ def restore_to_dashboard():
     db.session.commit()
     flash("Item restored to dashboard.", "success")
     return redirect(url_for('delivered.delivered'))
+
 
 @delivered_bp.route('/delivered/edit/<int:item_id>', methods=['GET', 'POST'])
 @login_required
