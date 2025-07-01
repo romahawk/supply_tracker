@@ -18,6 +18,7 @@
             darkMode: 'class',
         }
     </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 </head>
 
@@ -201,11 +202,16 @@
         <div class="p-2 sm:p-2 space-y-2">
             <div class="flex justify-between items-center">
                 <h2
-                    class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
+                    class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <i data-lucide="boxes"></i>
                     Your Orders
                 </h2>
-                <button id="toggle-orders-btn"
-                    class="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none">
+
+                <button id="toggle-orders-btn" class="text-sm font-medium px-3 py-1 rounded-md transition 
+         text-gray-700 dark:text-gray-300 
+         hover:text-white hover:bg-gray-600 
+         dark:hover:text-white dark:hover:bg-gray-500 
+         focus:outline-none shadow-sm">
                     Hide Orders
                 </button>
             </div>
@@ -267,9 +273,11 @@
 
         <!-- Timeline -->
         <h2
-            class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
-            📊 Timeline
+            class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <i data-lucide="activity"></i>
+            Timeline
         </h2>
+
         <!-- Year Filter Dropdown -->
         <div class="mb-4">
             <label for="year-filter" class="text-sm font-medium text-gray-900 dark:text-gray-500 mr-2">Select
@@ -449,6 +457,9 @@
                 });
             });
         });
+    </script>
+    <script>
+        lucide.createIcons();
     </script>
 
 
