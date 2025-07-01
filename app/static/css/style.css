@@ -482,3 +482,37 @@ table thead th {
   gap: 12px;
   margin-top: 16px;
 }
+
+/* Base Button Style */
+.btn {
+  @apply inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition-colors duration-200 focus:outline-none;
+}
+
+.btn svg {
+  @apply w-4 h-4;
+}
+
+/* Button Variants */
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+.btn-warning {
+  @apply bg-yellow-500 text-white hover:bg-yellow-600;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700;
+}
+
+.btn-icon {
+  @apply flex items-center justify-center gap-1 px-2.5 py-1 text-xs sm:text-sm text-center whitespace-nowrap;
+}
+
+.btn-disabled {
+  @apply opacity-40 cursor-not-allowed;
+}
