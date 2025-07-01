@@ -547,6 +547,51 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("updateTable: Table updated with data:", data);
   }
 
+const initializeProductSelect = () => {
+  const selectEl = document.getElementById("product_name");
+  if (!selectEl) return;
+
+  fetch("/api/products")
+    .then(res => res.json())
+    .then(products => {
+      // Clean up existing TomSelect instance
+      if (selectEl.tomselect) {
+        selectEl.tomselect.destroy();
+      }
+
+      // Clear existing options
+      selectEl.innerHTML = "";
+
+      // Add new options
+      products.forEach(product => {
+        const option = document.createElement("option");
+        option.value = product;
+        option.textContent = product;
+        selectEl.appendChild(option);
+      });
+
+      // Initialize TomSelect after populating
+      new TomSelect(selectEl, {
+        create: true,
+        sortField: {
+          field: "text",
+          direction: "asc",
+        },
+        maxOptions: 200,
+      });
+
+      console.log("✅ TomSelect ready with", products.length, "products");
+    })
+    .catch(err => {
+      console.error("❌ Error fetching products:", err);
+    });
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  initializeProductSelect();
+});
+
+
   function setupDashboardSearch() {
     const searchInput = document.getElementById("search-dashboard");
     if (!searchInput) return;

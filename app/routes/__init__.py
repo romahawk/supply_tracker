@@ -16,6 +16,7 @@ def register_routes(app):
     from .stats_routes import stats_bp
     from .onboarding_routes import onboarding_bp
     from .analytics_routes import analytics_bp
+    from .products_routes import products_bp
     import time
 
 
@@ -31,4 +32,5 @@ def register_routes(app):
     app.register_blueprint(analytics_bp)
     app.context_processor(inject_globals)
     app.config['VERSION'] = str(int(time.time()))
+    app.register_blueprint(products_bp)
 

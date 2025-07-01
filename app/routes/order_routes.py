@@ -6,6 +6,7 @@ from datetime import datetime
 from app.roles import can_view_all, can_edit
 from flask import flash, redirect, url_for
 from app.models import ArchivedOrder
+from app.utils.products import add_product_if_new
 import os
 
 order_bp = Blueprint('order', __name__)
@@ -18,7 +19,6 @@ def load_products():
             return sorted(set(line.strip() for line in f if line.strip()))
     except FileNotFoundError:
         return []
-
 @order_bp.route('/add_order', methods=['POST'])
 @login_required
 def add_order():
@@ -51,11 +51,16 @@ def add_order():
         if not order_number:
             return jsonify({'success': False, 'message': 'Order must have an Order Number.'}), 400
 
+        product_name = data['product_name'].strip()
+
+        # ✅ Save new product if missing
+        add_product_if_new(product_name)
+
         new_order = Order(
             user_id=current_user.id,
             order_date=order_date,
             order_number=order_number,
-            product_name=data['product_name'],
+            product_name=product_name,
             buyer=data.get('buyer', ''),
             responsible=data.get('responsible', ''),
             quantity=quantity,
@@ -72,16 +77,6 @@ def add_order():
         db.session.add(new_order)
         db.session.commit()
 
-        # Save new product to products.txt if it's new
-        new_product = data['product_name'].strip()
-        existing_products = load_products()
-        if new_product and new_product not in existing_products:
-            try:
-                with open(PRODUCTS_FILE, 'a', encoding='utf-8') as f:
-                    f.write(f"{new_product}\n")
-            except Exception as file_error:
-                print(f"⚠️ Could not write to products.txt – {file_error}")
-
         return jsonify({'success': True, 'message': 'Order added successfully!'}), 200
 
     except ValueError:
@@ -90,6 +85,7 @@ def add_order():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error adding order: {str(e)}'}), 500
+
 
 @order_bp.route('/edit_order/<int:order_id>', methods=['POST'])
 @login_required

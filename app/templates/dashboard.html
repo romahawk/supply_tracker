@@ -20,6 +20,10 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <!-- TomSelect -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
 </head>
 
 <body class="m-0 p-0 bg-gray-100 dark:bg-gray-900">
@@ -42,13 +46,14 @@
             </div>
             <div class="form-group">
                 <label for="product_name" class="block text-sm font-medium ">Product Name:</label>
-                <input type="text" id="product_name" name="product_name" required list="product-options"
-                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                <datalist id="product-options">
-                    {% for product in product_list %}
-                    <option value="{{ product }}">
-                        {% endfor %}
-                </datalist>
+                <input list="product-options" id="product_name" name="product_name" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
+              bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" placeholder="Select or type a product"
+                    required>
+                <datalist id="product-options"></datalist>
+
+
+
+
             </div>
             <div class="form-group">
                 <label for="buyer" class="block text-sm font-medium ">Buyer:</label>
@@ -335,12 +340,14 @@
                             class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
                             required>
                     </div>
-                    <div>
-                        <label for="edit-product_name" class="block text-sm font-medium ">Product Name</label>
-                        <input type="text" id="edit-product_name" name="product_name"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
+                    <div class="form-group">
+                        <label for="product_name" class="block text-sm font-medium">Product Name:</label>
+                        <select id="product_name" name="product_name" placeholder="Select or type a product"
+                            autocomplete="off" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
+                 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                        </select>
                     </div>
+
                     <div>
                         <label for="edit-buyer" class="block text-sm font-medium ">Buyer</label>
                         <input type="text" id="edit-buyer" name="buyer"
