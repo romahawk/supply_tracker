@@ -11,7 +11,7 @@
 
 <body class="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     {% include '_navbar.html' %}
-    <main class="flex-grow overflow-y-auto p-4">
+    <main class="flex flex-col h-full overflow-hidden p-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
         <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">{{ message }}</div>
@@ -20,13 +20,38 @@
 
         <h2 class="text-2xl font-bold mb-4">🚚 Delivered Goods</h2>
 
+        <!-- Filters -->
+        <form method="GET" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 text-sm">
+            <select name="transport" class="rounded px-2 py-1 dark:bg-gray-800">
+                <option value="">All Transport</option>
+                <option value="air" {% if request.args.get('transport')=='air' %}selected{% endif %}>Air</option>
+                <option value="sea" {% if request.args.get('transport')=='sea' %}selected{% endif %}>Sea</option>
+                <option value="truck" {% if request.args.get('transport')=='truck' %}selected{% endif %}>Truck</option>
+            </select>
+            <select name="month" class="rounded px-2 py-1 dark:bg-gray-800">
+                <option value="">Month</option>
+                {% for m in range(1,13) %}
+                <option value="{{ m }}" {% if request.args.get('month')==m|string %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+            <select name="year" class="rounded px-2 py-1 dark:bg-gray-800">
+                <option value="">Year</option>
+                {% for y in range(2023, 2026) %}
+                <option value="{{ y }}" {% if request.args.get('year')==y|string %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit"
+                class="col-span-2 sm:col-span-1 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">🔍
+                Filter</button>
+        </form>
+
         <!-- Search -->
         <div class="mb-4">
-            <input type="text" id="search-delivered" placeholder="Search delivered items" class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400
-                    bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" />
+            <input type="text" id="search-delivered" placeholder="Search delivered items"
+                class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" />
         </div>
 
-        <div class="orders-table-container overflow-auto h-full border rounded shadow w-full">
+        <div class="flex-1 overflow-y-auto border rounded shadow w-full">
             <table id="delivered-table"
                 class="w-full table-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-sm">
                 <thead class="sticky top-0 z-10 bg-gray-200 dark:bg-gray-800">
@@ -54,34 +79,26 @@
                         <td class="px-4 py-2">{{ item.order_number }}</td>
                         <td class="px-4 py-2">{{ item.product_name }}</td>
                         <td class="px-4 py-2">{{ item.quantity }}</td>
-
-                        <!-- ✅ Updated to include data-key for sortable date -->
                         <td class="px-4 py-2" data-key="delivery_date" data-sort-value="{{ item.delivery_date }}">
-  {{ item.delivery_date | format_date }}
-</td>
-
-
-
+                            {{ item.delivery_date | format_date }}
+                        </td>
                         <td class="px-4 py-2 text-xs">
-                            {% if item.transport == 'air' %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">✈️ Air</span>
-                            {% elif item.transport == 'sea' %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚢 Sea</span>
-                            {% elif item.transport == 'truck' %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚚 Truck</span>
+                            {% if item.transport == 'air' %}<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">✈️
+                                Air</span>
+                            {% elif item.transport == 'sea' %}<span
+                                class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚢 Sea</span>
+                            {% elif item.transport == 'truck' %}<span
+                                class="bg-gray-100 text-gray-800 px-2 py-1 rounded">🚚 Truck</span>
                             {% else %}—{% endif %}
                         </td>
-
                         <td class="px-4 py-2 text-xs">
-                            {% if item.delivery_source == 'Direct from Transit' %}
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Direct from Transit</span>
-                            {% elif item.delivery_source == 'From Warehouse' %}
-                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">From Warehouse</span>
-                            {% else %}
-                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">—</span>
+                            {% if item.delivery_source == 'Direct from Transit' %}<span
+                                class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Direct from Transit</span>
+                            {% elif item.delivery_source == 'From Warehouse' %}<span
+                                class="bg-purple-100 text-purple-800 px-2 py-1 rounded">From Warehouse</span>
+                            {% else %}<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">—</span>
                             {% endif %}
                         </td>
-
                         <td class="px-4 py-2 space-y-1">
                             {% if current_user.role != 'superuser' %}
                             <a href="{{ url_for('delivered.edit_delivered', item_id=item.id) }}"
@@ -90,24 +107,26 @@
                                 action="{{ url_for('restore.restore_from_delivered', item_id=item.id) }}"
                                 class="inline">
                                 <button type="submit"
-                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">
-                                    Restore
-                                </button>
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">Restore</button>
                             </form>
+                            {% if item.delivery_source == 'From Warehouse' and item.order_number in
+                            reported_order_numbers %}
+                            <button data-order-number="{{ item.order_number }}"
+                                class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded min-w-[90px]">
+                                View Report
+                            </button>
+
+                            {% endif %}
                             {% endif %}
                         </td>
-
                         <td class="px-4 py-2">
                             {% if item.notes %}
                             <span title="{{ item.notes }}"
                                 class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded whitespace-nowrap max-w-[150px] overflow-hidden text-ellipsis inline-block">
                                 {{ item.notes[:30] }}{% if item.notes|length > 30 %}...{% endif %}
                             </span>
-                            {% else %}
-                            —
-                            {% endif %}
+                            {% else %}—{% endif %}
                         </td>
-
                         <td class="px-4 py-2 text-xs text-center">
                             {% if current_user.role != 'superuser' %}
                             {% if item.pod_filename %}
@@ -123,10 +142,8 @@
                             <form method="POST" action="{{ url_for('upload.upload_pod', item_id=item.id) }}"
                                 enctype="multipart/form-data" class="flex flex-col items-center space-y-1">
                                 <label for="pod-{{ item.id }}"
-                                    class="cursor-pointer text-blue-600 text-sm hover:underline relative">
-                                    📤 Upload
-                                    ...
-                                </label>
+                                    class="cursor-pointer text-blue-600 text-sm hover:underline relative">📤
+                                    Upload...</label>
                                 <input id="pod-{{ item.id }}" name="file" type="file" accept=".pdf" class="hidden"
                                     onchange="this.form.submit()">
                             </form>
@@ -135,39 +152,62 @@
                         </td>
                     </tr>
                     {% endfor %}
-
                 </tbody>
             </table>
         </div>
+        {% set args = request.args.to_dict() if request.args else {} %}
+        {% set filtered_args = args.copy() %}
+        {% if 'page' in filtered_args %}{% set _ = filtered_args.pop('page') %}{% endif %}
+
+        <a href="{{ url_for('delivered.delivered', page=pagination.next_num, **filtered_args) }}"
+            class="block mt-4 text-center text-blue-600 hover:underline font-medium">
+            Load More...
+        </a>
+
+
     </main>
+
+    <!-- Modal for Stockreport -->
+    <div id="stockreport-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-5xl relative">
+            <button onclick="closeModal()"
+                class="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-lg font-bold">&times;</button>
+            <div id="modal-body" class="w-full h-[80vh] overflow-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle dark mode if saved
+        const toggle = document.getElementById('dark-mode-toggle');
+        if (toggle && localStorage.getItem('dark-mode') === 'enabled') {
+            document.documentElement.classList.add('dark');
+        }
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('dark-mode',
+                    document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled');
+            });
+        }
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const searchInput = document.getElementById('search-delivered');
+            // Sorting
             const headers = document.querySelectorAll('th[data-sort]');
             let currentSort = { key: '', direction: '' };
-
-            searchInput.addEventListener('input', () => {
-                const term = searchInput.value.toLowerCase();
-                const rows = document.querySelectorAll('#delivered-table tbody tr');
-                rows.forEach(row => {
-                    const rowText = row.textContent.toLowerCase();
-                    row.style.display = rowText.includes(term) ? '' : 'none';
-                });
-            });
 
             headers.forEach(header => {
                 header.addEventListener('click', () => {
                     const key = header.getAttribute('data-sort');
                     const ascending = currentSort.key === key && currentSort.direction === 'asc' ? false : true;
                     currentSort = { key, direction: ascending ? 'asc' : 'desc' };
-
-                    sortTableByKey(key, ascending);
+                    sortDeliveredTableByKey(key, ascending);
                     updateSortIndicators();
                 });
             });
 
-            function sortTableByKey(key, ascending) {
+            function sortDeliveredTableByKey(key, ascending) {
                 const cellMap = {
                     order_number: 0,
                     product_name: 1,
@@ -176,45 +216,32 @@
                     transport: 4
                 };
 
-                const parseDate = (str) => {
-    if (!str) return new Date("1970-01-01");
-    const parts = str.trim().split(".");
-    if (parts.length === 3) {
-        const [day, month, year] = parts;
-        const fullYear = year.length === 2 ? `20${year}` : year;
-        return new Date(`${fullYear}-${month}-${day}`);
-    }
-    return new Date(str); // fallback if format already ISO
-};
-
-
                 const rows = Array.from(document.querySelectorAll('#delivered-table tbody tr'));
-
                 const sortedRows = rows.sort((a, b) => {
-                    const cellA = a.cells[cellMap[key]];
-                    const cellB = b.cells[cellMap[key]];
-
-                    let valA = cellA.getAttribute("data-sort-value") || cellA.innerText.trim().toLowerCase();
-                    let valB = cellB.getAttribute("data-sort-value") || cellB.innerText.trim().toLowerCase();
+                    let valA = a.cells[cellMap[key]].innerText.trim();
+                    let valB = b.cells[cellMap[key]].innerText.trim();
 
                     if (key === "quantity") {
                         return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+                    } else if (key === "delivery_date") {
+                        const parseDate = (str) => {
+                            const parts = str.split(" ");
+                            if (parts.length !== 3) return new Date(0);
+                            const [day, monthStr, year] = parts;
+                            const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                                .findIndex(m => m.toLowerCase() === monthStr.toLowerCase());
+                            return new Date(parseInt(year), month, parseInt(day));
+                        };
+                        return ascending ? parseDate(valA) - parseDate(valB) : parseDate(valB) - parseDate(valA);
+                    } else {
+                        return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
                     }
-
-                    if (key === "delivery_date") {
-                        const dateA = parseDate(valA);
-                        const dateB = parseDate(valB);
-                        return ascending ? dateA - dateB : dateB - dateA;
-                    }
-
-                    return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 });
 
                 const tbody = document.querySelector('#delivered-table tbody');
                 tbody.innerHTML = '';
                 sortedRows.forEach(row => tbody.appendChild(row));
             }
-
 
             function updateSortIndicators() {
                 headers.forEach(h => {
@@ -226,23 +253,63 @@
                     }
                 });
             }
-        });
-    </script>
-    <!-- Dark mode -->
-    <script>
-        const toggle = document.getElementById('dark-mode-toggle');
 
-        if (localStorage.getItem('dark-mode') === 'enabled') {
-            document.documentElement.classList.add('dark');
+            // Live search
+            const search = document.getElementById('search-delivered');
+            if (search) {
+                search.addEventListener('input', () => {
+                    const term = search.value.toLowerCase();
+                    document.querySelectorAll('#delivered-table tbody tr').forEach(row => {
+                        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+                    });
+                });
+            }
+
+            // View Report Modal Trigger (via order_number)
+            document.querySelectorAll('.open-stockreport-modal').forEach(button => {
+                button.addEventListener('click', () => {
+                    const orderNumber = button.getAttribute('data-order-number');
+                    openStockReportByOrder(orderNumber);
+                });
+            });
+        });
+
+        function openStockReportByOrder(orderNumber) {
+            fetch(`/stockreport/view_by_order/${orderNumber}`)
+                .then(res => res.text())
+                .then(html => {
+                    const modal = document.getElementById('stockreport-modal');
+                    const modalBody = document.getElementById('modal-body');
+                    modalBody.innerHTML = html;
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+
+                    // Inject script only once
+                    if (!document.querySelector('script[data-id="view-stockreport"]')) {
+                        const script = document.createElement('script');
+                        script.src = '/static/js/view_stockreport.js';
+                        script.setAttribute('data-id', 'view-stockreport');
+                        script.onload = () => console.log("✅ view_stockreport.js loaded in Delivered");
+                        document.body.appendChild(script);
+                    }
+                })
+                .catch(err => {
+                    console.error("❌ Could not load stockreport modal:", err);
+                    alert("Failed to open stockreport modal.");
+                });
         }
 
-        toggle.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('dark-mode',
-                document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled'
-            );
-        });
+        function closeModal() {
+            const modal = document.getElementById('stockreport-modal');
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = '';
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
     </script>
+
+
+
 </body>
 
 </html>

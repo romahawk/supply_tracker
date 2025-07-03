@@ -7,7 +7,7 @@ from app.routes import register_routes
 from datetime import datetime
 
 login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
+login_manager.login_view = 'auth.login'  # type: ignore
 
 def create_app():
     app = Flask(__name__)
@@ -35,8 +35,21 @@ def create_app():
                         break
                     except ValueError:
                         continue
-            return value.strftime("%d %b %Y")
+            if isinstance(value, datetime):  # ✅ Only format datetime
+                return value.strftime("%d %b %Y")
         except Exception:
-            return value
+            pass
+        return value  # fallback
+    
+    app.jinja_env.globals['getattr'] = getattr
+    
+    @app.template_filter('getattr')
+    def jinja_getattr(obj, name):
+        return getattr(obj, name, None)
+
+    @app.template_filter('lookup')
+    def jinja_lookup(obj, key):
+        return obj.get(key) if isinstance(obj, dict) else getattr(obj, key, None)
 
     return app
+

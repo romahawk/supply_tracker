@@ -18,10 +18,15 @@
             darkMode: 'class',
         }
     </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <!-- TomSelect -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
 </head>
 
-<body class="m-0 p-0 bg-gray-100 dark:bg-gray-900 ">
+<body class="m-0 p-0 bg-gray-100 dark:bg-gray-900">
     {% include '_navbar.html' %}
 
     <!-- Add New Order Form (Collapsible) -->
@@ -41,13 +46,14 @@
             </div>
             <div class="form-group">
                 <label for="product_name" class="block text-sm font-medium ">Product Name:</label>
-                <input type="text" id="product_name" name="product_name" required list="product-options"
-                    class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                <datalist id="product-options">
-                    {% for product in product_list %}
-                    <option value="{{ product }}">
-                        {% endfor %}
-                </datalist>
+                <input list="product-options" id="product_name" name="product_name" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
+              bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" placeholder="Select or type a product"
+                    required>
+                <datalist id="product-options"></datalist>
+
+
+
+
             </div>
             <div class="form-group">
                 <label for="buyer" class="block text-sm font-medium ">Buyer:</label>
@@ -195,17 +201,22 @@
         </div>
     </div>
 
-    <div class="p-4 sm:p-6 space-y-6">
+    <div class="p-2 sm:p-2 space-y-6">
 
         <!-- Your Orders Section (Collapsible) -->
-        <div class="p-4 sm:p-6 space-y-6">
+        <div class="p-2 sm:p-2 space-y-2">
             <div class="flex justify-between items-center">
                 <h2
-                    class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
+                    class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <i data-lucide="boxes"></i>
                     Your Orders
                 </h2>
-                <button id="toggle-orders-btn"
-                    class="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none">
+
+                <button id="toggle-orders-btn" class="text-sm font-medium px-3 py-1 rounded-md transition 
+         text-gray-700 dark:text-gray-300 
+         hover:text-white hover:bg-gray-600 
+         dark:hover:text-white dark:hover:bg-gray-500 
+         focus:outline-none shadow-sm">
                     Hide Orders
                 </button>
             </div>
@@ -267,9 +278,11 @@
 
         <!-- Timeline -->
         <h2
-            class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100">
-            📊 Timeline
+            class="text-lg sm:text-xl font-semibold tracking-wide border-b border-gray-700 pb-1 mb-3 mt-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <i data-lucide="activity"></i>
+            Timeline
         </h2>
+
         <!-- Year Filter Dropdown -->
         <div class="mb-4">
             <label for="year-filter" class="text-sm font-medium text-gray-900 dark:text-gray-500 mr-2">Select
@@ -327,12 +340,15 @@
                             class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
                             required>
                     </div>
-                    <div>
-                        <label for="edit-product_name" class="block text-sm font-medium ">Product Name</label>
-                        <input type="text" id="edit-product_name" name="product_name"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
+                    <div class="form-group">
+                        <label for="product_name" class="block text-sm font-medium">Product Name:</label>
+                        <select id="edit-product_name" name="product_name" data-current=""
+                            placeholder="Select or type a product" autocomplete="off" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
+  bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
+                        </select>
+
                     </div>
+
                     <div>
                         <label for="edit-buyer" class="block text-sm font-medium ">Buyer</label>
                         <input type="text" id="edit-buyer" name="buyer"
@@ -449,6 +465,9 @@
                 });
             });
         });
+    </script>
+    <script>
+        lucide.createIcons();
     </script>
 
 

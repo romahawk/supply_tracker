@@ -36,7 +36,7 @@
         </button>
     </form>
 
-    <main class="flex-grow overflow-y-auto p-4">
+    <main class="flex flex-col h-full overflow-hidden p-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
         <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">{{ message }}</div>
@@ -98,7 +98,8 @@
                                 <div class="flex items-center gap-2 min-w-[500px] ml-4">
 
                                     <!-- Qty + Deliver -->
-                                    <form method="POST" action="{{ url_for('warehouse.deliver_partial', item_id=item.id) }}"
+                                    <form method="POST"
+                                        action="{{ url_for('warehouse.deliver_partial', item_id=item.id) }}"
                                         class="flex items-center gap-2">
                                         <input type="number" name="quantity" min="1" max="{{ item.quantity }}"
                                             placeholder="Qty"
@@ -112,6 +113,19 @@
                                     <a href="{{ url_for('warehouse.edit_warehouse', item_id=item.id) }}"
                                         class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px] text-center">Edit</a>
 
+                                    <!-- Stockreport -->
+                                    {% if item.id in reported_ids %}
+                                    <button data-item-id="{{ item.id }}"
+                                        class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded">
+                                        View Report
+                                    </button>
+                                    {% else %}
+                                    <a href="{{ url_for('warehouse.stockreport_entry_form', item_id=item.id) }}"
+                                        class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 text-xs rounded">
+                                        Stockreport
+                                    </a>
+                                    {% endif %}
+
                                     <!-- Restore -->
                                     <form method="POST"
                                         action="{{ url_for('restore.restore_to_dashboard', item_id=item.id) }}"
@@ -121,17 +135,21 @@
                                     </form>
 
                                     <!-- Delete (manual only) -->
-                                    {% if item.is_manual %}
-                                    <form method="POST" action="{{ url_for('warehouse.delete_warehouse', item_id=item.id) }}"
-                                        class="inline delete-form">
+                                    {% if entries|length > 0 %}
+                                    <form method="POST"
+                                        action="{{ url_for('warehouse.delete_stockreport', entry_id=entries[0].id) }}"
+                                        onsubmit="return confirm('Delete this entry?')">
                                         <button type="submit"
-                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded min-w-[70px]">Delete</button>
+                                            class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded shadow text-sm">🗑️
+                                            Delete</button>
                                     </form>
                                     {% endif %}
+
 
                                 </div>
                             </div>
                         </td>
+
 
 
                         <td class="px-4 py-2">
@@ -150,6 +168,15 @@
                 </tbody>
             </table>
         </div>
+        <div id="stockreport-modal"
+            class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden z-50">
+            <div class="bg-white max-w-6xl w-full max-h-[80vh] overflow-y-auto rounded shadow-lg relative p-4">
+                <button onclick="closeModal()"
+                    class="absolute top-2 right-2 text-white hover:text-gray-200 text-lg">&times;</button>
+                <div id="stockreport-modal-content">Loading...</div>
+            </div>
+        </div>
+
     </main>
 
     <script>
@@ -195,8 +222,22 @@
 
                     if (key === "quantity") {
                         return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+                    } else if (key === "ata") {
+                        const parseDate = (str) => {
+                            // expected format: "dd Mon yyyy"
+                            const parts = str.split(" ");
+                            if (parts.length !== 3) return new Date(0); // fallback
+                            const [day, monthStr, year] = parts;
+                            const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                                .findIndex(m => m.toLowerCase() === monthStr.toLowerCase());
+                            return new Date(parseInt(year), month, parseInt(day));
+                        };
+                        const dateA = parseDate(valA);
+                        const dateB = parseDate(valB);
+                        return ascending ? dateA - dateB : dateB - dateA;
                     }
                     return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+
                 });
 
                 const tbody = document.querySelector('#warehouse-table tbody');
@@ -243,6 +284,34 @@
                 }
             });
         });
+    </script>
+
+    <!--  -->
+    <script>
+        function closeModal() {
+            document.getElementById('stockreport-modal').classList.add('hidden');
+            document.getElementById('stockreport-modal-content').innerHTML = '';
+        }
+
+        document.querySelectorAll('.open-stockreport-modal').forEach(button => {
+            button.addEventListener('click', async () => {
+                const itemId = button.dataset.itemId;
+                const modal = document.getElementById('stockreport-modal');
+                const content = document.getElementById('stockreport-modal-content');
+                modal.classList.remove('hidden');
+
+                const response = await fetch(`/stockreport/view/${itemId}`);
+                const html = await response.text();
+                content.innerHTML = html;
+
+                // ✅ Dynamically attach inline edit logic
+                const script = document.createElement('script');
+                script.src = '/static/js/view_stockreport.js';
+                script.onload = () => console.log("✅ view_stockreport.js loaded");
+                document.body.appendChild(script);
+            });
+        });
+
     </script>
 
 </body>
