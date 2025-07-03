@@ -3,6 +3,7 @@ from flask import Blueprint, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.models import db, Order, WarehouseStock, DeliveredGoods
 from datetime import datetime
+from app.utils.logging import log_activity
 
 
 restore_bp = Blueprint('restore', __name__)
@@ -71,5 +72,6 @@ def restore_from_delivered():
     db.session.add(restored_order)
     db.session.delete(item)
     db.session.commit()
+    log_activity("Restore from Warehouse", f"#{item.order_number} → Dashboard")
     flash("Order restored to dashboard.", "success")
     return redirect(url_for("dashboard.dashboard"))

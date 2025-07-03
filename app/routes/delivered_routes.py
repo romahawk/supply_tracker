@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app.models import db, DeliveredGoods, WarehouseStock, Order, StockReportEntry
 from datetime import datetime
 from app.roles import can_edit, can_view_all
-
+from app.utils.logging import log_activity
 
 delivered_bp = Blueprint('delivered', __name__)
 
@@ -95,6 +95,7 @@ def edit_delivered(item_id):
         item.transport = request.form.get('transport')
         item.notes = request.form.get('notes')
         db.session.commit()
+        log_activity("Edit Delivered Item", f"#{item.order_number}")
         flash("Delivered item updated successfully.", "success")
         return redirect(url_for('delivered.delivered'))
 

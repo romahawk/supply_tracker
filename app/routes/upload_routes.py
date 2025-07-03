@@ -3,6 +3,7 @@ from flask import Blueprint, request, redirect, url_for, flash, current_app, sen
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app.models import db, DeliveredGoods
+from app.utils.logging import log_activity
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -36,7 +37,7 @@ def upload_pod():
         return redirect(request.referrer or url_for('delivered.delivered'))
 
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
+        filename = secure_filename(str(file.filename or ''))
         upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
         os.makedirs(upload_folder, exist_ok=True)
         file_path = os.path.join(upload_folder, filename)
@@ -44,7 +45,7 @@ def upload_pod():
 
         item.pod_filename = filename
         db.session.commit()
-
+        log_activity("Upload POD", f"{item.order_number} – {filename}")
         flash('File uploaded successfully', 'success')
         return redirect(request.referrer or url_for('delivered.delivered'))
 
@@ -79,5 +80,6 @@ def delete_pod(item_id):
 
     item.pod_filename = None
     db.session.commit()
+    log_activity("Delete POD", f"{item.order_number}")
     flash('POD file deleted successfully', 'success')
     return redirect(url_for('delivered.delivered'))

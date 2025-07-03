@@ -5,6 +5,7 @@ from app.decorators import role_required
 from app.database import db
 from datetime import datetime
 from app.roles import can_view_all
+from app.utils.logging import log_activity
 import os
 
 
@@ -61,6 +62,7 @@ def delete_order(order_id):
     
     db.session.delete(order)
     db.session.commit()
+    log_activity("Delete Order (Admin)", f"#{order.order_number}")
     flash('Order deleted successfully.', 'success')
     return redirect(url_for('dashboard.dashboard'))
 

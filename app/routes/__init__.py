@@ -18,6 +18,7 @@ def register_routes(app):
     from .analytics_routes import analytics_bp
     from .products_routes import products_bp
     from .admin_routes import admin_bp
+    from .activity_routes import activity_bp
     import time
 
 
@@ -35,4 +36,6 @@ def register_routes(app):
     app.config['VERSION'] = str(int(time.time()))
     app.register_blueprint(products_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(activity_bp)
+
 

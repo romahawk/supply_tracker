@@ -5,6 +5,7 @@ from app.models import db, Order, WarehouseStock, DeliveredGoods, StockReportEnt
 from app.roles import can_edit, can_view_all
 from datetime import datetime, timedelta
 from flask import jsonify, make_response
+from app.utils.logging import log_activity
 import os
 from weasyprint import HTML
 
@@ -56,6 +57,7 @@ def add_warehouse_manual():
         )
         db.session.add(new_item)
         db.session.commit()
+        log_activity("Manual Warehouse Entry", f"#{order_number} – {product_name}")
         flash("Manual order successfully added to warehouse.", "success")
     except Exception as e:
         db.session.rollback()
@@ -83,7 +85,7 @@ def stock_order(order_id):
     db.session.add(new_stock)
     db.session.delete(order)
     db.session.commit()
-
+    log_activity("Move to Warehouse", f"#{order.order_number} – stocked from Dashboard")
     flash("Order moved to warehouse.", "success")
     return redirect(url_for('dashboard.dashboard'))
 
@@ -132,7 +134,7 @@ def deliver_partial(item_id):
 
     db.session.add(delivery)
     db.session.commit()
-
+    log_activity("Partial Delivery", f"#{item.order_number} – {qty_to_deliver} units delivered")
     flash(f'Delivered {qty_to_deliver} from warehouse.', 'success')
     return redirect(url_for('warehouse.warehouse'))
 
@@ -151,6 +153,7 @@ def edit_warehouse(item_id):
         item.ata = request.form['ata']
         item.notes = request.form.get("notes")
         db.session.commit()
+        log_activity("Edit Warehouse Item", f"#{item.order_number}")
         flash('Warehouse item updated successfully!', 'success')
         return redirect(url_for('warehouse.warehouse'))
 
@@ -166,6 +169,7 @@ def delete_warehouse(item_id):
     item = WarehouseStock.query.get_or_404(item_id)
     db.session.delete(item)
     db.session.commit()
+    log_activity("Delete Warehouse Item", f"#{item.order_number}")
     flash('Warehouse item deleted successfully.', 'success')
     return redirect(url_for('warehouse.warehouse'))
 
@@ -220,6 +224,7 @@ def stockreport_entry_form(item_id):
 
             db.session.add(entry)
             db.session.commit()
+            log_activity("Add Stockreport Entry", f"#{item.order_number}")
             flash("Stockreport entry saved successfully.", "success")
             return redirect(url_for('warehouse.warehouse'))
 
@@ -310,6 +315,8 @@ def edit_stockreport(entry_id):
                 setattr(order, field, request.form.get(field))
 
         db.session.commit()
+        log_activity("Edit Stockreport Entry", f"Entry #{entry_id} for #{order.order_number}")
+
         return '', 204
 
     except Exception as e:
@@ -327,6 +334,7 @@ def delete_stockreport(entry_id):
     try:
         db.session.delete(entry)
         db.session.commit()
+        log_activity("Delete Stockreport Entry", f"Entry #{entry_id}")
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({"success": True})
         else:
