@@ -57,19 +57,47 @@ def edit_user(user_id):
 @admin_bp.route('/admin/delete-user/<int:user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):
+    if current_user.id == user_id:
+        flash("You can't delete your own account.", "danger")
+        return redirect(url_for('admin.user_management'))
+
+    user = User.query.get_or_404(user_id)
+    
+    if user.role == 'admin':
+        flash("Admin users cannot be deleted.", "danger")
+        return redirect(url_for('admin.user_management'))
+
+    print(f"[DEBUG] Deleting user: {user.username} (ID: {user.id})")
+    db.session.delete(user)
+    db.session.commit()
+    print("[DEBUG] Commit completed")
+
+    flash(f"User {user.username} deleted.", "success")
+    return redirect(url_for('admin.user_management'))
+
+
+@admin_bp.route('/admin/add_user', methods=['POST'])
+@login_required
+def add_user():
     if current_user.role != 'admin':
         flash("Access denied: Admins only.", "danger")
         return redirect(url_for('admin.user_management'))
 
-    user = User.query.get_or_404(user_id)
+    username = request.form.get('username')
+    password = request.form.get('password')
+    role = request.form.get('role')
 
-    # Prevent self-delete or admin-delete
-    if user.id == current_user.id or user.role == 'admin':
-        flash("You cannot delete this user.", "warning")
+    if not username or not password:
+        flash("Username and password are required.", "warning")
         return redirect(url_for('admin.user_management'))
 
-    db.session.delete(user)
-    db.session.commit()
-    flash(f"User {user.username} deleted.", "success")
-    return redirect(url_for('admin.user_management'))
+    if User.query.filter_by(username=username).first():
+        flash("Username already exists.", "warning")
+        return redirect(url_for('admin.user_management'))
 
+    new_user = User(username=username, role=role)
+    new_user.set_password(password)
+    db.session.add(new_user)
+    db.session.commit()
+    flash("New user added successfully.", "success")
+    return redirect(url_for('admin.user_management'))
