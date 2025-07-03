@@ -36,7 +36,9 @@
     </a>
 
     {% if current_path.startswith(url_for('dashboard.dashboard')) %}
-    <button class="w-[180px] flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-emerald-700 transition toggle-form-btn" title="Add a new incoming order">
+    <button
+      class="w-[180px] flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-emerald-700 transition toggle-form-btn"
+      title="Add a new incoming order">
       <i data-lucide="plus" class="w-4 h-4"></i>
       Add New Order
     </button>
@@ -51,6 +53,15 @@
     <div class="w-[180px]"></div>
     {% endif %}
 
+    {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('admin.user_management') }}" class="px-4 py-1.5 rounded-md font-medium transition-all duration-200 flex items-center gap-1
+   {{ 'bg-indigo-600 text-white text-lg font-bold' if current_path.startswith(url_for('admin.user_management')) else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
+   hover:bg-opacity-80 hover:shadow-md">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      Manage Users
+    </a>
+    {% endif %}
+
     <span class="ml-4 px-2 py-1 rounded bg-gray-700 text-white text-sm flex items-center gap-1">
       <i data-lucide="user" class="w-4 h-4"></i>
       {{ current_user.username }} ({{ current_user.role }})
@@ -61,20 +72,26 @@
     </a>
 
     <!-- Dark Mode Toggle -->
-    <button id="dark-mode-toggle" class="relative inline-flex items-center h-5 w-10 sm:h-8 sm:w-16 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0" aria-label="Toggle dark mode">
-      <span id="dark-mode-track" class="absolute inset-0 h-5 w-10 sm:h-8 sm:w-16 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors duration-300"></span>
-      <span id="dark-mode-thumb" class="absolute left-1 top-1 h-3 w-3 sm:h-6 sm:w-6 rounded-full bg-gray-800 dark:bg-gray-100 transform transition-transform duration-300 shadow-md dark:shadow-white/50 dark:translate-x-5 sm:dark:translate-x-8"></span>
+    <button id="dark-mode-toggle"
+      class="relative inline-flex items-center h-5 w-10 sm:h-8 sm:w-16 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0"
+      aria-label="Toggle dark mode">
+      <span id="dark-mode-track"
+        class="absolute inset-0 h-5 w-10 sm:h-8 sm:w-16 rounded-full bg-gray-300 dark:bg-gray-700 transition-colors duration-300"></span>
+      <span id="dark-mode-thumb"
+        class="absolute left-1 top-1 h-3 w-3 sm:h-6 sm:w-6 rounded-full bg-gray-800 dark:bg-gray-100 transform transition-transform duration-300 shadow-md dark:shadow-white/50 dark:translate-x-5 sm:dark:translate-x-8"></span>
     </button>
   </div>
 
   <!-- Onboarding Tour Modal -->
   <div id="tourModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-lg w-full shadow-lg relative">
-      <button id="closeTourBtn" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 dark:hover:text-white text-xl">&times;</button>
+      <button id="closeTourBtn"
+        class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 dark:hover:text-white text-xl">&times;</button>
       <h2 class="text-2xl font-bold mb-4">👋 Welcome to Supply Tracker!</h2>
       <div id="tourStepContent" class="text-sm text-gray-700 dark:text-gray-300 space-y-2"></div>
       <div class="mt-6 flex justify-between">
-        <button id="prevStepBtn" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded text-sm" disabled>Previous</button>
+        <button id="prevStepBtn" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded text-sm"
+          disabled>Previous</button>
         <button id="nextStepBtn" class="px-4 py-2 bg-blue-600 text-white rounded text-sm">Next</button>
       </div>
     </div>
