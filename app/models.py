@@ -12,7 +12,10 @@ class User(db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
+
 
     def is_active(self): return True
     def get_id(self): return str(self.id)
@@ -133,3 +136,11 @@ class StockReportEntry(db.Model):
     related_order_id = db.Column(db.Integer, db.ForeignKey('warehouse_stock.id', name='fk_stockreport_warehouse'))
 
     related_order = db.relationship('WarehouseStock', backref='stock_reports')
+
+class ActivityLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    action = db.Column(db.String(100))
+    details = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User')

@@ -62,6 +62,14 @@
     </a>
     {% endif %}
 
+    <a href="{{ url_for('activity.activity_logs') }}" class="px-4 py-1.5 rounded-md font-medium transition-all duration-200 flex items-center gap-1
+   {{ 'bg-amber-500 text-white text-lg font-bold' if current_path.startswith(url_for('activity.activity_logs')) else 'bg-white text-gray-800 dark:bg-gray-700 dark:text-white' }}
+   hover:bg-opacity-80 hover:shadow-md">
+      <i data-lucide="notebook-text" class="w-5 h-5"></i>
+      Activity Logs
+    </a>
+
+
     <span class="ml-4 px-2 py-1 rounded bg-gray-700 text-white text-sm flex items-center gap-1">
       <i data-lucide="user" class="w-4 h-4"></i>
       {{ current_user.username }} ({{ current_user.role }})

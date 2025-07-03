@@ -7,6 +7,7 @@ from app.roles import can_view_all, can_edit
 from flask import flash, redirect, url_for
 from app.models import ArchivedOrder
 from app.utils.products import add_product_if_new
+from app.utils.logging import log_activity
 import os
 
 order_bp = Blueprint('order', __name__)
@@ -76,7 +77,7 @@ def add_order():
 
         db.session.add(new_order)
         db.session.commit()
-
+        log_activity("Add Order", f"#{new_order.order_number} – {product_name}")
         return jsonify({'success': True, 'message': 'Order added successfully!'}), 200
 
     except ValueError:
@@ -135,6 +136,7 @@ def edit_order(order_id):
         order.transport = data.get('transport', '').strip()
 
         db.session.commit()
+        log_activity("Edit Order", f"#{order.order_number} – updated fields")
         return jsonify({'success': True, 'message': 'Order updated successfully.'})
 
     except ValueError:
@@ -157,6 +159,7 @@ def delete_order(order_id):
 
         db.session.delete(order)
         db.session.commit()
+        log_activity("Delete Order", f"#{order.order_number}")
         return jsonify({'success': True, 'message': 'Order deleted successfully!'})
     except Exception as e:
         db.session.rollback()
@@ -261,6 +264,7 @@ def deliver_direct(order_id):
         db.session.delete(order)
         db.session.commit()
         flash("Order delivered and archived successfully!", "success")
+        log_activity("Deliver Order (Direct)", f"#{order.order_number} → Delivered from Dashboard")
     except Exception as e:
         db.session.rollback()
         flash(f"Error delivering order: {e}", "danger")
