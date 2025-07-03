@@ -1,4 +1,4 @@
-{% extends "base_clean.html" %}
+{% extends "base.html" %}
 {% block title %}User Management{% endblock %}
 
 {% block body %}
@@ -22,11 +22,20 @@
       <td class="p-2 border">
         <form method="POST" action="{{ url_for('admin.change_role', user_id=user.id) }}" class="inline">
           <select name="new_role" class="text-sm px-2 py-1 border rounded">
-            <option value="user" {% if user.role == 'user' %}selected{% endif %}>user</option>
-            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>admin</option>
-            <option value="superuser" {% if user.role == 'superuser' %}selected{% endif %}>superuser</option>
+            <option value="user" {% if user.role=='user' %}selected{% endif %}>user</option>
+            <option value="admin" {% if user.role=='admin' %}selected{% endif %}>admin</option>
+            <option value="superuser" {% if user.role=='superuser' %}selected{% endif %}>superuser</option>
           </select>
           <button type="submit" class="bg-blue-500 text-white px-2 py-1 rounded text-xs ml-1">Change</button>
+          <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="text-blue-500 text-xs px-2">Edit</a>
+          <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline">
+            <button type="submit" class="text-red-600 text-xs px-2" {% if user.role=='admin' or user.id==current_user.id
+              %}disabled class="opacity-50 cursor-not-allowed" {% endif %}
+              onclick="return confirm('Delete user {{ user.username }}?')">
+              Delete
+            </button>
+          </form>
+
         </form>
       </td>
     </tr>
