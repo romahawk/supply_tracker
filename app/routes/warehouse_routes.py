@@ -6,6 +6,7 @@ from app.roles import can_edit, can_view_all
 from datetime import datetime, timedelta
 from flask import jsonify, make_response
 from app.utils.logging import log_activity
+from sqlalchemy import or_, func, extract
 import os
 from weasyprint import HTML
 
@@ -14,17 +15,36 @@ warehouse_bp = Blueprint('warehouse', __name__)
 @warehouse_bp.route('/warehouse')
 @login_required
 def warehouse():
-    if can_view_all(current_user.role):
-        warehouse_items = WarehouseStock.query.order_by(WarehouseStock.ata.desc()).all()
-    else:
-        warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).order_by(WarehouseStock.ata.desc()).all()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    search = request.args.get('search', '')
 
-    reported_ids = {
-        entry.related_order_id
-        for entry in StockReportEntry.query.with_entities(StockReportEntry.related_order_id).distinct()
-    }
+    query = WarehouseStock.query
 
-    return render_template('warehouse.html', warehouse_items=warehouse_items, reported_ids=reported_ids)
+    if search:
+        like_term = f"%{search.lower()}%"
+        query = query.filter(
+            or_(
+                func.lower(WarehouseStock.order_number).like(like_term),
+                func.lower(WarehouseStock.product_name).like(like_term),
+                func.lower(WarehouseStock.notes).like(like_term)
+            )
+        )
+
+    pagination = query.order_by(WarehouseStock.ata.desc()).paginate(page=page, per_page=per_page)
+    warehouse_items = pagination.items
+
+    reported_ids = [entry.related_order_id for entry in StockReportEntry.query.all() if entry.related_order_id]
+
+    return render_template(
+        'warehouse.html',
+        warehouse_items=warehouse_items,
+        pagination=pagination,
+        per_page=per_page,
+        reported_ids=reported_ids
+    )
+
+
 
 @warehouse_bp.route('/add_warehouse_manual', methods=['POST'])
 @login_required
