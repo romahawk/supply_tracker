@@ -1,0 +1,49 @@
+2025-07-03 | feat(admin): add Activity Logs page with admin-only navbar link and log display table
+2025-07-03 | ✨ Add full User Management functionality for Admin
+2025-07-03 | feat: Add navbar to User Management page by switching from base_clean.html to base.html
+2025-07-03 | feat(admin): Implement User Management page with role-changing functionality
+2025-07-01 | ✨ Enable product selection and editing with TomSelect in Edit Order modal
+2025-07-01 | Fix product selector with TomSelect: enable search + custom product entry, ensure product list loads before init
+2025-07-01 | fixed the "Load More" pagination error in the Delivered tab
+2025-07-01 | updated Show/Hide orders toggle
+2025-07-01 | fix: ensure table header scrolls under navbar without unwanted top margin
+2025-07-01 | Add filtering and pagination to Delivered tab
+2025-07-01 | fixed delivered page scrolling
+2025-06-30 | Use Lucide icons in navbar with proper syntax and initialization
+2025-06-30 | Use dropdowns for Warehouse and Client in Edit All modal (view_stockreport.html)
+2025-06-30 | temp fix
+2025-06-27 | 🔧 Debugging Delivered View Report issue — stockreport metadata not showing; added fallback logic for warehouse item lookup but issue persists. Temporarily committing current state for further debugging later.
+2025-06-27 | ✨ Implemented View Stockreport modal in Delivered tab with dynamic loading and script injection; resolved all previous console errors and UI issues
+2025-06-26 | Fix: Fully functional edit/save logic for stockreport with MutationObserver and datetime parsing
+2025-06-24 | feat(stockreport): enable inline editing of view report modal
+2025-06-24 | fix: proper delivery date sorting logic for Delivered tab
+2025-06-24 | fix: proper ATA date sorting logic in warehouse table
+2025-06-24 | Add styled content to Workflow Guide and FAQ tabs matching Quick Start layout
+2025-06-24 | Refactor view_stockreport to full-screen layout with tab logic and print-friendly formatting
+2025-06-23 | Fix: Ensure Warehouse, Client, Pos. No., and Client Ref. fields are saved in edit_stockreport
+2025-06-23 | Fix: Ensure warehouse, client, pos_no, and customer_ref fields are submitted in Stockreport form
+2025-06-23 | Refactor Stockreport product column to inherit product name from Warehouse and ensure text wrapping for long names
+2025-06-20 | feat: Add user onboarding page, navbar link, and modal quick tour
+2025-06-20 | feat(delivered): enable View Report modal by order_number for delivered items
+2025-06-20 | feat(stockreport): add "Print" button to view_stockreport.html
+2025-06-19 | fix: finalize stockreport edit flow and layout for full-page view
+2025-06-19 | eat: Complete Stockreport Form v1 with ATB logic, dynamic rows, and signature selection
+2025-06-18 | ✨ Add Stockreport integration to Warehouse tab
+2025-06-18 | added stockreport feature
+2025-06-06 | fixed timeline orders font
+2025-06-06 | Fix timeline height and remove pagination
+2025-06-06 | updated db
+2025-06-04 | Implement Order Archiving Before Deliver/Warehouse Actions
+2025-06-04 | Make Your Orders section collapsible
+2025-06-03 | Fix: Enable proper Delivery Date sorting toggle (ascending/descending) using data-sort-value and strict date parsing
+2025-06-02 | updated delivered orders
+2025-06-02 | Fix: Finalize role-based order validation, editable form logic, and time zone-safe date handling in dashboard.js
+2025-05-28 | fix: correctly display per-user transit, warehouse, and delivered counters in dashboard
+2025-05-28 | refactor: hide edit, restore, and POD actions in delivered.html for superuser role
+2025-05-28 | fix: show all orders for admin and superuser in /api/orders endpoint
+2025-05-28 | feat: implement user roles system with admin-only route protection and unified login/register flow
+2025-05-28 | feat(ui): improve "Add New Order" button and tab colors for better UX
+2025-05-28 | 🐛 Fix auth routes with full login, logout, register implementations
+2025-05-27 | feature update
+2025-05-27 | 🚀 Modularize routes and fix dashboard & warehouse core functionality
+2025-05-27 | ✅ Modularized routes and restored all dashboard/warehouse functionality
