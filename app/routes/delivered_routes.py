@@ -4,6 +4,7 @@ from app.models import db, DeliveredGoods, WarehouseStock, Order, StockReportEnt
 from datetime import datetime
 from app.roles import can_edit, can_view_all
 from app.utils.logging import log_activity
+from sqlalchemy import or_, func, extract
 
 delivered_bp = Blueprint('delivered', __name__)
 
@@ -11,42 +12,40 @@ delivered_bp = Blueprint('delivered', __name__)
 @login_required
 def delivered():
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)  # 🔧 Add this line
+    per_page = request.args.get('per_page', 10, type=int)
 
     query = DeliveredGoods.query
-    if not can_view_all(current_user.role):
-        query = query.filter_by(user_id=current_user.id)
 
-    # Filters
-    client = request.args.get('client')
+    # Apply filters
     transport = request.args.get('transport')
     month = request.args.get('month')
     year = request.args.get('year')
+    search = request.args.get('search', '')
 
-    if client:
-        query = query.filter(DeliveredGoods.client == client)
     if transport:
-        query = query.filter(DeliveredGoods.transport == transport)
-    if month and year:
-        query = query.filter(DeliveredGoods.delivery_date.like(f"{year}-{month.zfill(2)}-%"))
+        query = query.filter_by(transport=transport)
+    if month:
+        query = query.filter(extract('month', DeliveredGoods.delivery_date) == int(month))
+    if year:
+        query = query.filter(extract('year', DeliveredGoods.delivery_date) == int(year))
+    if search:
+        like_term = f"%{search.lower()}%"
+        query = query.filter(or_(
+            func.lower(DeliveredGoods.order_number).like(like_term),
+            func.lower(DeliveredGoods.product_name).like(like_term),
+            func.lower(DeliveredGoods.notes).like(like_term)
+        ))
 
-    query = query.order_by(DeliveredGoods.delivery_date.desc())
-    pagination = query.paginate(page=page, per_page=per_page)
+    delivered_items = query.order_by(DeliveredGoods.delivery_date.desc()).paginate(page=page, per_page=per_page)
 
-    reported_order_numbers = {
-        ws.order_number
-        for ws in WarehouseStock.query.join(StockReportEntry, WarehouseStock.id == StockReportEntry.related_order_id)
-    }
-
-    client_names = [r[0] for r in db.session.query(DeliveredGoods.client).distinct().all() if r[0]]
+    reported_order_numbers = [entry.related_order.order_number if entry.related_order else "—" for entry in StockReportEntry.query.all()]
 
     return render_template(
         'delivered.html',
-        delivered_items=pagination.items,
-        pagination=pagination,
-        reported_order_numbers=reported_order_numbers,
-        client_names=client_names,
-        per_page=per_page  # 🔧 Pass to template
+        delivered_items=delivered_items.items,
+        pagination=delivered_items,
+        per_page=per_page,
+        reported_order_numbers=reported_order_numbers
     )
 
 

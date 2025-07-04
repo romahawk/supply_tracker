@@ -40,15 +40,51 @@
                 <option value="{{ y }}" {% if request.args.get('year')==y|string %}selected{% endif %}>{{ y }}</option>
                 {% endfor %}
             </select>
-            <button type="submit"
-                class="col-span-2 sm:col-span-1 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">🔍
-                Filter</button>
+            <!-- Filter Button (same logic as above) -->
+            <form method="get" class="mb-4 flex justify-end">
+                <!-- Preserve existing filters -->
+                {% for key, value in request.args.items() %}
+                {% if key != 'page' %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+                {% endif %}
+                {% endfor %}
+                <button type="submit"
+                    class="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-sm">
+                    <i data-lucide="filter" class="w-4 h-4"></i> Filter
+                </button>
+            </form>
         </form>
 
-        <!-- Search -->
-        <div class="mb-4">
-            <input type="text" id="search-delivered" placeholder="Search delivered items"
-                class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" />
+        <!-- Search & Actions Row -->
+        <div class="mb-4 flex items-center justify-between gap-2">
+            <form method="get" class="flex flex-1 items-center gap-2">
+                <!-- Preserve filters -->
+                {% for key, value in request.args.items() %}
+                {% if key != 'search' and key != 'page' %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+                {% endif %}
+                {% endfor %}
+
+                <input type="text" name="search" value="{{ request.args.get('search', '') }}"
+                    placeholder="Search delivered items"
+                    class="flex-1 p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" />
+
+                <button type="submit"
+                    class="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-sm">
+                    <i data-lucide="search" class="w-4 h-4"></i> Search
+                </button>
+            </form>
+
+            {% set clear_args = request.args.to_dict() %}
+            {% if 'search' in clear_args %}{% set _ = clear_args.pop('search') %}{% endif %}
+            {% if 'page' in clear_args %}{% set _ = clear_args.pop('page') %}{% endif %}
+
+            {% if request.args.get('search') %}
+            <a href="{{ url_for('delivered.delivered') }}?{{ clear_args|urlencode }}"
+                class="flex items-center gap-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow text-sm">
+                <i data-lucide="x-circle" class="w-4 h-4"></i> Clear
+            </a>
+            {% endif %}
         </div>
 
         <!-- Row Count Selector -->
@@ -288,16 +324,16 @@
                 });
             }
 
-            // Live search
-            const search = document.getElementById('search-delivered');
-            if (search) {
-                search.addEventListener('input', () => {
-                    const term = search.value.toLowerCase();
-                    document.querySelectorAll('#delivered-table tbody tr').forEach(row => {
-                        row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-                    });
-                });
-            }
+            // // Live search
+            // const search = document.getElementById('search-delivered');
+            // if (search) {
+            //     search.addEventListener('input', () => {
+            //         const term = search.value.toLowerCase();
+            //         document.querySelectorAll('#delivered-table tbody tr').forEach(row => {
+            //             row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+            //         });
+            //     });
+            // }
 
             // View Report Modal Trigger (via order_number)
             document.querySelectorAll('.open-stockreport-modal').forEach(button => {
@@ -342,8 +378,8 @@
         }
     </script>
 
-
-
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>lucide.createIcons();</script>
 </body>
 
 </html>
