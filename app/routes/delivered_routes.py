@@ -11,7 +11,7 @@ delivered_bp = Blueprint('delivered', __name__)
 @login_required
 def delivered():
     page = request.args.get('page', 1, type=int)
-    per_page = 25
+    per_page = request.args.get('per_page', 10, type=int)  # 🔧 Add this line
 
     query = DeliveredGoods.query
     if not can_view_all(current_user.role):
@@ -45,7 +45,8 @@ def delivered():
         delivered_items=pagination.items,
         pagination=pagination,
         reported_order_numbers=reported_order_numbers,
-        client_names=client_names
+        client_names=client_names,
+        per_page=per_page  # 🔧 Pass to template
     )
 
 
