@@ -155,26 +155,36 @@
                             {% else %}<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded">—</span>
                             {% endif %}
                         </td>
-                        <td class="px-4 py-2 space-y-1">
-                            {% if current_user.role != 'superuser' %}
-                            <a href="{{ url_for('delivered.edit_delivered', item_id=item.id) }}"
-                                class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">Edit</a>
-                            <form method="POST"
-                                action="{{ url_for('restore.restore_from_delivered', item_id=item.id) }}"
-                                class="inline">
-                                <button type="submit"
-                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px] mt-1">Restore</button>
-                            </form>
-                            {% if item.delivery_source == 'From Warehouse' and item.order_number in
-                            reported_order_numbers %}
-                            <button data-order-number="{{ item.order_number }}"
-                                class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded min-w-[90px]">
-                                View Report
-                            </button>
+                        <td class="px-4 py-2">
+                            <div class="flex flex-wrap gap-2 justify-center">
+                                {% if current_user.role != 'superuser' %}
+                                <!-- Edit -->
+                                <a href="{{ url_for('delivered.edit_delivered', item_id=item.id) }}"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[90px] flex items-center gap-1 justify-center">
+                                    <i data-lucide="pencil-line"></i> Edit
+                                </a>
 
-                            {% endif %}
-                            {% endif %}
+                                <!-- Restore -->
+                                <form method="POST"
+                                    action="{{ url_for('restore.restore_from_delivered', item_id=item.id) }}">
+                                    <button type="submit"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[90px] flex items-center gap-1 justify-center">
+                                        <i data-lucide="rotate-ccw"></i> Restore
+                                    </button>
+                                </form>
+
+                                <!-- View Report -->
+                                {% if item.delivery_source == 'From Warehouse' and item.order_number in
+                                reported_order_numbers %}
+                                <button data-order-number="{{ item.order_number }}"
+                                    class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded min-w-[90px] flex items-center gap-1 justify-center">
+                                    <i data-lucide="file-text"></i> View Report
+                                </button>
+                                {% endif %}
+                                {% endif %}
+                            </div>
                         </td>
+
                         <td class="px-4 py-2">
                             {% if item.notes %}
                             <span title="{{ item.notes }}"
@@ -241,7 +251,10 @@
     <div id="stockreport-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-5xl relative">
             <button onclick="closeModal()"
-                class="absolute top-2 right-2 text-gray-600 hover:text-red-600 text-lg font-bold">&times;</button>
+                class="absolute top-2 right-2 text-white hover:text-gray-300 text-2xl font-bold transition duration-150 ease-in-out">
+                &times;
+            </button>
+
             <div id="modal-body" class="w-full h-[80vh] overflow-auto"></div>
         </div>
     </div>
