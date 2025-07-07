@@ -5,9 +5,10 @@ products_bp = Blueprint('products', __name__)
 
 @products_bp.route('/api/products', methods=['GET'])
 def get_products():
-    """Return all products from products.txt"""
     products = load_products()
+    print("📦 Loaded products:", products)  # ✅ For debugging
     return jsonify(products)
+
 
 @products_bp.route('/api/products/add', methods=['POST'])
 def add_product():

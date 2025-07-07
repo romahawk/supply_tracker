@@ -46,10 +46,10 @@
             </div>
             <div class="form-group">
                 <label for="product_name" class="block text-sm font-medium ">Product Name:</label>
-                <input list="product-options" id="product_name" name="product_name" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
-              bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" placeholder="Select or type a product"
-                    required>
-                <datalist id="product-options"></datalist>
+                <select id="product_name" name="product_name" placeholder="Select or type a product" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400
+           bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </select>
+
 
 
 
@@ -471,9 +471,9 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-    lucide.createIcons();
+        lucide.createIcons();
     </script>
-    
+
 </body>
 
 </html>

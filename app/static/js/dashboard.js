@@ -651,9 +651,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   };
 
-  document.addEventListener("DOMContentLoaded", () => {
-    initializeProductSelect();
-  });
+  initializeProductSelect();
+
 
   function setupDashboardSearch() {
     const searchInput = document.getElementById("search-dashboard");
@@ -1101,55 +1100,61 @@ document.addEventListener("DOMContentLoaded", function () {
       const isHidden =
         addOrderSection.style.display === "none" ||
         addOrderSection.style.display === "";
+
       addOrderSection.style.display = isHidden ? "block" : "none";
       toggleFormBtn.textContent = isHidden
         ? "Hide Add Order Form"
         : "Add New Order";
-    });
-  }
-});
 
-// Add window resize handler to re-render chart
-window.addEventListener("resize", () => {
-  const filteredData = filterData(
-    allOrders,
-    document.getElementById("order-filter")?.value || ""
-  );
-  const sortedData = sortData(
-    filteredData,
-    lastSortKey,
-    lastSortDirection === "desc"
-  );
-  renderTimeline(sortedData);
-});
-
-function attachActionHandlers() {
-  document.querySelectorAll(".edit-order").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const orderId = btn.dataset.id;
-      window.location.href = `/edit_order/${orderId}`;
-    });
-  });
-
-  document.querySelectorAll(".delete-order").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const orderId = btn.dataset.id;
-      if (confirm("Are you sure you want to delete this order?")) {
-        try {
-          const response = await fetch(`/delete_order/${orderId}`, {
-            method: "POST",
-            headers: { "X-Requested-With": "XMLHttpRequest" },
-          });
-
-          if (response.ok) {
-            window.location.reload();
-          } else {
-            alert("Error deleting order.");
-          }
-        } catch (err) {
-          console.error("Delete failed", err);
-        }
+      // ✅ Only initialize when form becomes visible
+      if (isHidden) {
+        initializeProductSelect();
       }
     });
+  }  
+
+  // Add window resize handler to re-render chart
+  window.addEventListener("resize", () => {
+    const filteredData = filterData(
+      allOrders,
+      document.getElementById("order-filter")?.value || ""
+    );
+    const sortedData = sortData(
+      filteredData,
+      lastSortKey,
+      lastSortDirection === "desc"
+    );
+    renderTimeline(sortedData);
   });
-}
+
+  function attachActionHandlers() {
+    document.querySelectorAll(".edit-order").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const orderId = btn.dataset.id;
+        window.location.href = `/edit_order/${orderId}`;
+      });
+    });
+
+    document.querySelectorAll(".delete-order").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const orderId = btn.dataset.id;
+        if (confirm("Are you sure you want to delete this order?")) {
+          try {
+            const response = await fetch(`/delete_order/${orderId}`, {
+              method: "POST",
+              headers: { "X-Requested-With": "XMLHttpRequest" },
+            });
+
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert("Error deleting order.");
+            }
+          } catch (err) {
+            console.error("Delete failed", err);
+          }
+        }
+      });
+    });
+  }
+})
