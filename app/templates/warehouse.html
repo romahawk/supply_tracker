@@ -94,7 +94,7 @@
         </div>
 
         <!-- Order table -->
-        <div class="orders-table-container overflow-auto h-full border rounded shadoww-full">
+        <div class="orders-table-container flex-grow overflow-auto border rounded shadow w-full">
             <table id="warehouse-table"
                 class="w-full table-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-sm">
                 <thead class="sticky top-0 z-10 bg-gray-200 dark:bg-gray-800">
@@ -150,23 +150,27 @@
                                             class="w-20 px-2 py-1 rounded text-sm bg-white text-black dark:bg-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             required>
                                         <button type="submit"
-                                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs rounded min-w-[70px]">Deliver</button>
+                                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs rounded min-w-[90px] flex items-center gap-1 justify-center">
+                                            <i data-lucide="truck"></i> Deliver
+                                        </button>
                                     </form>
 
                                     <!-- Edit -->
                                     <a href="{{ url_for('warehouse.edit_warehouse', item_id=item.id) }}"
-                                        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[70px] text-center">Edit</a>
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded min-w-[90px] flex items-center gap-1 justify-center">
+                                        <i data-lucide="pencil-line"></i> Edit
+                                    </a>
 
-                                    <!-- Stockreport -->
+                                    <!-- Stockreport / View Report -->
                                     {% if item.id in reported_ids %}
                                     <button data-item-id="{{ item.id }}"
-                                        class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded">
-                                        View Report
+                                        class="open-stockreport-modal bg-purple-800 hover:bg-purple-900 text-white px-3 py-1 text-xs rounded flex items-center gap-1 justify-center">
+                                        <i data-lucide="file-text"></i> View Report
                                     </button>
                                     {% else %}
                                     <a href="{{ url_for('warehouse.stockreport_entry_form', item_id=item.id) }}"
-                                        class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 text-xs rounded">
-                                        Stockreport
+                                        class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 text-xs rounded flex items-center gap-1 justify-center">
+                                        <i data-lucide="file-plus"></i> Stockreport
                                     </a>
                                     {% endif %}
 
@@ -175,25 +179,26 @@
                                         action="{{ url_for('restore.restore_to_dashboard', item_id=item.id) }}"
                                         class="inline">
                                         <button type="submit"
-                                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[70px]">Restore</button>
+                                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[90px] flex items-center gap-1 justify-center">
+                                            <i data-lucide="rotate-ccw"></i> Restore
+                                        </button>
                                     </form>
 
-                                    <!-- Delete (manual only) -->
+                                    <!-- Delete (if entries exist) -->
                                     {% if entries|length > 0 %}
                                     <form method="POST"
                                         action="{{ url_for('warehouse.delete_stockreport', entry_id=entries[0].id) }}"
                                         onsubmit="return confirm('Delete this entry?')">
                                         <button type="submit"
-                                            class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded shadow text-sm">🗑️
-                                            Delete</button>
+                                            class="bg-red-700 hover:bg-red-800 text-white px-3 py-1 text-xs rounded flex items-center gap-1 justify-center">
+                                            <i data-lucide="trash-2"></i> Delete
+                                        </button>
                                     </form>
                                     {% endif %}
-
 
                                 </div>
                             </div>
                         </td>
-
 
 
                         <td class="px-4 py-2">
@@ -368,10 +373,28 @@
                 document.body.appendChild(script);
             });
         });
-
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>lucide.createIcons();</script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+    <!-- Stockreport Modal -->
+    <div id="stockreport-modal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white dark:bg-gray-900 p-4 rounded shadow-lg max-w-4xl w-full relative">
+            <button onclick="document.getElementById('stockreport-modal').classList.add('hidden')"
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-900">
+                ✖
+            </button>
+            <div id="stockreport-modal-content" class="overflow-y-auto max-h-[80vh]">
+                <!-- Injected HTML from openStockReport() -->
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>
