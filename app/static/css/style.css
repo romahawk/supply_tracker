@@ -110,6 +110,11 @@ body {
   gap: 20px;
 }
 
+.form-input {
+    @apply mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400
+      bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200;
+  }
+
 .form-row {
   display: flex;
   flex-wrap: wrap;
