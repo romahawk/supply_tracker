@@ -46,7 +46,7 @@
       </thead>
       <tbody class="text-gray-900 dark:text-gray-100">
         {% for log in logs %}
-        <tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700">
           <td class="p-3">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
           <td class="p-3">{{ log.user.username if log.user else 'System' }}</td>
           <td class="p-3 font-semibold text-blue-600">{{ log.action }}</td>
