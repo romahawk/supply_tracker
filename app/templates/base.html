@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,8 +12,16 @@
             darkMode: 'class',
         }
     </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+        });
+    </script>
+
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 </head>
+
 <body class="flex flex-col h-screen m-0 p-0 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
 
@@ -22,13 +31,14 @@
     <!-- Flash Messages -->
     <div class="max-w-6xl mx-auto px-4 py-2">
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="mb-2 p-3 rounded bg-{{ 'green' if category == 'success' else 'red' }}-100 text-{{ 'green' if category == 'success' else 'red' }}-800 text-sm">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div
+            class="mb-2 p-3 rounded bg-{{ 'green' if category == 'success' else 'red' }}-100 text-{{ 'green' if category == 'success' else 'red' }}-800 text-sm">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
     </div>
 
@@ -43,4 +53,5 @@
     </footer>
 
 </body>
+
 </html>

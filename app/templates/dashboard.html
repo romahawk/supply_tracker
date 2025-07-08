@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Tracker Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        // Set dark mode from localStorage before page paint
+        (function () {
+            if (localStorage.getItem('dark-mode') === 'enabled') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script
         src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -46,10 +56,10 @@
             </div>
             <div class="form-group">
                 <label for="product_name" class="block text-sm font-medium ">Product Name:</label>
-                <input list="product-options" id="product_name" name="product_name" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
-              bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" placeholder="Select or type a product"
-                    required>
-                <datalist id="product-options"></datalist>
+                <select id="product_name" name="product_name" placeholder="Select or type a product" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400
+           bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
+                </select>
+
 
 
 
@@ -320,115 +330,6 @@
                 class="load-more-btn bg-blue-500 hover:bg-blue-700 text-gray-600 dark:text-gray-300 font-bold py-2 px-4 rounded hidden"
                 onclick="loadMoreOrders()">Load More</button>
         </div>
-
-        <!-- Edit Order Modal -->
-        <div id="edit-order-modal"
-            class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-2xl">
-                <h2 class="text-gray-900 dark:text-white text-xl font-semibold border-b pb-2 mb-4">Edit Order</h2>
-                <form id="edit-order-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <input type="hidden" id="edit-order-id" name="order_id">
-                    <div>
-                        <label for="edit-order_date" class="block text-sm font-medium ">Order Date</label>
-                        <input type="date" id="edit-order_date" name="order_date"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                    </div>
-                    <div>
-                        <label for="edit-order_number" class="block text-sm font-medium ">Order Number</label>
-                        <input type="text" id="edit-order_number" name="order_number"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                    </div>
-                    <div class="form-group">
-                        <label for="product_name" class="block text-sm font-medium">Product Name:</label>
-                        <select id="edit-product_name" name="product_name" data-current=""
-                            placeholder="Select or type a product" autocomplete="off" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
-  bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                        </select>
-
-                    </div>
-
-                    <div>
-                        <label for="edit-buyer" class="block text-sm font-medium ">Buyer</label>
-                        <input type="text" id="edit-buyer" name="buyer"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                    </div>
-                    <div>
-                        <label for="edit-responsible" class="block text-sm font-medium ">Responsible</label>
-                        <input type="text" id="edit-responsible" name="responsible"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                    </div>
-                    <div>
-                        <label for="edit-quantity" class="block text-sm font-medium ">Quantity</label>
-                        <input type="number" id="edit-quantity" name="quantity" step="0.01"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                    </div>
-                    <div>
-                        <label for="edit-required_delivery" class="block text-sm font-medium ">Required Delivery</label>
-                        <input type="text" id="edit-required_delivery" name="required_delivery"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                    </div>
-                    <div>
-                        <label for="edit-terms_of_delivery" class="block text-sm font-medium ">Terms of Delivery</label>
-                        <input type="text" id="edit-terms_of_delivery" name="terms_of_delivery"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                    </div>
-                    <div>
-                        <label for="edit-payment_date" class="block text-sm font-medium ">Payment Date</label>
-                        <input type="date" id="edit-payment_date" name="payment_date"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                    </div>
-                    <div>
-                        <label for="edit-etd" class="block text-sm font-medium ">ETD</label>
-                        <input type="date" id="edit-etd" name="etd"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                    </div>
-                    <div>
-                        <label for="edit-eta" class="block text-sm font-medium ">ETA</label>
-                        <input type="date" id="edit-eta" name="eta"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                    </div>
-                    <div>
-                        <label for="edit-ata" class="block text-sm font-medium ">ATA</label>
-                        <input type="date" id="edit-ata" name="ata"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200">
-                    </div>
-                    <div>
-                        <label for="edit-transit_status" class="block text-sm font-medium ">Transit Status</label>
-                        <select id="edit-transit_status" name="transit_status"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                            <option value="in process">In Process</option>
-                            <option value="en route">En Route</option>
-                            <option value="arrived">Arrived</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="edit-transport" class="block text-sm font-medium ">Transport</label>
-                        <select id="edit-transport" name="transport"
-                            class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
-                            required>
-                            <option value="sea">Sea</option>
-                            <option value="air">Air</option>
-                            <option value="truck">Truck</option>
-                        </select>
-                    </div>
-                    <div class="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-end space-x-4">
-                        <button type="button"
-                            class="close px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">Cancel</button>
-                        <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Save
-                            Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -469,7 +370,21 @@
     <script>
         lucide.createIcons();
     </script>
-
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggle = document.getElementById("dark-mode-toggle");
+            if (toggle) {
+                toggle.addEventListener("click", () => {
+                    const isDark = document.documentElement.classList.toggle("dark");
+                    localStorage.setItem("dark-mode", isDark ? "enabled" : "disabled");
+                });
+            }
+        });
+    </script>
 
 </body>
 

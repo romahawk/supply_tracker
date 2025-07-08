@@ -552,41 +552,62 @@ document.addEventListener("DOMContentLoaded", function () {
     }</td>
     <td class="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200">${transportIcon}</td>
     <td class="px-2 py-2 text-center text-xs sm:text-sm">
-        <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
-            ${
-              window.currentUserRole !== "superuser"
-                ? `
-              <form class="w-full sm:w-auto">
-                  <button type="button" class="edit-order bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${
-                    order.id
-                  }">Edit</button>
-              </form>
-              <form class="w-full sm:w-auto">
-                  <button type="button" class="delete-order bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto" data-id="${
-                    order.id
-                  }">Delete</button>
-              </form>
-              ${
-                order.transit_status === "arrived"
-                  ? `
-                  <form method="POST" action="/stock_order/${order.id}" class="w-full sm:w-auto">
-                      <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Stock</button>
-                  </form>
-                  <form method="POST" action="/deliver_direct/${order.id}" class="w-full sm:w-auto">
-                      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs w-full sm:w-auto">Deliver</button>
-                  </form>
-                  `
-                  : ""
-              }
-              `
-                : ""
-            }
-        </div>
+      <div class="flex flex-col sm:flex-row sm:justify-center gap-1 sm:gap-2">
+        ${
+          window.currentUserRole !== "superuser"
+            ? `
+          <button 
+            type="button" 
+            class="edit-order text-blue-600 hover:text-blue-800" 
+            data-id="${order.id}" 
+            title="Edit Order"
+          >
+            <i data-lucide="pencil" class="w-4 h-4"></i>
+          </button>
+          <button 
+            type="button" 
+            class="delete-order text-red-600 hover:text-red-800" 
+            data-id="${order.id}" 
+            title="Delete Order"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+          ${
+            order.transit_status === "arrived"
+              ? `
+            <form method="POST" action="/stock_order/${order.id}">
+              <button 
+                type="submit" 
+                class="text-yellow-600 hover:text-yellow-800" 
+                title="Move to Warehouse"
+              >
+                <i data-lucide="warehouse" class="w-4 h-4"></i>
+              </button>
+            </form>
+            <form method="POST" action="/deliver_direct/${order.id}">
+              <button 
+                type="submit" 
+                class="text-green-600 hover:text-green-800" 
+                title="Mark as Delivered"
+              >
+                <i data-lucide="truck" class="w-4 h-4"></i>
+              </button>
+            </form>
+            `
+              : ""
+          }
+          `
+            : ""
+        }
+      </div>
     </td>
+
 `;
         tbody.appendChild(row);
       });
     }
+    lucide.createIcons();
+    attachActionHandlers(); 
     console.log("updateTable: Table updated with data:", data);
   }
 
@@ -630,9 +651,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   };
 
-  document.addEventListener("DOMContentLoaded", () => {
-    initializeProductSelect();
-  });
+  initializeProductSelect();
+
 
   function setupDashboardSearch() {
     const searchInput = document.getElementById("search-dashboard");
@@ -1080,24 +1100,61 @@ document.addEventListener("DOMContentLoaded", function () {
       const isHidden =
         addOrderSection.style.display === "none" ||
         addOrderSection.style.display === "";
+
       addOrderSection.style.display = isHidden ? "block" : "none";
       toggleFormBtn.textContent = isHidden
         ? "Hide Add Order Form"
         : "Add New Order";
+
+      // ✅ Only initialize when form becomes visible
+      if (isHidden) {
+        initializeProductSelect();
+      }
+    });
+  }  
+
+  // Add window resize handler to re-render chart
+  window.addEventListener("resize", () => {
+    const filteredData = filterData(
+      allOrders,
+      document.getElementById("order-filter")?.value || ""
+    );
+    const sortedData = sortData(
+      filteredData,
+      lastSortKey,
+      lastSortDirection === "desc"
+    );
+    renderTimeline(sortedData);
+  });
+
+  function attachActionHandlers() {
+    document.querySelectorAll(".edit-order").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const orderId = btn.dataset.id;
+        window.location.href = `/edit_order/${orderId}`;
+      });
+    });
+
+    document.querySelectorAll(".delete-order").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const orderId = btn.dataset.id;
+        if (confirm("Are you sure you want to delete this order?")) {
+          try {
+            const response = await fetch(`/delete_order/${orderId}`, {
+              method: "POST",
+              headers: { "X-Requested-With": "XMLHttpRequest" },
+            });
+
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert("Error deleting order.");
+            }
+          } catch (err) {
+            console.error("Delete failed", err);
+          }
+        }
+      });
     });
   }
-});
-
-// Add window resize handler to re-render chart
-window.addEventListener("resize", () => {
-  const filteredData = filterData(
-    allOrders,
-    document.getElementById("order-filter")?.value || ""
-  );
-  const sortedData = sortData(
-    filteredData,
-    lastSortKey,
-    lastSortDirection === "desc"
-  );
-  renderTimeline(sortedData);
-});
+})

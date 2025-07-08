@@ -2,10 +2,18 @@ function openStockReport(entryId) {
   fetch(`/stockreport/view/${entryId}`)
     .then(res => res.text())
     .then(html => {
-      const modal = document.getElementById('modal-body');  // adjust if needed
+      const modal = document.getElementById('modal-body'); // modal content container
       modal.innerHTML = html;
 
-      // ✅ Attach editing logic after content is injected
+      // ✅ Show the full modal (ensure parent exists with ID 'stockreport-modal')
+      const modalWrapper = document.getElementById('stockreport-modal');
+      if (modalWrapper) {
+        modalWrapper.classList.remove('hidden');
+      } else {
+        console.warn("⚠️ Modal wrapper with ID 'stockreport-modal' not found.");
+      }
+
+      // ✅ Load editing script
       const script = document.createElement('script');
       script.src = '/static/js/view_stockreport.js';
       script.onload = () => console.log("✅ Stockreport script loaded.");
@@ -16,12 +24,3 @@ function openStockReport(entryId) {
       alert("Failed to open stockreport modal.");
     });
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".open-stockreport-modal").forEach(button => {
-    button.addEventListener("click", () => {
-      const entryId = button.getAttribute("data-item-id");
-      openStockReport(entryId);
-    });
-  });
-});

@@ -184,4 +184,20 @@
 
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>lucide.createIcons();</script>
+
+  <!-- Dark mode -->
+  <script>
+      const toggle = document.getElementById('dark-mode-toggle');
+
+      if (localStorage.getItem('dark-mode') === 'enabled') {
+        document.documentElement.classList.add('dark');
+      }
+
+      toggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('dark-mode',
+          document.documentElement.classList.contains('dark') ? 'enabled' : 'disabled'
+        );
+      });
+  </script>
 </header>

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from app.models import Order, WarehouseStock, DeliveredGoods
 from app.decorators import role_required
@@ -12,14 +12,6 @@ import os
 dashboard_bp = Blueprint('dashboard', __name__)
 
 # ✅ Re-added inline load_products()
-PRODUCTS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'products.txt'))
-
-def load_products():
-    try:
-        with open(PRODUCTS_FILE, 'r', encoding='utf-8') as f:
-            return sorted(set(line.strip() for line in f if line.strip()))
-    except FileNotFoundError:
-        return []
 
 @dashboard_bp.route('/')
 def index():
@@ -66,3 +58,36 @@ def delete_order(order_id):
     flash('Order deleted successfully.', 'success')
     return redirect(url_for('dashboard.dashboard'))
 
+@dashboard_bp.route('/add_order', methods=['POST'])
+@login_required
+def add_order():
+    from app.models import Order
+    from app.utils.products import add_product_if_new
+
+    form = request.form
+    new_order = Order(
+        order_date=form.get("order_date"),
+        order_number=form.get("order_number"),
+        product_name=form.get("product_name"),
+        buyer=form.get("buyer"),
+        responsible=form.get("responsible"),
+        quantity=form.get("quantity"),
+        required_delivery=form.get("required_delivery"),
+        terms_of_delivery=form.get("terms_of_delivery"),
+        payment_date=form.get("payment_date"),
+        etd=form.get("etd"),
+        eta=form.get("eta"),
+        ata=form.get("ata"),
+        transit_status=form.get("transit_status"),
+        transport=form.get("transport"),
+        user_id=current_user.id
+    )
+
+    # ✅ Add the new product to the list if not already present
+    add_product_if_new(new_order.product_name)
+
+    db.session.add(new_order)
+    db.session.commit()
+    log_activity("Add Order", f"#{new_order.order_number}")
+
+    return jsonify({"success": True})
