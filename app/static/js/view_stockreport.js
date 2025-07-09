@@ -1,3 +1,4 @@
+
 console.log("✅ view_stockreport.js loaded");
 
 // Ensure buttons are bound when they appear
@@ -18,16 +19,64 @@ function tryBindButtons() {
   }
 }
 
-// Initial check
+function setupPrintButton() {
+  const printBtn = document.getElementById("custom-print-btn");
+  if (!printBtn || printBtn.dataset.bound === "true") return;
+
+  printBtn.addEventListener("click", () => {
+    const report = document.querySelector(".print-area");
+    if (!report) {
+      alert("❌ Report not found.");
+      return;
+    }
+
+    const content = report.cloneNode(true);
+    content.querySelectorAll(".edit-header").forEach(el => el.remove());
+    content.querySelectorAll(".view-mode").forEach(el => el.style.display = "block");
+
+    const printWindow = window.open('', '', 'width=1200,height=800');
+    const html = `
+      <html>
+        <head>
+          <title>Print Report</title>
+          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+          <style>
+            @page { size: A4 landscape; margin: 0; }
+            body { padding: 40px; margin: 0; font-family: sans-serif; background: white; color: black; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
+          </style>
+        </head>
+        <body class="${document.documentElement.classList.contains('dark') ? 'dark' : ''}">
+          <div class="print-area">${content.innerHTML}</div>
+        </body>
+      </html>
+    `;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    };
+  });
+
+  printBtn.dataset.bound = "true";
+  console.log("🖨️ Custom Print button bound");
+}
+
+// Initial binding
 tryBindButtons();
+setupPrintButton();
 
 // Observe for dynamic content (modals, etc.)
 const observer = new MutationObserver(() => {
   tryBindButtons();
+  setupPrintButton();
 });
-
 observer.observe(document.body, { childList: true, subtree: true });
-
 
 // ----- Toggle Edit Mode -----
 function toggleHeaderEdit() {
@@ -44,14 +93,13 @@ function toggleHeaderEdit() {
     return;
   }
 
-  const isEditMode = editFields[0].classList.contains("hidden") === false;
+  const isEditMode = !editFields[0].classList.contains("hidden");
   console.log("🔄 Current mode:", isEditMode ? "EDIT" : "VIEW");
 
   editFields.forEach(el => el.classList.toggle("hidden", isEditMode));
   viewFields.forEach(el => el.classList.toggle("hidden", !isEditMode));
   toggleSaveButton(!isEditMode);
 }
-
 
 // ----- Show/Hide Save Button -----
 function toggleSaveButton(show) {
@@ -60,7 +108,6 @@ function toggleSaveButton(show) {
     saveBtn.classList.toggle("hidden", !show);
   }
 }
-
 
 // ----- Save All Edited Fields -----
 function saveAllStockreportFields() {

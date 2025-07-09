@@ -263,28 +263,37 @@ def view_stockreport_entries(item_id):
         flash("No stockreport entries found.", "warning")
         return redirect(url_for('warehouse.warehouse'))
 
-    # Extract metadata from the first entry
+    # Use the first entry as a base for shared metadata
     first_entry = entries[0]
 
-    # Calculate customs info
+    # ✅ Compute customs-related fields
     atb_frist = customs_ozl = free_till = None
     if first_entry.customs_status == "T1" and first_entry.entrance_date:
         atb_frist = first_entry.entrance_date.strftime("%d.%m.%Y")
         customs_ozl = "OZL Hamburg"
         free_till = (first_entry.entrance_date + timedelta(days=90)).strftime("%d.%m.%Y")
 
+        # ✅ Attach to the first entry for template access
+        setattr(first_entry, 'atb_first', atb_frist)
+        setattr(first_entry, 'customs_ozl', customs_ozl)
+        setattr(first_entry, 'free_till', free_till)
+
+    # ✅ Ensure signature fields are passed from entry if present
+    signature_date_client = getattr(first_entry, 'signature_date_client', None)
+    signature_client = getattr(first_entry, 'signature_client', None)
+    signature_date_warehouse = getattr(first_entry, 'signature_date_warehouse', None)
+    signature_warehouse = getattr(first_entry, 'signature_warehouse', None)
+
     return render_template(
         "view_stockreport.html",
         entries=entries,
         item=first_entry,
-        atb_frist=atb_frist,
-        customs_ozl=customs_ozl,
-        free_till=free_till,
-        signature_date_client=None,
-        signature_date_warehouse=None,
-        signature_client=None,
-        signature_warehouse=None,
+        signature_date_client=signature_date_client,
+        signature_client=signature_client,
+        signature_date_warehouse=signature_date_warehouse,
+        signature_warehouse=signature_warehouse
     )
+
 
 @warehouse_bp.route('/stockreport/download/<int:item_id>')
 @login_required

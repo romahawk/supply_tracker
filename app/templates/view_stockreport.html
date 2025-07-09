@@ -15,17 +15,16 @@
     Edit All</button>
   <button id="save-stockreport-btn"
     class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded shadow text-sm hidden">💾 Save</button>
-  <button onclick="window.print()" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">🖨️
+  <button id="custom-print-btn" class="bg-gray-700 hover:bg-gray-900 text-white px-4 py-2 rounded shadow text-sm">🖨️
     Print</button>
 </div>
 
 <!-- Report Block -->
-<div class="print-area bg-white dark:bg-gray-800 p-6 rounded shadow max-w-full px-[50px] mt-6" id="pdf-report">
+<div class="print-area bg-white dark:bg-gray-800 p-6 rounded shadow max-w-[1120px] mx-auto mt-6" id="pdf-report">
   <div class="flex justify-between items-start mb-6">
     <div>
       <h2 class="text-2xl font-bold mb-2">Stock IN Report</h2>
       <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
-        <!-- Warehouse -->
         <div>
           <span class="font-semibold">Warehouse:</span>
           <div class="ml-2 view-mode">{{ item.warehouse_address or '—' }}</div>
@@ -41,7 +40,6 @@
           </div>
         </div>
 
-        <!-- Pos. No. -->
         <div>
           <span class="font-semibold">Pos. No.:</span>
           <div class="ml-2 view-mode">{{ item.pos_no or '—' }}</div>
@@ -51,7 +49,6 @@
           </div>
         </div>
 
-        <!-- Client -->
         <div>
           <span class="font-semibold">Client:</span>
           <div class="ml-2 view-mode">{{ item.client or '—' }}</div>
@@ -66,7 +63,6 @@
           </div>
         </div>
 
-        <!-- Client Ref. -->
         <div>
           <span class="font-semibold">Client Ref.:</span>
           <div class="ml-2 view-mode">{{ item.customer_ref or '—' }}</div>
@@ -75,39 +71,39 @@
               class="w-full mt-1 border px-2 py-1 rounded text-sm bg-white dark:bg-gray-700" />
           </div>
         </div>
-
       </div>
     </div>
     <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="w-36 object-contain h-auto">
   </div>
 
   <!-- Table -->
-  <div class="overflow-auto">
-    <table class="w-full text-sm text-left border" id="stockreport-table">
+  <div class="overflow-auto print:overflow-visible">
+    <table class="w-full table-fixed text-sm text-left border" id="stockreport-table">
       <thead class="bg-gray-100 dark:bg-gray-700 text-xs text-gray-700 dark:text-gray-300">
         <tr>
-          <th class="p-2 border">Entrance</th>
-          <th class="p-2 border">Article/Batch</th>
-          <th class="p-2 border">Colli</th>
-          <th class="p-2 border">Packing</th>
-          <th class="p-2 border">PCS</th>
-          <th class="p-2 border">Colli/Pal.</th>
-          <th class="p-2 border">Pcs Total</th>
-          <th class="p-2 border">Pal.</th>
-          <th class="p-2 border">Product</th>
-          <th class="p-2 border">Gross kg</th>
-          <th class="p-2 border">Net kg</th>
-          <th class="p-2 border">Sender</th>
-          <th class="p-2 border">Customs</th>
-          <th class="p-2 border">Stockref</th>
+          <th class="p-2 border w-[90px] whitespace-nowrap">Entrance</th>
+          <th class="p-2 border w-[120px] whitespace-nowrap">Article/Batch</th>
+          <th class="p-2 border w-[40px]">Colli</th>
+          <th class="p-2 border w-[60px]">Packing</th>
+          <th class="p-2 border w-[40px]">PCS</th>
+          <th class="p-2 border w-[60px] whitespace-nowrap">Colli/Pal.</th>
+          <th class="p-2 border w-[40px] whitespace-nowrap">Pcs Total</th>
+          <th class="p-2 border w-[40px]">Pal.</th>
+          <th class="p-2 border w-[160px] whitespace-nowrap">Product</th>
+          <th class="p-2 border w-[70px]">Gross kg</th>
+          <th class="p-2 border w-[70px]">Net kg</th>
+          <th class="p-2 border w-[140px] whitespace-nowrap">Sender</th>
+          <th class="p-2 border w-[60px]">Customs</th>
+          <th class="p-2 border w-[80px]">Stockref</th>
         </tr>
       </thead>
+
       <tbody>
         {% for entry in entries %}
         <tr class="border-t" data-entry-id="{{ entry.id }}">
           {% for field in ["entrance_date", "article_batch", "colli", "packing", "pcs", "colli_per_pal", "pcs_total",
           "pal", "product", "gross_kg", "net_kg", "sender", "customs_status", "stockref"] %}
-          <td class="p-2 border">
+          <td class="p-2 border break-words">
             <div class="view-mode">{{ entry | lookup(field) }}</div>
             <div class="edit-header hidden">
               {% if field == "customs_status" %}
@@ -128,6 +124,7 @@
         </tr>
         {% endfor %}
       </tbody>
+
     </table>
   </div>
 
@@ -175,4 +172,56 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/view_stockreport.js') }}?v={{ config['VERSION'] }}"></script>
+<style>
+  @media print {
+
+    body,
+    html {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      zoom: 100%;
+    }
+
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+
+    body * {
+      visibility: hidden;
+    }
+
+    .print-area,
+    .print-area * {
+      visibility: visible;
+    }
+
+    .print-area {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: auto;
+      max-width: unset;
+      padding: 0;
+    }
+
+    .print-area table {
+      page-break-inside: avoid;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    .modal,
+    .bg-opacity-50,
+    .fixed,
+    .inset-0 {
+      display: none !important;
+    }
+  }
+</style>
 {% endblock %}
