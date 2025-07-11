@@ -38,7 +38,26 @@ def delivered():
 
     delivered_items = query.order_by(DeliveredGoods.delivery_date.desc()).paginate(page=page, per_page=per_page)
 
-    reported_order_numbers = [entry.related_order.order_number if entry.related_order else "—" for entry in StockReportEntry.query.all()]
+    reported_order_numbers = set()
+    all_entries = StockReportEntry.query.all()
+
+    for entry in all_entries:
+        order_number = None
+
+        # Try resolving from WarehouseStock
+        warehouse_order = WarehouseStock.query.get(entry.related_order_id)
+        if warehouse_order:
+            order_number = warehouse_order.order_number
+        else:
+            # Fallback: Try DeliveredGoods
+            delivered_order = DeliveredGoods.query.get(entry.related_order_id)
+            if delivered_order:
+                order_number = delivered_order.order_number
+
+        if order_number:
+            reported_order_numbers.add(order_number)
+
+
 
     return render_template(
         'delivered.html',

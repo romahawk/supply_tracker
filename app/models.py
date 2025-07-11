@@ -16,7 +16,6 @@ class User(db.Model):
             return False
         return check_password_hash(self.password_hash, password)
 
-
     def is_active(self): return True
     def get_id(self): return str(self.id)
     def is_authenticated(self): return True
@@ -60,6 +59,7 @@ class WarehouseStock(db.Model):
     client = db.Column(db.String(255))
     pos_no = db.Column(db.String(50))
     customer_ref = db.Column(db.String(50))
+    is_archived = db.Column(db.Boolean, default=False)
 
 
 class DeliveredGoods(db.Model):

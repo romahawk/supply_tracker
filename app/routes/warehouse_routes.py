@@ -19,7 +19,7 @@ def warehouse():
     per_page = request.args.get('per_page', 10, type=int)
     search = request.args.get('search', '')
 
-    query = WarehouseStock.query
+    query = WarehouseStock.query.filter_by(is_archived=False)
 
     if search:
         like_term = f"%{search.lower()}%"
@@ -131,10 +131,10 @@ def deliver_partial(item_id):
 
     new_qty = current_qty - qty_to_deliver
     if new_qty <= 0:
-        db.session.delete(item)
+        item.is_archived = True  # ✅ Archive instead of delete
     else:
         item.quantity = new_qty
-        db.session.add(item)
+
 
     # Not mandatory, but good future-proofing
     delivery = DeliveredGoods(
