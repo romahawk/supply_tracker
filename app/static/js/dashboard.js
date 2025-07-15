@@ -713,6 +713,21 @@ document.addEventListener("DOMContentLoaded", function () {
           delivery_year: parseInt(order.delivery_year) || null,
         }));
 
+        const yearsAvailable = [...new Set(allOrders.map(o => o.delivery_year).filter(Boolean))].map(Number);
+        const selectedYearNum = parseInt(selectedYear);
+
+        const yearWarning = document.getElementById("year-warning");
+        if (yearWarning) {
+          if (!yearsAvailable.includes(selectedYearNum)) {
+            yearWarning.textContent = `⚠️ Some orders exist in other years: ${yearsAvailable.join(", ")}. Adjust the year filter to see them.`;
+            yearWarning.classList.remove("hidden");
+          } else {
+            yearWarning.textContent = "";
+            yearWarning.classList.add("hidden");
+          }
+        }
+
+
         populateYearDropdown(allOrders);
         if (!selectedYear) {
           console.warn(

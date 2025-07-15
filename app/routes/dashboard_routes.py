@@ -48,9 +48,10 @@ def dashboard():
 @role_required('admin')
 def delete_order(order_id):
     order = Order.query.get_or_404(order_id)
-    if order.user_id != current_user.id and current_user.role != 'admin':
+    if not can_view_all(current_user.role) and order.user_id != current_user.id:
         flash("Unauthorized delete attempt.", "error")
         return redirect(url_for('dashboard.dashboard'))
+
     
     db.session.delete(order)
     db.session.commit()

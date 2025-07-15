@@ -8,6 +8,7 @@ import os
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
 from flask import current_app
+from app.roles import can_view_all
 
 PRODUCTS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'products.txt'))
 def load_products():
@@ -73,9 +74,9 @@ def logout():
     logout_user()
     return redirect(url_for('main.login'))
 
-@main.route('/dashboard')
+@main.route('/dashboard_alt')
 @login_required
-def dashboard():
+def dashboard_alt():
     orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
 
     # 🧮 Count summaries
@@ -243,7 +244,11 @@ def get_delivery_year_dict(order):
 @main.route('/api/orders')
 @login_required
 def get_orders():
-    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
+    if can_view_all(current_user.role):
+        orders = Order.query.order_by(Order.order_date.asc()).all()
+    else:
+        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.order_date.asc()).all()
+
     orders_data = [{
         'id': order.id,
         'order_date': order.order_date,
@@ -260,10 +265,10 @@ def get_orders():
         'ata': order.ata,
         'transit_status': order.transit_status,
         'transport': order.transport,
-        'delivery_year': get_delivery_year_dict(order)  # 🟢 Add this line
+        'delivery_year': get_delivery_year_dict(order)
     } for order in orders]
-    return jsonify(orders_data)
 
+    return jsonify(orders_data)
 
 @main.route('/warehouse')
 @login_required

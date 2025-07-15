@@ -59,11 +59,6 @@
                 <select id="product_name" name="product_name" placeholder="Select or type a product" class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400
            bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" required>
                 </select>
-
-
-
-
-
             </div>
             <div class="form-group">
                 <label for="buyer" class="block text-sm font-medium ">Buyer:</label>
@@ -302,6 +297,10 @@
                 <!-- Options will be populated dynamically -->
             </select>
         </div>
+        <div id="year-warning" class="hidden text-yellow-700 bg-yellow-100 border border-yellow-400 px-4 py-2 rounded text-sm mt-4">
+        ⚠️ Some orders may exist for other years. Adjust the year filter to see them.
+        </div>
+
         <!-- Legend for Timeline Chart -->
         <div class="legend flex space-x-4 mb-4">
             <span class="legend-item cursor-pointer" data-status="in process">
