@@ -9,6 +9,7 @@ from app.utils.logging import log_activity
 from sqlalchemy import or_, func, extract
 import os
 from weasyprint import HTML
+from app.roles import can_view_all
 
 warehouse_bp = Blueprint('warehouse', __name__)
 
@@ -19,7 +20,10 @@ def warehouse():
     per_page = request.args.get('per_page', 10, type=int)
     search = request.args.get('search', '')
 
-    query = WarehouseStock.query.filter_by(is_archived=False)
+    if can_view_all(current_user.role):
+        query = WarehouseStock.query.filter_by(is_archived=False)
+    else:
+        query = WarehouseStock.query.filter_by(is_archived=False, user_id=current_user.id)
 
     if search:
         like_term = f"%{search.lower()}%"
@@ -138,7 +142,7 @@ def deliver_partial(item_id):
 
     # Not mandatory, but good future-proofing
     delivery = DeliveredGoods(
-        user_id=current_user.id,
+        user_id=item.user_id,
         order_number=item.order_number,
         product_name=item.product_name,
         quantity=qty_to_deliver,

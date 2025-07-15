@@ -5,6 +5,7 @@ from datetime import datetime
 from app.roles import can_edit, can_view_all
 from app.utils.logging import log_activity
 from sqlalchemy import or_, func, extract
+from app.roles import can_view_all
 
 delivered_bp = Blueprint('delivered', __name__)
 
@@ -14,14 +15,19 @@ def delivered():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
 
-    query = DeliveredGoods.query
-
     # Apply filters
     transport = request.args.get('transport')
     month = request.args.get('month')
     year = request.args.get('year')
     search = request.args.get('search', '')
 
+    # ✅ Apply role-based visibility
+    if can_view_all(current_user.role):
+        query = DeliveredGoods.query
+    else:
+        query = DeliveredGoods.query.filter_by(user_id=current_user.id)
+
+    # Continue with filters
     if transport:
         query = query.filter_by(transport=transport)
     if month:

@@ -273,15 +273,19 @@ def get_orders():
 @main.route('/warehouse')
 @login_required
 def warehouse():
-    from .models import WarehouseStock
-    warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).all()
+    if can_view_all(current_user.role):
+        warehouse_items = WarehouseStock.query.all()
+    else:
+        warehouse_items = WarehouseStock.query.filter_by(user_id=current_user.id).all()
     return render_template('warehouse.html', warehouse_items=warehouse_items)
 
 @main.route('/delivered')
 @login_required
 def delivered():
-    from .models import DeliveredGoods
-    delivered_items = DeliveredGoods.query.filter_by(user_id=current_user.id).all()
+    if can_view_all(current_user.role):
+        delivered_items = DeliveredGoods.query.all()
+    else:
+        delivered_items = DeliveredGoods.query.filter_by(user_id=current_user.id).all()
 
     for item in delivered_items:
         if isinstance(item.delivery_date, str):
@@ -424,7 +428,7 @@ def stock_order(order_id):
 
     # Create WarehouseStock record
     new_stock = WarehouseStock(
-        user_id=current_user.id,
+        user_id=order.user_id,
         order_number=order.order_number,
         product_name=order.product_name,
         quantity=order.quantity,
@@ -453,7 +457,7 @@ def deliver_direct(order_id):
         return redirect(url_for('main.dashboard'))
 
     delivered = DeliveredGoods(
-        user_id=current_user.id,
+        user_id=order.user_id,
         order_number=order.order_number,
         product_name=order.product_name,
         quantity=order.quantity,
