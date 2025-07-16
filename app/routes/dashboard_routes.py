@@ -27,12 +27,13 @@ def dashboard():
 
     if can_view_all(current_user.role):
         in_transit_count = Order.query.count()
-        warehouse_count = WarehouseStock.query.count()
+        warehouse_count = WarehouseStock.query.filter_by(is_archived=False).count()
         delivered_count = DeliveredGoods.query.count()
     else:
         in_transit_count = Order.query.filter_by(user_id=current_user.id).count()
-        warehouse_count = WarehouseStock.query.filter_by(user_id=current_user.id).count()
+        warehouse_count = WarehouseStock.query.filter_by(user_id=current_user.id, is_archived=False).count()
         delivered_count = DeliveredGoods.query.filter_by(user_id=current_user.id).count()
+
 
     return render_template(
         'dashboard.html',
