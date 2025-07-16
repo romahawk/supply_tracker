@@ -74,33 +74,60 @@ def delivered():
     )
 
 
-@delivered_bp.route('/restore_to_dashboard', methods=['POST'])
+@delivered_bp.route('/restore_from_delivered', methods=['POST'])
 @login_required
 def restore_to_dashboard():
+    item_id = request.args.get('item_id', type=int)
+    item = DeliveredGoods.query.get_or_404(item_id)
+
+    # ✅ Check role-level permission
     if not can_edit(current_user.role):
         flash("Access denied.", "danger")
         return redirect(url_for('delivered.delivered'))
 
-    item_id = request.args.get('item_id', type=int)
-    item = DeliveredGoods.query.get_or_404(item_id)
+    # ✅ Prevent unauthorized restores by regular users
+    if not can_view_all(current_user.role):
+        if not item.user_id or item.user_id != current_user.id:
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for('delivered.delivered'))
 
-    new_order = Order(
-        user_id=item.user_id,
-        order_number=item.order_number,
-        product_name=item.product_name,
-        quantity=item.quantity,
-        etd=datetime.now().strftime('%Y-%m-%d'),
-        eta=datetime.now().strftime('%Y-%m-%d'),
-        ata=datetime.now().strftime('%Y-%m-%d'),
-        transit_status="Restored",
-        transport=item.transport
-    )
+    # ✅ Defensive fallback: handle missing/empty transport field
+    transport_value = (item.transport or "").strip()
+    if not transport_value:
+        transport_value = "Not specified"
 
-    db.session.add(new_order)
-    db.session.delete(item)
-    db.session.commit()
-    flash("Item restored to dashboard.", "success")
-    return redirect(url_for('delivered.delivered'))
+    try:
+        # ✅ Create restored Order entry
+        new_order = Order(
+            user_id=item.user_id or current_user.id,  # fallback for legacy entries
+            order_date=datetime.now().strftime('%d.%m.%y'),
+            order_number=item.order_number,
+            product_name=item.product_name,
+            buyer="Restored",
+            responsible="Restored",
+            quantity=item.quantity,
+            required_delivery="",
+            terms_of_delivery="Restored",
+            payment_date="",
+            etd=datetime.now().strftime('%Y-%m-%d'),
+            eta=datetime.now().strftime('%Y-%m-%d'),
+            ata=datetime.now().strftime('%Y-%m-%d'),
+            transit_status="in process",
+            transport=transport_value
+        )
+
+        db.session.add(new_order)
+        db.session.delete(item)  # Remove from Delivered
+        db.session.commit()
+        flash(f"Order {item.order_number} restored to Dashboard.", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Restore error: {str(e)}")
+        flash("An error occurred while restoring the order.", "danger")
+
+    return redirect(url_for('dashboard.dashboard'))
+
 
 
 @delivered_bp.route('/delivered/edit/<int:item_id>', methods=['GET', 'POST'])
