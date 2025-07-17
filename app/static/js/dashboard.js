@@ -211,7 +211,11 @@ function renderTimeline(data) {
 
   data.forEach((order) => {
     const startDate = parseDate(order.etd);
-    const endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
+    let endDate = order.ata ? parseDate(order.ata) : parseDate(order.eta);
+    if (endDate) {
+      endDate.setDate(endDate.getDate() + 7); // extend bar by 1 day
+    }
+
 
     if (!startDate || !endDate) return;
 
