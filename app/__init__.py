@@ -35,11 +35,12 @@ def create_app():
                         break
                     except ValueError:
                         continue
-            if isinstance(value, datetime):  # ✅ Only format datetime
-                return value.strftime("%d %b %Y")
+            if isinstance(value, datetime):
+                return value.strftime("%d.%m.%y")
         except Exception:
             pass
-        return value  # fallback
+        return value
+
     
     app.jinja_env.globals['getattr'] = getattr
     

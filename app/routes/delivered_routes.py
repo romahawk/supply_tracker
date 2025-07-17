@@ -15,19 +15,21 @@ def delivered():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
 
-    # Apply filters
+    # Filters
     transport = request.args.get('transport')
     month = request.args.get('month')
     year = request.args.get('year')
     search = request.args.get('search', '')
+    sort_key = request.args.get('sort', 'delivery_date')
+    sort_dir = request.args.get('direction', 'desc')
 
-    # ✅ Apply role-based visibility
+    # Base query
     if can_view_all(current_user.role):
         query = DeliveredGoods.query
     else:
         query = DeliveredGoods.query.filter_by(user_id=current_user.id)
 
-    # Continue with filters
+    # Apply filters
     if transport:
         query = query.filter_by(transport=transport)
     if month:
@@ -42,35 +44,28 @@ def delivered():
             func.lower(DeliveredGoods.notes).like(like_term)
         ))
 
-    delivered_items = query.order_by(DeliveredGoods.delivery_date.desc()).paginate(page=page, per_page=per_page)
+    # Sorting logic
+    sort_column = getattr(DeliveredGoods, sort_key, DeliveredGoods.delivery_date)
+    sort_order = sort_column.asc() if sort_dir == 'asc' else sort_column.desc()
+    query = query.order_by(sort_order)
 
+    pagination = query.paginate(page=page, per_page=per_page)
+
+    # Reported Orders
     reported_order_numbers = set()
-    all_entries = StockReportEntry.query.all()
-
-    for entry in all_entries:
-        order_number = None
-
-        # Try resolving from WarehouseStock
-        warehouse_order = WarehouseStock.query.get(entry.related_order_id)
-        if warehouse_order:
-            order_number = warehouse_order.order_number
-        else:
-            # Fallback: Try DeliveredGoods
-            delivered_order = DeliveredGoods.query.get(entry.related_order_id)
-            if delivered_order:
-                order_number = delivered_order.order_number
-
-        if order_number:
-            reported_order_numbers.add(order_number)
-
-
+    for entry in StockReportEntry.query.all():
+        related = WarehouseStock.query.get(entry.related_order_id) or DeliveredGoods.query.get(entry.related_order_id)
+        if related:
+            reported_order_numbers.add(related.order_number)
 
     return render_template(
         'delivered.html',
-        delivered_items=delivered_items.items,
-        pagination=delivered_items,
+        delivered_items=pagination.items,
+        pagination=pagination,
         per_page=per_page,
-        reported_order_numbers=reported_order_numbers
+        reported_order_numbers=reported_order_numbers,
+        sort_key=sort_key,
+        sort_dir=sort_dir
     )
 
 

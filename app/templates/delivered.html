@@ -113,22 +113,33 @@
             <table id="delivered-table"
                 class="w-full table-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-sm">
                 <thead class="sticky top-0 z-10 bg-gray-200 dark:bg-gray-800">
+                    {% set args = request.args.to_dict() %}
+                    {% set _ = args.pop('sort', None) %}
+                    {% set _ = args.pop('direction', None) %}
                     <tr class="text-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 uppercase">
-                        <th class="px-4 py-2 cursor-pointer" data-sort="order_number">Order # <span
-                                class="sort-indicator"></span></th>
-                        <th class="px-4 py-2 cursor-pointer" data-sort="product_name">Product Name <span
-                                class="sort-indicator"></span></th>
-                        <th class="px-4 py-2 cursor-pointer" data-sort="quantity">Quantity <span
-                                class="sort-indicator"></span></th>
-                        <th class="px-4 py-2 cursor-pointer" data-sort="delivery_date">Delivery Date <span
-                                class="sort-indicator"></span></th>
-                        <th class="px-4 py-2 cursor-pointer" data-sort="transport">Transport <span
-                                class="sort-indicator"></span></th>
+                        {% for col, label in [
+                        ('order_number', 'Order #'),
+                        ('product_name', 'Product Name'),
+                        ('quantity', 'Quantity'),
+                        ('delivery_date', 'Delivery Date'),
+                        ('transport', 'Transport')
+                        ] %}
+                        <th class="px-4 py-2">
+                            <a href="{{ url_for('delivered.delivered', sort=col, direction='asc' if sort_key != col or sort_dir == 'desc' else 'desc', **args) }}"
+                                class="flex items-center justify-center gap-1">
+                                {{ label }}
+                                {% if sort_key == col %}
+                                <span>{{ '↑' if sort_dir == 'asc' else '↓' }}</span>
+                                {% endif %}
+                            </a>
+                        </th>
+                        {% endfor %}
                         <th class="px-4 py-2">Source</th>
                         <th class="px-4 py-2">Actions</th>
                         <th class="px-4 py-2">Notes</th>
                         <th class="px-4 py-2">POD</th>
                     </tr>
+
                 </thead>
                 <tbody>
                     {% for item in delivered_items %}
