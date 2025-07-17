@@ -20,6 +20,10 @@ def warehouse():
     per_page = request.args.get('per_page', 10, type=int)
     search = request.args.get('search', '')
 
+    # NEW: sort parameters
+    sort_key = request.args.get('sort', 'ata')  # Default to ATA
+    sort_dir = request.args.get('direction', 'desc')
+
     if can_view_all(current_user.role):
         query = WarehouseStock.query.filter_by(is_archived=False)
     else:
@@ -35,7 +39,26 @@ def warehouse():
             )
         )
 
-    pagination = query.order_by(WarehouseStock.ata.desc()).paginate(page=page, per_page=per_page)
+    # NEW: apply sorting
+    sort_column_map = {
+        'order_number': WarehouseStock.order_number,
+        'product_name': WarehouseStock.product_name,
+        'quantity': WarehouseStock.quantity,
+        'ata': WarehouseStock.ata,
+        'transport': WarehouseStock.transport
+    }
+
+    if sort_key in sort_column_map:
+        sort_column = sort_column_map[sort_key]
+        if sort_dir == 'asc':
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+    else:
+        # Fallback if invalid sort_key
+        query = query.order_by(WarehouseStock.ata.desc())
+
+    pagination = query.paginate(page=page, per_page=per_page)
     warehouse_items = pagination.items
 
     reported_ids = [entry.related_order_id for entry in StockReportEntry.query.all() if entry.related_order_id]
@@ -45,9 +68,10 @@ def warehouse():
         warehouse_items=warehouse_items,
         pagination=pagination,
         per_page=per_page,
-        reported_ids=reported_ids
+        reported_ids=reported_ids,
+        sort_key=sort_key,
+        sort_dir=sort_dir
     )
-
 
 
 @warehouse_bp.route('/add_warehouse_manual', methods=['POST'])

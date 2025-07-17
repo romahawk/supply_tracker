@@ -98,23 +98,36 @@
             <table id="warehouse-table"
                 class="w-full table-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-sm">
                 <thead class="sticky top-0 z-10 bg-gray-200 dark:bg-gray-800">
+                    {% set args = request.args.to_dict() %}
+                    {% set _ = args.pop('sort', None) %}
+                    {% set _ = args.pop('direction', None) %}
                     <tr
                         class="bg-gray-200 dark:bg-gray-700 text-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 uppercase">
-                        <th class="px-4 py-2 cursor-pointer" data-sort="order_number">Order # <span
-                                class="sort-indicator"></span></th>
-                        <th class="px-4 py-2 cursor-pointer" data-sort="product_name">Product Name <span
-                                class="sort-indicator"></span></th>
-                        <th class="px-4 py-2 cursor-pointer" data-sort="quantity">Quantity <span
-                                class="sort-indicator"></span></th>
-                        <th class="px-4 py-2 cursor-pointer" data-sort="ata">ATA <span class="sort-indicator"></span>
+
+                        {% for col, label in [
+                        ('order_number', 'Order #'),
+                        ('product_name', 'Product Name'),
+                        ('quantity', 'Quantity'),
+                        ('ata', 'ATA'),
+                        ('transport', 'Transport')
+                        ] %}
+                        <th class="px-4 py-2">
+                            <a href="{{ url_for('warehouse.warehouse', sort=col, direction='asc' if sort_key != col or sort_dir == 'desc' else 'desc', **args) }}"
+                                class="flex items-center justify-center gap-1">
+                                {{ label }}
+                                {% if sort_key == col %}
+                                <span>{{ '↑' if sort_dir == 'asc' else '↓' }}</span>
+                                {% endif %}
+                            </a>
                         </th>
-                        <th class="px-4 py-2 cursor-pointer" data-sort="transport">Transport <span
-                                class="sort-indicator"></span></th>
+                        {% endfor %}
+
                         <th class="px-4 py-2">Status</th>
                         <th class="px-4 py-2">Actions</th>
                         <th class="px-4 py-2">Notes</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for item in warehouse_items %}
                     <tr
@@ -240,7 +253,7 @@
         </div>
     </main>
 
-    <script>
+    <!-- <script>
         document.addEventListener('DOMContentLoaded', () => {
             const searchWarehouse = document.getElementById('search-warehouse');
 
@@ -262,62 +275,62 @@
                     const ascending = currentSort.key === key && currentSort.direction === 'asc' ? false : true;
                     currentSort = { key, direction: ascending ? 'asc' : 'desc' };
 
-                    sortTableByKey(key, ascending);
-                    updateSortIndicators();
+                    // sortTableByKey(key, ascending);
+                    // updateSortIndicators();
                 });
             });
 
-            function sortTableByKey(key, ascending) {
-                const cellMap = {
-                    order_number: 0,
-                    product_name: 1,
-                    quantity: 2,
-                    ata: 3,
-                    transport: 4
-                };
+            // function sortTableByKey(key, ascending) {
+            //     const cellMap = {
+            //         order_number: 0,
+            //         product_name: 1,
+            //         quantity: 2,
+            //         ata: 3,
+            //         transport: 4
+            //     };
 
-                const rows = Array.from(document.querySelectorAll('#warehouse-table tbody tr'));
-                const sortedRows = rows.sort((a, b) => {
-                    let valA = a.cells[cellMap[key]].innerText.trim().toLowerCase();
-                    let valB = b.cells[cellMap[key]].innerText.trim().toLowerCase();
+            //     const rows = Array.from(document.querySelectorAll('#warehouse-table tbody tr'));
+            //     const sortedRows = rows.sort((a, b) => {
+            //         let valA = a.cells[cellMap[key]].innerText.trim().toLowerCase();
+            //         let valB = b.cells[cellMap[key]].innerText.trim().toLowerCase();
 
-                    if (key === "quantity") {
-                        return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
-                    } else if (key === "ata") {
-                        const parseDate = (str) => {
-                            // expected format: "dd Mon yyyy"
-                            const parts = str.split(" ");
-                            if (parts.length !== 3) return new Date(0); // fallback
-                            const [day, monthStr, year] = parts;
-                            const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-                                .findIndex(m => m.toLowerCase() === monthStr.toLowerCase());
-                            return new Date(parseInt(year), month, parseInt(day));
-                        };
-                        const dateA = parseDate(valA);
-                        const dateB = parseDate(valB);
-                        return ascending ? dateA - dateB : dateB - dateA;
-                    }
-                    return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            //         if (key === "quantity") {
+            //             return ascending ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+            //         } else if (key === "ata") {
+            //             const parseDate = (str) => {
+            //                 // expected format: "dd Mon yyyy"
+            //                 const parts = str.split(" ");
+            //                 if (parts.length !== 3) return new Date(0); // fallback
+            //                 const [day, monthStr, year] = parts;
+            //                 const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            //                     .findIndex(m => m.toLowerCase() === monthStr.toLowerCase());
+            //                 return new Date(parseInt(year), month, parseInt(day));
+            //             };
+            //             const dateA = parseDate(valA);
+            //             const dateB = parseDate(valB);
+            //             return ascending ? dateA - dateB : dateB - dateA;
+            //         }
+            //         return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
 
-                });
+            //     });
 
-                const tbody = document.querySelector('#warehouse-table tbody');
-                tbody.innerHTML = '';
-                sortedRows.forEach(row => tbody.appendChild(row));
-            }
+            //     const tbody = document.querySelector('#warehouse-table tbody');
+            //     tbody.innerHTML = '';
+            //     sortedRows.forEach(row => tbody.appendChild(row));
+            // }
 
-            function updateSortIndicators() {
-                headers.forEach(h => {
-                    const indicator = h.querySelector('.sort-indicator');
-                    if (h.getAttribute('data-sort') === currentSort.key) {
-                        indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
-                    } else {
-                        indicator.textContent = '';
-                    }
-                });
-            }
+            // function updateSortIndicators() {
+            //     headers.forEach(h => {
+            //         const indicator = h.querySelector('.sort-indicator');
+            //         if (h.getAttribute('data-sort') === currentSort.key) {
+            //             indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+            //         } else {
+            //             indicator.textContent = '';
+            //         }
+            //     });
+            // }
         });
-    </script>
+    </script> -->
 
     <!-- Dark mode -->
     <script>
@@ -426,8 +439,6 @@
             </div>
         </div>
     </div>
-
-
 
 </body>
 
