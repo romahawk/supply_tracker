@@ -80,26 +80,22 @@ def restore_to_dashboard():
     item_id = request.args.get('item_id', type=int)
     item = DeliveredGoods.query.get_or_404(item_id)
 
-    # ✅ Check role-level permission
+    # Role-based access checks
     if not can_edit(current_user.role):
-        flash("Access denied.", "danger")
-        return redirect(url_for('delivered.delivered'))
+        return 'Forbidden', 403
 
-    # ✅ Prevent unauthorized restores by regular users
     if not can_view_all(current_user.role):
         if not item.user_id or item.user_id != current_user.id:
-            flash("Unauthorized access.", "danger")
-            return redirect(url_for('delivered.delivered'))
+            return 'Unauthorized', 403
 
-    # ✅ Defensive fallback: handle missing/empty transport field
+    # Normalize transport
     transport_value = (item.transport or "").strip()
     if not transport_value:
         transport_value = "Not specified"
 
     try:
-        # ✅ Create restored Order entry
         new_order = Order(
-            user_id=item.user_id or current_user.id,  # fallback for legacy entries
+            user_id=item.user_id or current_user.id,
             order_date=datetime.now().strftime('%d.%m.%y'),
             order_number=item.order_number,
             product_name=item.product_name,
@@ -117,16 +113,16 @@ def restore_to_dashboard():
         )
 
         db.session.add(new_order)
-        db.session.delete(item)  # Remove from Delivered
+        db.session.delete(item)
         db.session.commit()
-        flash(f"Order {item.order_number} restored to Dashboard.", "success")
+
+        log_activity("Restore from Delivered", f"Order #{item.order_number}")
+        return '', 200
 
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Restore error: {str(e)}")
-        flash("An error occurred while restoring the order.", "danger")
-
-    return redirect(url_for('dashboard.dashboard'))
+        return 'Internal Server Error', 500
 
 
 

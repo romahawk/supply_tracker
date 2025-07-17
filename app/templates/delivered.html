@@ -15,9 +15,9 @@
     <main class="flex flex-col h-full overflow-hidden p-4">
         <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">{{ message }}</div>
-            {% endfor %}
+        {% for category, message in messages %}
+        <div class="bg-green-100 border px-4 py-2 rounded my-2 text-green-800">{{ message }}</div>
+        {% endfor %}
         {% endwith %}
 
         <h2 class="text-2xl font-bold mb-4">🚚 Delivered Goods</h2>
@@ -167,13 +167,11 @@
                                 </a>
 
                                 <!-- Restore -->
-                                <form method="POST"
-                                    action="{{ url_for('restore.restore_from_delivered', item_id=item.id) }}">
-                                    <button type="submit"
-                                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded min-w-[90px] flex items-center gap-1 justify-center">
-                                        <i data-lucide="rotate-ccw"></i> Restore
-                                    </button>
-                                </form>
+                                <button class="text-sm text-green-600 hover:underline restore-btn"
+                                    data-item-id="{{ item.id }}">
+                                    Restore
+                                </button>
+
 
                                 <!-- View Report Button inside loop -->
                                 {% if item.delivery_source == 'From Warehouse' and item.order_number in
@@ -249,7 +247,7 @@
         </div>
         {% endif %}
 
-         <!-- Single Stockreport Modal Block (do NOT duplicate) -->
+        <!-- Single Stockreport Modal Block (do NOT duplicate) -->
         <div id="stockreport-modal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-60 overflow-y-auto">
             <div class="min-h-screen w-full bg-white dark:bg-gray-900 p-6">
                 <button onclick="closeModal()"
@@ -265,7 +263,7 @@
         </div>
     </main>
 
-     <!-- Dark Mode Toggle -->
+    <!-- Dark Mode Toggle -->
     <script>
         const toggle = document.getElementById('dark-mode-toggle');
         if (toggle && localStorage.getItem('dark-mode') === 'enabled') {
@@ -329,6 +327,38 @@
             });
         });
     </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const restoreButtons = document.querySelectorAll(".restore-btn");
+
+            restoreButtons.forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    const itemId = btn.dataset.itemId;
+
+                    const confirmed = confirm("Restore this order to Dashboard?");
+                    if (!confirmed) return;
+
+                    try {
+                        const response = await fetch(`/restore_from_delivered?item_id=${itemId}`, {
+                            method: "POST"
+                        });
+
+                        if (response.ok) {
+                            btn.closest("tr").remove();  // remove row from table
+                            alert("✅ Order restored to Dashboard.");
+                        } else {
+                            alert("❌ Failed to restore order.");
+                        }
+                    } catch (error) {
+                        console.error("Restore error:", error);
+                        alert("⚠️ An error occurred while restoring the order.");
+                    }
+                });
+            });
+        });
+    </script>
+
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>lucide.createIcons();</script>
