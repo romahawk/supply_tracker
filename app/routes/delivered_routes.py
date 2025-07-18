@@ -46,8 +46,12 @@ def delivered():
 
     # Sorting logic
     sort_column = getattr(DeliveredGoods, sort_key, DeliveredGoods.delivery_date)
-    sort_order = sort_column.asc() if sort_dir == 'asc' else sort_column.desc()
+    if sort_dir == 'asc':
+        sort_order = sort_column.asc().nullslast()
+    else:
+        sort_order = sort_column.desc().nullsfirst()
     query = query.order_by(sort_order)
+
 
     pagination = query.paginate(page=page, per_page=per_page)
 
